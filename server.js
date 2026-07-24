@@ -14,7 +14,8 @@ app.use(express.json());
 // ---------------- CONFIGURACIÓN FRONTEND ----------------
 app.use(express.static(path.join(__dirname, 'web')));
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'web', 'index.html'));
+  res.send('SmartCampus funcionando en Render!');
+//  res.sendFile(path.join(__dirname, 'web', 'index.html'));
 });
 
 // ---------------- CONFIGURACIÓN POSTGRES ----------------
@@ -569,10 +570,7 @@ app.delete('/profesores/:id', async (req, res) => {
   }
 });
 
-// Ruta de prueba
-app.get('/', (req, res) => {
-  res.send('SmartCampusGuide funcionando en Render 🚀');
-});
+
 
 // ---------------- INICIO SERVIDOR ----------------
 // Render asigna el puerto automáticamente
