@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Edificios - SmartCampusGuide</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+</head>
+<body>
+
+
+<div class="d-flex justify-content-between mb-4">
+  <a href="admin.html" class="btn btn-outline-secondary">⬅️ Volver al Panel Principal</a>
+  <a href="alertas.html" class="btn btn-primary">Ir al Módulo Alertas ➡️</a>
+</div>
+
+
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="menuPrincipal">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+          <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
+          <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+          <li class="nav-item"><a class="nav-link active" href="edificios.html">Edificios</a></li>
+          <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h2>Gestión de Edificios</h2>
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalEdificio">➕ Nuevo Edificio</button>
+
+    <table id="tablaEdificios" class="display table table-striped" style="width:100%">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Ubicación</th>
+          <th>Capacidad</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Se llenará dinámicamente -->
+      </tbody>
+    </table>
+  </div>
+  <!-- Modal para crear/editar edificio -->
+  <div class="modal fade" id="modalEdificio" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formEdificio">
+          <div class="modal-header">
+            <h5 class="modal-title">Edificio</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="edificioId">
+
+            <div class="mb-3">
+              <label for="edificioNombre" class="form-label">Nombre</label>
+              <input type="text" class="form-control" id="edificioNombre" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="edificioUbicacion" class="form-label">Ubicación</label>
+              <input type="text" class="form-control" id="edificioUbicacion" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="edificioCapacidad" class="form-label">Capacidad</label>
+              <input type="number" class="form-control" id="edificioCapacidad" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    let tabla;
+
+    // Inicializar tabla
+    function cargarEdificios() {
+      fetch("http://10.70.200.112:4000/edificios")
+        .then(res => res.json())
+        .then(data => {
+          if (tabla) {
+            tabla.clear().rows.add(data).draw();
+          } else {
+            tabla = $('#tablaEdificios').DataTable({
+              data: data,
+              columns: [
+                { data: 'id' },
+                { data: 'nombre' },
+                { data: 'ubicacion' },
+                { data: 'capacidad' },
+                {
+                  data: null,
+                  render: function (row) {
+                    return `
+                      <button class="btn btn-sm btn-primary btnEditar" data-id="${row.id}">✏️ Editar</button>
+                      <button class="btn btn-sm btn-danger btnEliminar" data-id="${row.id}">🗑️ Eliminar</button>
+                    `;
+                  }
+                }
+              ]
+            });
+          }
+        });
+    }
+
+    // Guardar edificio (crear/editar)
+    document.getElementById("formEdificio").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const id = document.getElementById("edificioId").value;
+      const edificio = {
+        nombre: document.getElementById("edificioNombre").value,
+        ubicacion: document.getElementById("edificioUbicacion").value,
+        capacidad: document.getElementById("edificioCapacidad").value
+      };
+
+      const url = id ? `http://10.70.200.112:4000/edificios/${id}` : "http://10.70.200.112:4000/edificios";
+      const method = id ? "PUT" : "POST";
+
+      fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(edificio)
+      })
+      .then(res => res.json())
+      .then(() => {
+        cargarEdificios();
+        document.getElementById("formEdificio").reset();
+        document.getElementById("edificioId").value = "";
+        bootstrap.Modal.getInstance(document.getElementById("modalEdificio")).hide();
+      });
+    });
+
+    // Editar edificio
+    $(document).on("click", ".btnEditar", function() {
+      const id = $(this).data("id");
+      fetch(`http://10.70.200.112:4000/edificios/${id}`)
+        .then(res => res.json())
+        .then(edificio => {
+          document.getElementById("edificioId").value = edificio.id;
+          document.getElementById("edificioNombre").value = edificio.nombre;
+          document.getElementById("edificioUbicacion").value = edificio.ubicacion;
+          document.getElementById("edificioCapacidad").value = edificio.capacidad;
+          new bootstrap.Modal(document.getElementById("modalEdificio")).show();
+        });
+    });
+
+    // Eliminar edificio
+    $(document).on("click", ".btnEliminar", function() {
+      const id = $(this).data("id");
+      if (confirm("¿Seguro que deseas eliminar este edificio?")) {
+        fetch(`http://10.70.200.112:4000/edificios/${id}`, { method: "DELETE" })
+          .then(() => cargarEdificios());
+      }
+    });
+
+    // Cargar edificios al inicio
+    cargarEdificios();
+  </script>
+</body>
+</html>

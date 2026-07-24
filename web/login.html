@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - SmartCampusGuide</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #004080, #0066cc);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-card {
+      width: 380px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .login-card h3 {
+      font-weight: bold;
+      color: #004080;
+    }
+    .btn-primary {
+      background-color: #004080;
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: #003366;
+    }
+    .login-icon {
+      font-size: 3rem;
+      color: #004080;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card p-4 shadow login-card bg-white">
+    <div class="text-center mb-3">
+      <i class="bi bi-person-circle login-icon"></i>
+    </div>
+    <h3 class="text-center mb-3">Iniciar Sesión</h3>
+    <form id="formLogin">
+      <div class="mb-3">
+        <label for="usuario" class="form-label">Usuario</label>
+        <input type="text" class="form-control" id="usuario" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Contraseña</label>
+        <input type="password" class="form-control" id="password" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Entrar</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById("formLogin").addEventListener("submit", function(e){
+      e.preventDefault();
+      const usuario = document.getElementById("usuario").value;
+      const password = document.getElementById("password").value;
+
+      // Validación simple con roles
+      let rol = null;
+
+      if(usuario === "admin" && password === "1234"){
+        rol = "admin";
+      } else if(usuario === "profesor" && password === "abcd"){
+        rol = "profesor";
+      } else if(usuario === "estudiante" && password === "xyz"){
+        rol = "estudiante";
+      }
+
+      if(rol){
+        sessionStorage.setItem("usuarioActivo", usuario);
+        sessionStorage.setItem("rolActivo", rol);
+
+        // Redirección según rol
+        if(rol === "admin"){
+          window.location.href = "admin.html";
+        } else if(rol === "profesor"){
+          window.location.href = "profesores.html";
+        } else if(rol === "estudiante"){
+          window.location.href = "estudiantes.html";
+        }
+      } else {
+        alert("Credenciales incorrectas");
+      }
+    });
+  </script>
+</body>
+</html>

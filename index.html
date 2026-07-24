@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>SmartCampusGuide</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: url('entrada_principal.jpg') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background-color: rgba(0, 64, 128, 0.85);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .navbar {
+      background-color: rgba(0, 64, 128, 0.85);
+    }
+    .navbar-brand, .nav-link {
+      color: #fff !important;
+    }
+    .card {
+      margin-top: 20px;
+      background-color: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      border-radius: 10px;
+    }
+    .card-header {
+      font-weight: bold;
+      background-color: rgba(0, 64, 128, 0.85);
+      color: white;
+      border-radius: 10px 10px 0 0;
+    }
+    footer {
+      background-color: rgba(0, 64, 128, 0.85);
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: auto;
+    }
+    .btn {
+      border-radius: 20px;
+    }
+    #resultado {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabecera -->
+  <header>
+    BIENVENIDO A LA UNGE, CAMPUS-LEON XIV
+  </header>
+
+  <!-- Barra de navegación -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">SmartCampusGuide</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="#radio">Radio UNGE</a></li>
+          <li class="nav-item"><a class="nav-link" href="#mapa">Mapa</a></li>
+          <li class="nav-item"><a class="nav-link" href="#transporte">Transporte Escolar</a></li>
+          <li class="nav-item"><a class="nav-link" href="#login">Login</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sección Radio UNGE -->
+  <div class="container" id="radio">
+    <div class="card">
+      <div class="card-header">Radio UNGE</div>
+      <div class="card-body">
+        <p>Programación y streaming en vivo.</p>
+        <button class="btn btn-primary">Escuchar ahora</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección Mapa -->
+  <div class="container" id="mapa">
+    <div class="card">
+      <div class="card-header">Mapa Interactivo</div>
+      <div class="card-body">
+        <input type="text" class="form-control" placeholder="Buscar edificio...">
+        <button class="btn btn-success mt-2">Buscar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección Transporte -->
+  <div class="container" id="transporte">
+    <div class="card">
+      <div class="card-header">Transporte Escolar</div>
+      <div class="card-body">
+        <p>Consulta rutas y horarios de buses.</p>
+        <button class="btn btn-info">Ver rutas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login -->
+  <div class="container" id="login">
+    <div class="card">
+      <div class="card-header">Acceso</div>
+      <div class="card-body">
+        <form id="loginForm">
+          <div class="mb-3">
+            <label for="username" class="form-label">Usuario</label>
+            <input type="text" class="form-control" id="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <input type="password" class="form-control" id="password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Entrar</button>
+        </form>
+        <div id="resultado"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pie de página -->
+  <footer>
+    TODOS LOS DERECHOS RESERVADOS @IoT A NUESTRO ALCANCE - 2026
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Script de conexión al backend -->
+  <script>
+    const form = document.getElementById('loginForm');
+    const resultado = document.getElementById('resultado');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('http://10.70.200.112:4000/login', { // usa la IP de tu Raspberry + puerto del backend
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          resultado.innerHTML = `✅ Bienvenido ${data.usuario} (Rol: ${data.rol})`;
+          // Redirigir según rol
+          if (data.rol === 'admin') window.location.href = '/admin.html';
+          if (data.rol === 'profesor') window.location.href = '/profesor.html';
+          if (data.rol === 'estudiante') window.location.href = '/estudiante.html';
+        } else {
+          resultado.innerHTML = `❌ Error: ${data.message}`;
+        }
+      } catch (err) {
+        resultado.innerHTML = '⚠️ Error de conexión con el servidor';
+      }
+    });
+  </script>
+</body>
+</html>

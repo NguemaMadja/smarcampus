@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Admin - SmartCampusGuide</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; }
+    .navbar { margin-bottom: 20px; }
+    .card { margin-bottom: 20px; }
+    #output { white-space: pre-wrap; background: #fff; padding: 15px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <!-- Barra de navegación -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">SmartCampusGuide - Admin</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><span class="nav-link">Usuario: <strong id="usuario">admin</strong></span></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1 class="mb-4">Panel de Administración</h1>
+
+    <div class="row">
+      <!-- Gestión de Usuarios -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-primary text-white">Usuarios</div>
+          <div class="card-body">
+            <button class="btn btn-primary w-100" onclick="fetchData('/usuarios')">Ver Usuarios</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edificios -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-success text-white">Edificios</div>
+          <div class="card-body">
+            <button class="btn btn-success w-100" onclick="fetchData('/edificios')">Ver Edificios</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aulas -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-info text-white">Aulas</div>
+          <div class="card-body">
+            <button class="btn btn-info w-100" onclick="fetchData('/aulas')">Ver Aulas</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Radio UNGE -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-warning text-dark">Radio UNGE</div>
+          <div class="card-body">
+            <button class="btn btn-warning w-100" onclick="fetchData('/radiounge')">Programación Radio</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estadísticas de Escucha -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-secondary text-white">Estadísticas de Escucha</div>
+          <div class="card-body">
+            <button class="btn btn-secondary w-100" onclick="fetchData('/estadisticas_escucha')">Ver Estadísticas</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logs de Actividad -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-dark text-white">Logs de Actividad</div>
+          <div class="card-body">
+            <button class="btn btn-dark w-100" onclick="fetchData('/logsactividad')">Ver Logs</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Sensores -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-danger text-white">Sensores</div>
+          <div class="card-body">
+            <button class="btn btn-danger w-100" onclick="fetchData('/sensores')">Ver Sensores</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mediciones Ambientales -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-primary text-white">Mediciones Ambientales</div>
+          <div class="card-body">
+            <button class="btn btn-primary w-100" onclick="fetchData('/medicionesambientales')">Ver Mediciones</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transporte Escolar -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-success text-white">Transporte Escolar</div>
+          <div class="card-body">
+            <button class="btn btn-success w-100" onclick="fetchData('/transporteescolar')">Ver Transporte</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Visitas App -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-info text-white">Visitas App</div>
+          <div class="card-body">
+            <button class="btn btn-info w-100" onclick="fetchData('/visitasapp')">Ver Visitas</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Materiales -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-warning text-dark">Materiales</div>
+          <div class="card-body">
+            <button class="btn btn-warning w-100" onclick="fetchData('/materiales')">Ver Materiales</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estudiantes -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-secondary text-white">Estudiantes</div>
+          <div class="card-body">
+            <button class="btn btn-secondary w-100" onclick="fetchData('/estudiantes')">Ver Estudiantes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salida de datos -->
+    <h2 class="mt-4">Resultados</h2>
+    <div id="output" class="border"></div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function fetchData(endpoint) {
+      fetch("http://localhost:4000" + endpoint)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+        })
+        .catch(err => {
+          document.getElementById("output").textContent = "Error: " + err;
+        });
+    }
+  </script>
+</body>
+</html>
