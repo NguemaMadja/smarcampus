@@ -15,7 +15,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'web')));
 app.get('/', (req, res) => {
   res.send('SmartCampus funcionando en Render!');
-//  res.sendFile(path.join(__dirname, 'web', 'index.html'));
+  // Si quieres servir tu frontend en vez del mensaje de prueba, usa:
+  // res.sendFile(path.join(__dirname, 'web', 'index.html'));
 });
 
 // ---------------- CONFIGURACIÓN POSTGRES ----------------
@@ -26,6 +27,7 @@ const pool = new Pool({
   password: 'piangel',
   port: 5432,
 });
+
 // ---------------- LOGIN ----------------
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -47,6 +49,8 @@ app.post('/login', async (req, res) => {
   }
 });
 
+
+
 // ---------------- USUARIOS CRUD ----------------
 app.get('/usuarios', async (req, res) => {
   try {
@@ -67,7 +71,6 @@ app.get('/usuarios/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 app.post('/usuarios', async (req, res) => {
   try {
     const { nombre, correo, rol } = req.body;
@@ -89,7 +92,7 @@ app.put('/usuarios/:id', async (req, res) => {
       'UPDATE usuarios SET nombre=$1, correo=$2, rol=$3 WHERE id_usuario=$4 RETURNING *',
       [nombre, correo, rol, id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+  if (result.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -106,8 +109,6 @@ app.delete('/usuarios/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 // ---------------- PROFESORES CRUD ----------------
 app.get('/profesores', async (req, res) => {
   try {
@@ -367,16 +368,7 @@ app.post('/asistencia_profesores', async (req, res) => {
   res.json({ message: 'Asistencia registrada' });
 });
 
-
-
-
-
-
-
-
-
 // ---------------- CRON JOB SEMANAL ----------------
-// Cada lunes a las 8 AM se generan nuevos QR para todas las aulas
 cron.schedule('0 8 * * MON', async () => {
   try {
     const aulas = await pool.query('SELECT id_aula FROM aulas');
@@ -389,9 +381,6 @@ cron.schedule('0 8 * * MON', async () => {
     console.error('Error generando QR semanal:', err);
   }
 });
-
-
-
 
 // Crear usuario con contraseña encriptada
 app.post("/usuarios", async (req, res) => {
@@ -409,8 +398,6 @@ app.post("/usuarios", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 // Editar usuario con opción de actualizar contraseña
 app.put("/usuarios/:id", async (req, res) => {
@@ -570,13 +557,11 @@ app.delete('/profesores/:id', async (req, res) => {
   }
 });
 
-
-
 // ---------------- INICIO SERVIDOR ----------------
-// Render asigna el puerto automáticamente
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
+
 
 
