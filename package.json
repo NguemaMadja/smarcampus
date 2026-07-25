@@ -1,5 +1,5 @@
 {
-  "name": "smartcampus",
+  "name": "smartcampusguide",
   "version": "1.0.0",
   "description": "SmartCampusGuide - Plataforma de gestión y visualización para campus universitario",
   "main": "server.js",
@@ -11,9 +11,12 @@
     "pg": "^8.11.1",
     "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "qrcode": "^1.5.3",
+    "node-cron": "^3.0.2"
   },
   "engines": {
     "node": ">=18"
   }
 }
+
