@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
 
 // ---------------- CONFIGURACIÓN POSTGRES ----------------
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgresql://campus_admin:piangel@localhost:5432/smartcampus",
+  connectionString: process.env.DATABASE_URL || "postgresql://campus_admin:piangel@localhost:5432/smartcampusguide",
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
