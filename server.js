@@ -5,8 +5,8 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
 const path = require('path');
-const QRCode = require('qrcode');   // NUEVO
-const cron = require('node-cron');  // NUEVO
+const QRCode = require('qrcode');
+const cron = require('node-cron');
 
 const app = express();
 app.use(express.json());
@@ -21,35 +21,26 @@ app.get('/', (req, res) => {
 
 // ---------------- CONFIGURACIÓN POSTGRES ----------------
 const pool = new Pool({
-  user: 'campus_admin',
-  host: 'localhost',
-  database: 'smartcampus',
-  password: 'piangel',
-  port: 5432,
+  connectionString: process.env.DATABASE_URL || "postgresql://campus_admin:piangel@localhost:5432/smartcampus",
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
 // ---------------- LOGIN ----------------
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { correo, password } = req.body;
   try {
-    const result = await pool.query(
-      'SELECT id_usuario, username, password_hash, rol FROM usuarios WHERE username = $1',
-      [username]
-    );
-    if (result.rows.length === 0) return res.status(401).json({ message: 'Usuario no encontrado' });
+    const result = await pool.query("SELECT * FROM usuarios WHERE correo=$1", [correo]);
+    if (result.rows.length === 0) return res.status(401).json({ error: "Usuario no encontrado" });
 
-    const user = result.rows[0];
-    const isValid = await bcrypt.compare(password, user.password_hash);
-    if (!isValid) return res.status(401).json({ message: 'Contraseña incorrecta' });
+    const usuario = result.rows[0];
+    const valido = bcrypt.compareSync(password, usuario.password_hash);
+    if (!valido) return res.status(401).json({ error: "Contraseña incorrecta" });
 
-    res.json({ message: 'Login exitoso', usuario: user.username, rol: user.rol });
+    res.json({ mensaje: "Login correcto", usuario });
   } catch (err) {
-    console.error('Error en consulta:', err);
-    res.status(500).json({ message: 'Error en el servidor' });
+    res.status(500).json({ error: err.message });
   }
 });
-
-
 
 // ---------------- USUARIOS CRUD ----------------
 app.get('/usuarios', async (req, res) => {
@@ -71,31 +62,41 @@ app.get('/usuarios/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-app.post('/usuarios', async (req, res) => {
+
+app.post("/usuarios", async (req, res) => {
+  const { nombre, correo, rol, password } = req.body;
   try {
-    const { nombre, correo, rol } = req.body;
+    const passwordHash = bcrypt.hashSync(password, 10);
     const result = await pool.query(
-      'INSERT INTO usuarios (nombre, correo, rol) VALUES ($1, $2, $3) RETURNING *',
-      [nombre, correo, rol]
+      "INSERT INTO usuarios (nombre, correo, rol, password_hash) VALUES ($1, $2, $3, $4) RETURNING *",
+      [nombre, correo, rol, passwordHash]
     );
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
-
-app.put('/usuarios/:id', async (req, res) => {
+app.put("/usuarios/:id", async (req, res) => {
+  const { id } = req.params;
+  const { nombre, correo, rol, password } = req.body;
   try {
-    const { id } = req.params;
-    const { nombre, correo, rol } = req.body;
-    const result = await pool.query(
-      'UPDATE usuarios SET nombre=$1, correo=$2, rol=$3 WHERE id_usuario=$4 RETURNING *',
-      [nombre, correo, rol, id]
-    );
-  if (result.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+    let result;
+    if (password && password.trim() !== "") {
+      const passwordHash = bcrypt.hashSync(password, 10);
+      result = await pool.query(
+        "UPDATE usuarios SET nombre=$1, correo=$2, rol=$3, password_hash=$4 WHERE id_usuario=$5 RETURNING *",
+        [nombre, correo, rol, passwordHash, id]
+      );
+    } else {
+      result = await pool.query(
+        "UPDATE usuarios SET nombre=$1, correo=$2, rol=$3 WHERE id_usuario=$4 RETURNING *",
+        [nombre, correo, rol, id]
+      );
+    }
+    if (result.rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -109,21 +110,21 @@ app.delete('/usuarios/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 // ---------------- PROFESORES CRUD ----------------
 app.get('/profesores', async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT
-         p.id_profesor AS id,
-         u.nombre AS nombre,
-         u.correo AS email,
-         p.departamento,
-         p.carrera,
-         p.asignaturas
-       FROM profesores p
-       JOIN usuarios u ON p.id_usuario = u.id_usuario
-       ORDER BY p.id_profesor`
-    );
+    const result = await pool.query(`
+      SELECT p.id_profesor AS id,
+             u.nombre,
+             u.correo AS email,
+             p.departamento,
+             p.carrera,
+             p.asignaturas
+      FROM profesores p
+      JOIN usuarios u ON p.id_usuario = u.id_usuario
+      ORDER BY p.id_profesor
+    `);
     res.json({ data: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -133,126 +134,84 @@ app.get('/profesores', async (req, res) => {
 app.get('/profesores/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      `SELECT
-         p.id_profesor AS id,
-         u.nombre AS nombre,
-         u.correo AS email,
-         p.departamento
-       FROM profesores p
-       JOIN usuarios u ON p.id_usuario = u.id_usuario
-       WHERE p.id_profesor=$1`,
-      [id]
-    );
+    const result = await pool.query(`
+      SELECT p.id_profesor AS id,
+             u.nombre,
+             u.correo AS email,
+             p.departamento,
+             p.carrera,
+             p.asignaturas
+      FROM profesores p
+      JOIN usuarios u ON p.id_usuario = u.id_usuario
+      WHERE p.id_profesor=$1
+    `, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json({ data: [result.rows[0]] });
+    res.json({ data: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.post('/profesores', async (req, res) => {
+  const { id_usuario, departamento, carrera, asignaturas } = req.body;
   try {
-    const { id_usuario, departamento } = req.body;
-    const insert = await pool.query(
-      `INSERT INTO profesores (id_usuario, departamento)
-       VALUES ($1, $2)
-       RETURNING id_profesor`,
-      [id_usuario, departamento]
-    );
-
-    const id_profesor = insert.rows[0].id_profesor;
-
     const result = await pool.query(
-      `SELECT
-         p.id_profesor AS id,
-         u.nombre AS nombre,
-         u.correo AS email,
-         p.departamento
-       FROM profesores p
-       JOIN usuarios u ON p.id_usuario = u.id_usuario
-       WHERE p.id_profesor=$1`,
-      [id_profesor]
+      `INSERT INTO profesores (id_usuario, departamento, carrera, asignaturas)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
+      [id_usuario, departamento, carrera, asignaturas]
     );
-
-    res.json({ data: [result.rows[0]] });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.put('/profesores/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { id_usuario, departamento } = req.body;
-
-    await pool.query(
-      `UPDATE profesores
-       SET id_usuario=$1, departamento=$2
-       WHERE id_profesor=$3`,
-      [id_usuario, departamento, id]
-    );
-
-    const result = await pool.query(
-      `SELECT
-         p.id_profesor AS id,
-         u.nombre AS nombre,
-         u.correo AS email,
-         p.departamento
-       FROM profesores p
-       JOIN usuarios u ON p.id_usuario = u.id_usuario
-       WHERE p.id_profesor=$1`,
-      [id]
-    );
-
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json({ data: [result.rows[0]] });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.delete('/profesores/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const result = await pool.query(
-      `SELECT
-         p.id_profesor AS id,
-         u.nombre AS nombre,
-         u.correo AS email,
-         p.departamento
-       FROM profesores p
-       JOIN usuarios u ON p.id_usuario = u.id_usuario
-       WHERE p.id_profesor=$1`,
-      [id]
-    );
-
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-
-    await pool.query(`DELETE FROM profesores WHERE id_profesor=$1`, [id]);
-
-    res.json({ data: [result.rows[0]] });
+    res.json({ data: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+app.put('/profesores/:id', async (req, res) => {
+  const { id } = req.params;
+  const { id_usuario, departamento, carrera, asignaturas } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE profesores
+       SET id_usuario=$1, departamento=$2, carrera=$3, asignaturas=$4
+       WHERE id_profesor=$5
+       RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
+      [id_usuario, departamento, carrera, asignaturas, id]
+    );
+    res.json({ data: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
+app.delete('/profesores/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `DELETE FROM profesores
+       WHERE id_profesor=$1
+       RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
+      [id]
+    );
+    if (result.rowCount === 0) return res.status(404).json({ error: "Profesor no encontrado" });
+    res.json({ mensaje: "Profesor eliminado correctamente", data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // ---------------- ESTUDIANTES CRUD ----------------
 app.get('/estudiantes', async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT
-         e.id_estudiante AS id,
-         u.nombre,
-         u.correo,
-         e.matricula,
-         e.id_usuario
-       FROM estudiantes e
-       JOIN usuarios u ON e.id_usuario = u.id_usuario
-       ORDER BY e.id_estudiante`
-    );
+    const result = await pool.query(`
+      SELECT e.id_estudiante AS id,
+             u.nombre,
+             u.correo,
+             e.matricula,
+             e.id_usuario
+      FROM estudiantes e
+      JOIN usuarios u ON e.id_usuario = u.id_usuario
+      ORDER BY e.id_estudiante
+    `);
     res.json({ data: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -262,18 +221,16 @@ app.get('/estudiantes', async (req, res) => {
 app.get('/estudiantes/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      `SELECT
-         e.id_estudiante AS id,
-         u.nombre,
-         u.correo,
-         e.matricula,
-         e.id_usuario
-       FROM estudiantes e
-       JOIN usuarios u ON e.id_usuario = u.id_usuario
-       WHERE e.id_estudiante=$1`,
-      [id]
-    );
+    const result = await pool.query(`
+      SELECT e.id_estudiante AS id,
+             u.nombre,
+             u.correo,
+             e.matricula,
+             e.id_usuario
+      FROM estudiantes e
+      JOIN usuarios u ON e.id_usuario = u.id_usuario
+      WHERE e.id_estudiante=$1
+    `, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Estudiante no encontrado' });
     res.json({ data: result.rows[0] });
   } catch (err) {
@@ -330,8 +287,6 @@ app.delete('/estudiantes/:id', async (req, res) => {
   }
 });
 
-
-
 // ---------------- QR Y ASISTENCIA ----------------
 
 // Generar QR para un aula
@@ -381,187 +336,8 @@ cron.schedule('0 8 * * MON', async () => {
     console.error('Error generando QR semanal:', err);
   }
 });
-
-// Crear usuario con contraseña encriptada
-app.post("/usuarios", async (req, res) => {
-  const { nombre, correo, rol, password } = req.body;
-  try {
-    // Generar hash seguro de la contraseña
-    const passwordHash = bcrypt.hashSync(password, 10);
-
-    const result = await pool.query(
-      "INSERT INTO usuarios (nombre, correo, rol, password_hash) VALUES ($1, $2, $3, $4) RETURNING *",
-      [nombre, correo, rol, passwordHash]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Editar usuario con opción de actualizar contraseña
-app.put("/usuarios/:id", async (req, res) => {
-  const { id } = req.params;
-  const { nombre, correo, rol, password } = req.body;
-
-  try {
-    let result;
-
-    if (password && password.trim() !== "") {
-      // Si se envía nueva contraseña, la encriptamos
-      const passwordHash = bcrypt.hashSync(password, 10);
-      result = await pool.query(
-        "UPDATE usuarios SET nombre=$1, correo=$2, rol=$3, password_hash=$4 WHERE id_usuario=$5 RETURNING *",
-        [nombre, correo, rol, passwordHash, id]
-      );
-    } else {
-      // Si no se envía contraseña, no la tocamos
-      result = await pool.query(
-        "UPDATE usuarios SET nombre=$1, correo=$2, rol=$3 WHERE id_usuario=$4 RETURNING *",
-        [nombre, correo, rol, id]
-      );
-    }
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
-    }
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-app.post("/login", async (req, res) => {
-  const { correo, password } = req.body;
-  try {
-    const result = await pool.query("SELECT * FROM usuarios WHERE correo=$1", [correo]);
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: "Usuario no encontrado" });
-    }
-
-    const usuario = result.rows[0];
-    const valido = bcrypt.compareSync(password, usuario.password_hash);
-
-    if (!valido) {
-      return res.status(401).json({ error: "Contraseña incorrecta" });
-    }
-
-    res.json({ mensaje: "Login correcto", usuario });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-// Crear profesor
-app.post('/profesores', async (req, res) => {
-  const { id_usuario, departamento, carrera, asignaturas } = req.body;
-  try {
-    const result = await pool.query(
-      `INSERT INTO profesores (id_usuario, departamento, carrera, asignaturas)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
-      [id_usuario, departamento, carrera, asignaturas]
-    );
-    res.json({ data: result.rows });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Editar profesor
-app.put('/profesores/:id', async (req, res) => {
-  const { id } = req.params; // corresponde a id_profesor
-  const { id_usuario, departamento, carrera, asignaturas } = req.body;
-  try {
-    const result = await pool.query(
-      `UPDATE profesores
-       SET id_usuario=$1, departamento=$2, carrera=$3, asignaturas=$4
-       WHERE id_profesor=$5
-       RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
-      [id_usuario, departamento, carrera, asignaturas, id]
-    );
-    res.json({ data: result.rows });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-
-// Obtener profesores
-app.get("/profesores", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT p.id_profesor AS id,
-             u.nombre,
-             u.correo AS email,
-             p.departamento,
-             p.carrera,
-             p.asignaturas
-      FROM profesores p
-      JOIN usuarios u ON p.id_usuario = u.id_usuario
-    `);
-    res.json({ data: result.rows });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-// Obtener profesor por ID
-app.get("/profesores/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await pool.query(`
-      SELECT p.id_profesor AS id,
-             u.nombre,
-             u.correo AS email,
-             p.departamento,
-             p.carrera,
-             p.asignaturas
-      FROM profesores p
-      JOIN usuarios u ON p.id_usuario = u.id_usuario
-      WHERE p.id_profesor = $1
-    `, [id]);
-    res.json({ data: result.rows });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-// Eliminar profesor
-app.delete('/profesores/:id', async (req, res) => {
-  const { id } = req.params; // corresponde a id_profesor
-  try {
-    const result = await pool.query(
-      `DELETE FROM profesores
-       WHERE id_profesor = $1
-       RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
-      [id]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "Profesor no encontrado" });
-    }
-
-    res.json({ mensaje: "Profesor eliminado correctamente", data: result.rows[0] });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ---------------- INICIO SERVIDOR ----------------
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
-
-
-
