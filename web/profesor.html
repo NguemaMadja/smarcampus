@@ -92,7 +92,7 @@
   <script>
     async function cargarAsignaturas() {
       try {
-        const res = await fetch("http://10.70.200.112:4000/asignaturas");
+        const res = await fetch("/asignaturas");
         const data = await res.json();
         const lista = document.getElementById("listaAsignaturas");
         lista.innerHTML = "";
@@ -108,7 +108,7 @@
 
     async function cargarAsistencia() {
       try {
-        const res = await fetch("http://10.70.200.112:4000/asistencia");
+        const res = await fetch("/asistencia");
         const data = await res.json();
         const lista = document.getElementById("listaAsistencia");
         lista.innerHTML = "";
@@ -124,7 +124,7 @@
 
     async function cargarMateriales() {
       try {
-        const res = await fetch("http://10.70.200.112:4000/materiales");
+        const res = await fetch("/materiales");
         const data = await res.json();
         const lista = document.getElementById("listaMateriales");
         lista.innerHTML = "";
@@ -140,7 +140,7 @@
 
     async function cargarEstudiantes() {
       try {
-        const res = await fetch("http://10.70.200.112:4000/estudiantes");
+        const res = await fetch("/estudiantes");
         const data = await res.json();
         const lista = document.getElementById("listaEstudiantes");
         lista.innerHTML = "";
