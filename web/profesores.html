@@ -134,29 +134,30 @@
         if (tabla) {
           tabla.clear().rows.add(data).draw();
         } else {
-          tabla = $('#tablaProfesores').DataTable({
-            data: data,
-            columns: [
-              { data: 'id' },
-              { data: 'nombre' },
-              { data: 'email' },
-              { data: 'departamento' },
-              { data: 'carrera' },
-              { data: 'asignaturas' },
-              {
-                data: null,
-                render: function (row) {
-                  return `
-                    <button class="btn btn-sm btn-primary btnEditar" data-id="${row.id}">✏️ Editar</button>
-                    <button class="btn btn-sm btn-danger btnEliminar" data-id="${row.id}">🗑️ Eliminar</button>
-                  `;
-                }
-              }
-            ]
-          });
-        }
-      });
-  }
+        tabla = $('#tablaProfesores').DataTable({
+  ajax: {
+    url: "/profesores",
+    dataSrc: ""   // CORREGIDO: acepta array plano
+  },
+  columns: [
+    { data: 'id' },
+    { data: 'nombre' },
+    { data: 'email' },        // CORREGIDO: aquí debe ser 'email'
+    { data: 'departamento' },
+    { data: 'carrera' },
+    { data: 'asignaturas' },
+    {
+      data: null,
+      render: function (row) {
+        return `
+          <button class="btn btn-sm btn-primary btnEditar" data-id="${row.id}">✏️ Editar</button>
+          <button class="btn btn-sm btn-danger btnEliminar" data-id="${row.id}">🗑️ Eliminar</button>
+        `;
+      }
+    }
+  ]
+});
+ 
 
   // Guardar profesor
   document.getElementById("formProfesor").addEventListener("submit", function(e) {
