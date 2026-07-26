@@ -45,8 +45,8 @@
     <h3 class="text-center mb-3">Iniciar Sesión</h3>
     <form id="formLogin">
       <div class="mb-3">
-        <label for="usuario" class="form-label">Usuario</label>
-        <input type="text" class="form-control" id="usuario" required>
+        <label for="usuario" class="form-label">Correo</label>
+        <input type="email" class="form-control" id="usuario" required>
       </div>
       <div class="mb-3">
         <label for="password" class="form-label">Contraseña</label>
@@ -57,36 +57,41 @@
   </div>
 
   <script>
-    document.getElementById("formLogin").addEventListener("submit", function(e){
+    document.getElementById("formLogin").addEventListener("submit", async function(e){
       e.preventDefault();
-      const usuario = document.getElementById("usuario").value;
+      const correo = document.getElementById("usuario").value;
       const password = document.getElementById("password").value;
 
-      // Validación simple con roles
-      let rol = null;
+      try {
+        const res = await fetch("/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ correo, password })
+        });
 
-      if(usuario === "admin" && password === "1234"){
-        rol = "admin";
-      } else if(usuario === "profesor" && password === "abcd"){
-        rol = "profesor";
-      } else if(usuario === "estudiante" && password === "xyz"){
-        rol = "estudiante";
-      }
+        if(!res.ok){
+          throw new Error("Credenciales incorrectas");
+        }
 
-      if(rol){
-        sessionStorage.setItem("usuarioActivo", usuario);
+        const data = await res.json();
+        const rol = data.usuario.rol;
+
+        // Guardar sesión en navegador
+        sessionStorage.setItem("usuarioActivo", data.usuario.nombre);
         sessionStorage.setItem("rolActivo", rol);
 
         // Redirección según rol
         if(rol === "admin"){
           window.location.href = "admin.html";
         } else if(rol === "profesor"){
-          window.location.href = "profesores.html";
+          window.location.href = "profesor.html";
         } else if(rol === "estudiante"){
           window.location.href = "estudiantes.html";
+        } else {
+          alert("Rol desconocido");
         }
-      } else {
-        alert("Credenciales incorrectas");
+      } catch(err){
+        alert("Error al iniciar sesión: " + err.message);
       }
     });
   </script>
