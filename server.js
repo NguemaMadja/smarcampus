@@ -14,15 +14,13 @@ app.use(express.json());
 // ---------------- CONFIGURACIÓN FRONTEND ----------------
 app.use(express.static(path.join(__dirname, 'web')));
 app.get('/', (req, res) => {
-  res.send('SmartCampus funcionando en Render!');
-  // Si quieres servir tu frontend en vez del mensaje de prueba, usa:
-  // res.sendFile(path.join(__dirname, 'web', 'index.html'));
+  res.sendFile(path.join(__dirname, 'web', 'index.html'));
 });
 
 // ---------------- CONFIGURACIÓN POSTGRES ----------------
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgresql://campus_admin:piangel@localhost:5432/smartcampusguide",
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+  connectionString: process.env.DATABASE_URL || "postgresql://smartcampus_e3qk_user:VcilJQhBclQrE8dlUTEnOqQA3rUL1L1K@dpg-d9hstto4n6ts73bg0em0-a.oregon-postgres.render.com:5432/smartcampus_e3qk",
+  ssl: { rejectUnauthorized: false }
 });
 
 // ---------------- LOGIN ----------------
@@ -76,6 +74,7 @@ app.post("/usuarios", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 app.put("/usuarios/:id", async (req, res) => {
   const { id } = req.params;
   const { nombre, correo, rol, password } = req.body;
@@ -199,6 +198,7 @@ app.delete('/profesores/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 // ---------------- ESTUDIANTES CRUD ----------------
 app.get('/estudiantes', async (req, res) => {
   try {
@@ -336,8 +336,9 @@ cron.schedule('0 8 * * MON', async () => {
     console.error('Error generando QR semanal:', err);
   }
 });
+
 // ---------------- INICIO SERVIDOR ----------------
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
