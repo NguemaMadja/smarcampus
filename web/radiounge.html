@@ -11,119 +11,119 @@
 
 <div class="d-flex justify-content-between mb-4">
   <a href="admin.html" class="btn btn-outline-secondary">⬅️ Volver al Panel Principal</a>
-  <a href="transporte.html" class="btn btn-primary">Ir al Módulo Transporte Escolar ➡️</a>
+  <a href="transporteescolar.html" class="btn btn-primary">Ir al Módulo Transporte Escolar ➡️</a>
 </div>
 
-
-
-  <!-- Navbar persistente -->
-  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="menuPrincipal">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
-          <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
-          <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
-          <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
-          <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
-          <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
-          <li class="nav-item"><a class="nav-link" href="asistencia_profesores.html">Asistencia Profesores</a></li>
-          <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
-          <li class="nav-item"><a class="nav-link" href="estadisticas.html">Estadísticas</a></li>
-          <li class="nav-item"><a class="nav-link active" href="radiounge.html">Radio UNGE</a></li>
-          <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
-          <li class="nav-item"><a class="nav-link" href="mapa.html">Mapa</a></li>
-        </ul>
-      </div>
+<!-- Navbar persistente -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menuPrincipal">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
+        <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+        <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
+        <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+        <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
+        <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+        <li class="nav-item"><a class="nav-link" href="asistencia_profesores.html">Asistencia Profesores</a></li>
+        <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
+        <li class="nav-item"><a class="nav-link" href="estadisticas.html">Estadísticas</a></li>
+        <li class="nav-item"><a class="nav-link active" href="radiounge.html">Radio UNGE</a></li>
+        <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
+        <li class="nav-item"><a class="nav-link" href="mapa.html">Mapa</a></li>
+      </ul>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <div class="container mt-4">
-    <h2>Radio UNGE - Transmisión y Oyentes</h2>
+<div class="container mt-4">
+  <h2>Radio UNGE - Transmisión y Oyentes</h2>
 
-    <!-- Tabla de programas -->
-    <div class="card mb-4">
-      <div class="card-header">Programas Emitidos</div>
-      <div class="card-body">
-        <table id="tablaRadio" class="display" style="width:100%">
-          <thead>
-            <tr>
-              <th>ID Programa</th>
-              <th>Nombre</th>
-              <th>Duración</th>
-              <th>Oyentes</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Se llenará dinámicamente -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Gráfica de oyentes -->
-    <div class="card mb-4">
-      <div class="card-header">Distribución de Oyentes</div>
-      <div class="card-body">
-        <canvas id="graficoOyentes"></canvas>
-      </div>
+  <!-- Tabla de programas -->
+  <div class="card mb-4">
+    <div class="card-header">Programas Emitidos</div>
+    <div class="card-body">
+      <table id="tablaRadio" class="display" style="width:100%">
+        <thead>
+          <tr>
+            <th>ID Programa</th>
+            <th>Nombre</th>
+            <th>Duración</th>
+            <th>Oyentes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Se llenará dinámicamente -->
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
-    TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
-  </footer>
+  <!-- Gráfica de oyentes -->
+  <div class="card mb-4">
+    <div class="card-header">Distribución de Oyentes</div>
+    <div class="card-body">
+      <canvas id="graficoOyentes"></canvas>
+    </div>
+  </div>
+</div>
 
-  <!-- jQuery y DataTables -->
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
+  TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
+</footer>
 
-  <!-- Script para cargar datos -->
-  <script>
-    $(document).ready(function() {
-      const tablaRadio = $('#tablaRadio').DataTable();
+<!-- jQuery y DataTables -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
-      // Cargar tabla de programas
-      fetch("http://10.70.200.112:4000/radiounge")
-        .then(res => res.json())
-        .then(data => {
-          tablaRadio.clear();
-          data.forEach(r => {
-            tablaRadio.row.add([r.id_programa, r.nombre, r.duracion, r.oyentes]);
-          });
-          tablaRadio.draw();
+<!-- Script para cargar datos -->
+<script>
+  $(document).ready(function() {
+    const tablaRadio = $('#tablaRadio').DataTable();
+
+    // Cargar tabla de programas
+    fetch("/radiounge")
+      .then(res => res.json())
+      .then(data => {
+        tablaRadio.clear();
+        data.forEach(r => {
+          tablaRadio.row.add([r.id_programa, r.nombre, r.duracion, r.oyentes]);
         });
+        tablaRadio.draw();
+      })
+      .catch(err => console.error("Error cargando programas de radio:", err));
 
-      // Cargar gráfica de oyentes
-      fetch("http://10.70.200.112:4000/oyentes_radio")
-        .then(res => res.json())
-        .then(data => {
-          new Chart(document.getElementById('graficoOyentes'), {
-            type: 'pie',
-            data: {
-              labels: data.map(d => d.programa),
-              datasets: [{
-                label: 'Oyentes',
-                data: data.map(d => d.oyentes),
-                backgroundColor: [
-                  'rgba(255, 99, 132, 0.7)',
-                  'rgba(54, 162, 235, 0.7)',
-                  'rgba(255, 206, 86, 0.7)',
-                  'rgba(75, 192, 192, 0.7)',
-                  'rgba(153, 102, 255, 0.7)'
-                ]
-              }]
-            }
-          });
+    // Cargar gráfica de oyentes
+    fetch("/oyentes_radio")
+      .then(res => res.json())
+      .then(data => {
+        new Chart(document.getElementById('graficoOyentes'), {
+          type: 'pie',
+          data: {
+            labels: data.map(d => d.programa),
+            datasets: [{
+              label: 'Oyentes',
+              data: data.map(d => d.oyentes),
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)'
+              ]
+            }]
+          }
         });
-    });
-  </script>
+      })
+      .catch(err => console.error("Error cargando gráfica de oyentes:", err));
+  });
+</script>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
