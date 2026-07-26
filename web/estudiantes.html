@@ -13,47 +13,44 @@
   <a href="edificios.html" class="btn btn-primary">Ir al Módulo Edificios ➡️</a>
 </div>
 
-
-
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="menuPrincipal">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
-          <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
-          <li class="nav-item"><a class="nav-link active" href="estudiantes.html">Estudiantes</a></li>
-          <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
-          <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
-        </ul>
-      </div>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menuPrincipal">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+        <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
+        <li class="nav-item"><a class="nav-link active" href="estudiantes.html">Estudiantes</a></li>
+        <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
+        <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+      </ul>
     </div>
-  </nav>
-
-  <div class="container mt-4">
-    <h2>Gestión de Estudiantes</h2>
-    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalEstudiante">➕ Nuevo Estudiante</button>
-
-    <table id="tablaEstudiantes" class="display table table-striped" style="width:100%">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Correo</th>
-          <th>Carrera</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Se llenará dinámicamente -->
-      </tbody>
-    </table>
   </div>
+</nav>
 
+<div class="container mt-4">
+  <h2>Gestión de Estudiantes</h2>
+  <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalEstudiante">➕ Nuevo Estudiante</button>
+
+  <table id="tablaEstudiantes" class="display table table-striped" style="width:100%">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Correo</th>
+        <th>Matrícula</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Se llenará dinámicamente -->
+    </tbody>
+  </table>
+</div>
 
 <!-- Modal para crear/editar estudiante -->
 <div class="modal fade" id="modalEstudiante" tabindex="-1" aria-hidden="true">
@@ -86,7 +83,6 @@
   </div>
 </div>
 
-
 <!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -98,7 +94,7 @@
   // Inicializar DataTable con AJAX
   tabla = $('#tablaEstudiantes').DataTable({
     ajax: {
-      url: "http://10.70.200.112:4000/estudiantes",
+      url: "/estudiantes",
       dataSrc: "data"
     },
     columns: [
@@ -127,7 +123,7 @@
       matricula: document.getElementById("estudianteMatricula").value
     };
 
-    const url = id ? `http://10.70.200.112:4000/estudiantes/${id}` : "http://10.70.200.112:4000/estudiantes";
+    const url = id ? `/estudiantes/${id}` : "/estudiantes";
     const method = id ? "PUT" : "POST";
 
     fetch(url, {
@@ -147,7 +143,7 @@
   // Editar estudiante
   $(document).on("click", ".btnEditar", function() {
     const id = $(this).data("id");
-    fetch(`http://10.70.200.112:4000/estudiantes/${id}`)
+    fetch(`/estudiantes/${id}`)
       .then(res => res.json())
       .then(estudiante => {
         document.getElementById("estudianteId").value = estudiante.data.id;
@@ -161,7 +157,7 @@
   $(document).on("click", ".btnEliminar", function() {
     const id = $(this).data("id");
     if (confirm("¿Seguro que deseas eliminar este estudiante?")) {
-      fetch(`http://10.70.200.112:4000/estudiantes/${id}`, { method: "DELETE" })
+      fetch(`/estudiantes/${id}`, { method: "DELETE" })
         .then(() => tabla.ajax.reload());
     }
   });
