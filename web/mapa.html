@@ -20,88 +20,87 @@
   <a href="usuarios.html" class="btn btn-primary">Ir al Módulo Usuarios ➡️</a>
 </div>
 
-
-
-  <!-- Navbar persistente -->
-  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="menuPrincipal">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
-          <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
-          <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
-          <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
-          <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
-          <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
-          <li class="nav-item"><a class="nav-link" href="asistencia_profesores.html">Asistencia Profesores</a></li>
-          <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
-          <li class="nav-item"><a class="nav-link" href="estadisticas.html">Estadísticas</a></li>
-          <li class="nav-item"><a class="nav-link" href="radiounge.html">Radio UNGE</a></li>
-          <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
-          <li class="nav-item"><a class="nav-link active" href="mapa.html">Mapa</a></li>
-        </ul>
-      </div>
+<!-- Navbar persistente -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menuPrincipal">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
+        <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+        <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
+        <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+        <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
+        <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+        <li class="nav-item"><a class="nav-link" href="asistencia_profesores.html">Asistencia Profesores</a></li>
+        <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
+        <li class="nav-item"><a class="nav-link" href="estadisticas.html">Estadísticas</a></li>
+        <li class="nav-item"><a class="nav-link" href="radiounge.html">Radio UNGE</a></li>
+        <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
+        <li class="nav-item"><a class="nav-link active" href="mapa.html">Mapa</a></li>
+      </ul>
     </div>
-  </nav>
-
-  <div class="container mt-4">
-    <h2>Mapa Interactivo del Campus</h2>
-    <div id="map"></div>
   </div>
+</nav>
 
-  <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
-    TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
-  </footer>
+<div class="container mt-4">
+  <h2>Mapa Interactivo del Campus</h2>
+  <div id="map"></div>
+</div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
+  TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
+</footer>
 
-  <!-- Script para inicializar mapa -->
-  <script>
-    // Inicializar mapa centrado en UNGE (ejemplo coordenadas de Malabo)
-    var map = L.map('map').setView([3.75, 8.78], 15);
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
-    // Cargar tiles de OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+<!-- Script para inicializar mapa -->
+<script>
+  // Inicializar mapa centrado en UNGE (ejemplo coordenadas de Malabo)
+  var map = L.map('map').setView([3.75, 8.78], 15);
 
-    // Añadir buscador
-    L.Control.geocoder().addTo(map);
+  // Cargar tiles de OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
 
-    // Marcadores fijos de edificios (ejemplo)
-    var edificiosFijos = [
-      {nombre: "Facultad de Ingeniería", lat: 3.751, lng: 8.780},
-      {nombre: "Biblioteca Central", lat: 3.752, lng: 8.782},
-      {nombre: "Facultad de Medicina", lat: 3.749, lng: 8.779},
-      {nombre: "Rectorado", lat: 3.750, lng: 8.781}
-    ];
+  // Añadir buscador
+  L.Control.geocoder().addTo(map);
 
-    edificiosFijos.forEach(ed => {
-      L.marker([ed.lat, ed.lng]).addTo(map)
-        .bindPopup(`<b>${ed.nombre}</b>`);
-    });
+  // Marcadores fijos de edificios (ejemplo)
+  var edificiosFijos = [
+    {nombre: "Facultad de Ingeniería", lat: 3.751, lng: 8.780},
+    {nombre: "Biblioteca Central", lat: 3.752, lng: 8.782},
+    {nombre: "Facultad de Medicina", lat: 3.749, lng: 8.779},
+    {nombre: "Rectorado", lat: 3.750, lng: 8.781}
+  ];
 
-    // Cargar edificios desde API
-    fetch("http://10.70.200.112:4000/edificios")
-      .then(res => res.json())
-      .then(data => {
-        data.forEach(ed => {
-          if (ed.lat && ed.lng) {
-            L.marker([ed.lat, ed.lng]).addTo(map)
-              .bindPopup(`<b>${ed.nombre}</b><br>${ed.ubicacion}`);
-          }
-        });
+  edificiosFijos.forEach(ed => {
+    L.marker([ed.lat, ed.lng]).addTo(map)
+      .bindPopup(`<b>${ed.nombre}</b>`);
+  });
+
+  // Cargar edificios desde API
+  fetch("/edificios")
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(ed => {
+        if (ed.lat && ed.lng) {
+          L.marker([ed.lat, ed.lng]).addTo(map)
+            .bindPopup(`<b>${ed.nombre}</b><br>${ed.ubicacion}`);
+        }
       });
-  </script>
+    })
+    .catch(err => console.error("Error cargando edificios:", err));
+</script>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
