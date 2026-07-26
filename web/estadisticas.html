@@ -8,209 +8,193 @@
 </head>
 <body>
 
-
 <div class="d-flex justify-content-between mb-4">
   <a href="admin.html" class="btn btn-outline-secondary">⬅️ Volver al Panel Principal</a>
-  <a href="radio.html" class="btn btn-primary">Ir al Módulo Radio UNGE ➡️</a>
+  <a href="radiounge.html" class="btn btn-primary">Ir al Módulo Radio UNGE ➡️</a>
 </div>
 
-
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="menuPrincipal">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
-          <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
-          <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
-          <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
-          <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
-          <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
-          <li class="nav-item"><a class="nav-link" href="asistencia_profesores.html">Asistencia Profesores</a></li>
-          <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
-          <li class="nav-item"><a class="nav-link active" href="estadisticas.html">Estadísticas</a></li>
-          <li class="nav-item"><a class="nav-link" href="radiounge.html">Radio UNGE</a></li>
-          <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
-          <li class="nav-item"><a class="nav-link" href="mapa.html">Mapa</a></li>
-        </ul>
-      </div>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menuPrincipal">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
+        <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+        <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
+        <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+        <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
+        <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+        <li class="nav-item"><a class="nav-link" href="asistencia_profesores.html">Asistencia Profesores</a></li>
+        <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
+        <li class="nav-item"><a class="nav-link active" href="estadisticas.html">Estadísticas</a></li>
+        <li class="nav-item"><a class="nav-link" href="radiounge.html">Radio UNGE</a></li>
+        <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
+        <li class="nav-item"><a class="nav-link" href="mapa.html">Mapa</a></li>
+      </ul>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <div class="container mt-4">
-    <h2>Estadísticas Interactivas</h2>
+<div class="container mt-4">
+  <h2>Estadísticas Interactivas</h2>
 
-    <!-- Filtros -->
-    <div class="card mb-4">
-      <div class="card-header">Filtros</div>
-      <div class="card-body">
-        <form id="formFiltros" class="row g-3">
-          <div class="col-md-3">
-            <label for="fechaInicio" class="form-label">Fecha inicio</label>
-            <input type="date" id="fechaInicio" class="form-control">
-          </div>
-          <div class="col-md-3">
-            <label for="fechaFin" class="form-label">Fecha fin</label>
-            <input type="date" id="fechaFin" class="form-control">
-          </div>
-          <div class="col-md-3">
-            <label for="nombreProfesor" class="form-label">Profesor</label>
-            <input type="text" id="nombreProfesor" class="form-control" placeholder="Nombre">
-          </div>
-          <div class="col-md-3">
-            <label for="programaRadio" class="form-label">Programa Radio</label>
-            <input type="text" id="programaRadio" class="form-control" placeholder="Programa">
-          </div>
-          <div class="col-md-3">
-            <label for="parametroAmbiental" class="form-label">Parámetro Ambiental</label>
-            <select id="parametroAmbiental" class="form-select">
-              <option value="temperatura">Temperatura</option>
-              <option value="humedad">Humedad</option>
-              <option value="co2">CO₂</option>
-            </select>
-          </div>
-          <div class="col-md-12">
-            <button type="button" id="btnAplicarFiltros" class="btn btn-primary">Aplicar filtros</button>
-          </div>
-        </form>
-      </div>
-    </div>
-    <!-- Gráficas -->
-    <div class="card mb-4">
-      <div class="card-header">Asistencia de Profesores</div>
-      <div class="card-body">
-        <canvas id="graficoAsistencia"></canvas>
-      </div>
-    </div>
-
-    <div class="card mb-4">
-      <div class="card-header">QoS de la Red WiFi</div>
-      <div class="card-body">
-        <canvas id="graficoQoS"></canvas>
-      </div>
-    </div>
-
-    <div class="card mb-4">
-      <div class="card-header">Oyentes de Radio UNGE</div>
-      <div class="card-body">
-        <canvas id="graficoRadio"></canvas>
-      </div>
-    </div>
-
-    <div class="card mb-4">
-      <div class="card-header">Condiciones Ambientales</div>
-      <div class="card-body">
-        <canvas id="graficoAmbiental"></canvas>
-      </div>
+  <!-- Filtros -->
+  <div class="card mb-4">
+    <div class="card-header">Filtros</div>
+    <div class="card-body">
+      <form id="formFiltros" class="row g-3">
+        <div class="col-md-3">
+          <label for="fechaInicio" class="form-label">Fecha inicio</label>
+          <input type="date" id="fechaInicio" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label for="fechaFin" class="form-label">Fecha fin</label>
+          <input type="date" id="fechaFin" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label for="nombreProfesor" class="form-label">Profesor</label>
+          <input type="text" id="nombreProfesor" class="form-control" placeholder="Nombre">
+        </div>
+        <div class="col-md-3">
+          <label for="programaRadio" class="form-label">Programa Radio</label>
+          <input type="text" id="programaRadio" class="form-control" placeholder="Programa">
+        </div>
+        <div class="col-md-3">
+          <label for="parametroAmbiental" class="form-label">Parámetro Ambiental</label>
+          <select id="parametroAmbiental" class="form-select">
+            <option value="temperatura">Temperatura</option>
+            <option value="humedad">Humedad</option>
+            <option value="co2">CO₂</option>
+          </select>
+        </div>
+        <div class="col-md-12">
+          <button type="button" id="btnAplicarFiltros" class="btn btn-primary">Aplicar filtros</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
-    TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
-  </footer>
+  <!-- Gráficas -->
+  <div class="card mb-4">
+    <div class="card-header">Asistencia de Profesores</div>
+    <div class="card-body">
+      <canvas id="graficoAsistencia"></canvas>
+    </div>
+  </div>
 
-  <!-- Script -->
-  <script>
-    let graficoAsistencia, graficoQoS, graficoRadio, graficoAmbiental;
+  <div class="card mb-4">
+    <div class="card-header">QoS de la Red WiFi</div>
+    <div class="card-body">
+      <canvas id="graficoQoS"></canvas>
+    </div>
+  </div>
 
-    function cargarGraficas(filtros = {}) {
-      // Asistencia
-      fetch("http://10.70.200.112:4000/asistencia_estadisticas?" + new URLSearchParams(filtros))
-        .then(res => res.json())
-        .then(data => {
-          if (graficoAsistencia) graficoAsistencia.destroy();
-          graficoAsistencia = new Chart(document.getElementById('graficoAsistencia'), {
-            type: 'bar',
-            data: {
-              labels: data.map(d => d.profesor),
-              datasets: [{
-                label: 'Asistencias',
-                data: data.map(d => d.asistencias),
-                backgroundColor: 'rgba(0, 128, 255, 0.7)'
+  <div class="card mb-4">
+    <div class="card-header">Oyentes de Radio UNGE</div>
+    <div class="card-body">
+      <canvas id="graficoRadio"></canvas>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header">Condiciones Ambientales</div>
+    <div class="card-body">
+      <canvas id="graficoAmbiental"></canvas>
+    </div>
+  </div>
+</div>
+
+<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
+  TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
+</footer>
+
+<!-- Script -->
+<script>
+  let graficoAsistencia, graficoQoS, graficoRadio, graficoAmbiental;
+
+  function cargarGraficas(filtros = {}) {
+    // Asistencia
+    fetch("/asistencia_estadisticas?" + new URLSearchParams(filtros))
+      .then(res => res.json())
+      .then(data => {
+        if (graficoAsistencia) graficoAsistencia.destroy();
+        graficoAsistencia = new Chart(document.getElementById('graficoAsistencia'), {
+          type: 'bar',
+          data: {
+            labels: data.map(d => d.profesor),
+            datasets: [{
+              label: 'Asistencias',
+              data: data.map(d => d.asistencias),
+              backgroundColor: 'rgba(0, 128, 255, 0.7)'
+            }]
+          }
+        });
+      });
+
+    // QoS
+    fetch("/qos_wifi?" + new URLSearchParams(filtros))
+      .then(res => res.json())
+      .then(data => {
+        if (graficoQoS) graficoQoS.destroy();
+        graficoQoS = new Chart(document.getElementById('graficoQoS'), {
+          type: 'line',
+          data: {
+            labels: data.map(d => d.fecha),
+            datasets: [
+              { label: 'Latencia (ms)', data: data.map(d => d.latencia), borderColor: 'rgba(255, 99, 132, 0.8)', fill: false },
+              { label: 'Pérdida (%)', data: data.map(d => d.perdida), borderColor: 'rgba(54, 162, 235, 0.8)', fill: false }
+            ]
+          }
+        });
+      });
+
+    // Radio
+    fetch("/oyentes_radio?" + new URLSearchParams(filtros))
+      .then(res => res.json())
+      .then(data => {
+        if (graficoRadio) graficoRadio.destroy();
+        graficoRadio = new Chart(document.getElementById('graficoRadio'), {
+          type: 'pie',
+          data: {
+            labels: data.map(d => d.programa),
+            datasets: [{
+              label: 'Oyentes',
+              data: data.map(d => d.oyentes),
+              backgroundColor: [
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)',
+                'rgba
+
+
+                                ]
               }]
             }
           });
         });
-      // QoS
-      fetch("http://10.70.200.112:4000/qos_wifi?" + new URLSearchParams(filtros))
-        .then(res => res.json())
-        .then(data => {
-          if (graficoQoS) graficoQoS.destroy();
-          graficoQoS = new Chart(document.getElementById('graficoQoS'), {
-            type: 'line',
-            data: {
-              labels: data.map(d => d.fecha),
-              datasets: [
-                { label: 'Latencia (ms)', data: data.map(d => d.latencia), borderColor: 'rgba(255, 99, 132, 0.8)', fill: false },
-                { label: 'Pérdida (%)', data: data.map(d => d.perdida), borderColor: 'rgba(54, 162, 235, 0.8)', fill: false }
-              ]
-            }
-          });
-        });
+  }
 
-      // Radio
-      fetch("http://10.70.200.112:4000/oyentes_radio?" + new URLSearchParams(filtros))
-        .then(res => res.json())
-        .then(data => {
-          if (graficoRadio) graficoRadio.destroy();
-          graficoRadio = new Chart(document.getElementById('graficoRadio'), {
-            type: 'pie',
-            data: {
-              labels: data.map(d => d.programa),
-              datasets: [{
-                label: 'Oyentes',
-                data: data.map(d => d.oyentes),
-                backgroundColor: [
-                  'rgba(255, 206, 86, 0.7)',
-                  'rgba(75, 192, 192, 0.7)',
-                  'rgba(153, 102, 255, 0.7)',
-                  'rgba(255, 99, 132, 0.7)'
-                ]
-              }]
-            }
-          });
-        });
+  // Botón aplicar filtros
+  document.getElementById('btnAplicarFiltros').addEventListener('click', () => {
+    const filtros = {
+      fechaInicio: document.getElementById('fechaInicio').value,
+      fechaFin: document.getElementById('fechaFin').value,
+      profesor: document.getElementById('nombreProfesor').value,
+      programa: document.getElementById('programaRadio').value,
+      parametro: document.getElementById('parametroAmbiental').value
+    };
+    cargarGraficas(filtros);
+  });
 
-      // Ambientales
-      fetch("http://10.70.200.112:4000/condiciones_ambientales?" + new URLSearchParams(filtros))
-        .then(res => res.json())
-        .then(data => {
-          if (graficoAmbiental) graficoAmbiental.destroy();
-          graficoAmbiental = new Chart(document.getElementById('graficoAmbiental'), {
-            type: 'line',
-            data: {
-              labels: data.map(d => d.fecha + " " + d.hora),
-              datasets: [
-                { label: 'Temperatura (°C)', data: data.map(d => d.temperatura), borderColor: 'rgba(255, 99, 132, 0.8)', fill: false },
-                { label: 'Humedad (%)', data: data.map(d => d.humedad), borderColor: 'rgba(54, 162, 235, 0.8)', fill: false },
-                { label: 'CO₂ (ppm)', data: data.map(d => d.co2), borderColor: 'rgba(255, 206, 86, 0.8)', fill: false }
-              ]
-            }
-          });
-        });
-    }
+  // Cargar gráficas al inicio
+  cargarGraficas();
+</script>
 
-    // Botón aplicar filtros
-    document.getElementById('btnAplicarFiltros').addEventListener('click', () => {
-      const filtros = {
-        fechaInicio: document.getElementById('fechaInicio').value,
-        fechaFin: document.getElementById('fechaFin').value,
-        profesor: document.getElementById('nombreProfesor').value,
-        programa: document.getElementById('programaRadio').value,
-        parametro: document.getElementById('parametroAmbiental').value
-      };
-      cargarGraficas(filtros);
-    });
-
-    // Cargar gráficas al inicio
-    cargarGraficas();
-  </script>
-
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
