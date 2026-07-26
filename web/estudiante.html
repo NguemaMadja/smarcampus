@@ -101,7 +101,7 @@
   <script>
     async function cargarAsignaturas() {
       try {
-        const res = await fetch("http://10.70.200.112:4000/asignaturas");
+        const res = await fetch("/asignaturas");
         const data = await res.json();
         const lista = document.getElementById("listaAsignaturas");
         lista.innerHTML = "";
@@ -117,7 +117,7 @@
 
     async function cargarAsistencia() {
       try {
-        const res = await fetch("http://10.70.200.112:4000/asistencia");
+        const res = await fetch("/asistencia");
         const data = await res.json();
         const lista = document.getElementById("listaAsistencia");
         lista.innerHTML = "";
@@ -133,7 +133,7 @@
 
     async function cargarMateriales() {
       try {
-        const res = await fetch("http://10.70.200.112:4000/materiales");
+        const res = await fetch("/materiales");
         const data = await res.json();
         const lista = document.getElementById("listaMateriales");
         lista.innerHTML = "";
@@ -149,7 +149,7 @@
 
     async function cargarTransporte() {
       try {
-        const res = await fetch("http://10.70.200.112:4000/transporteescolar");
+        const res = await fetch("/transporteescolar");
         const data = await res.json();
         const lista = document.getElementById("listaTransporte");
         lista.innerHTML = "";
@@ -165,7 +165,7 @@
 
     async function cargarMetricas() {
       try {
-        const res = await fetch("http://10.70.200.112:4000/metricaswifi");
+        const res = await fetch("/metricaswifi");
         const data = await res.json();
         const lista = document.getElementById("listaMetricas");
         lista.innerHTML = "";
@@ -176,7 +176,7 @@
         });
 
         // También mostrar visitas de la app
-        const res2 = await fetch("http://10.70.200.112:4000/visitasapp");
+        const res2 = await fetch("/visitasapp");
         const data2 = await res2.json();
         data2.forEach(v => {
           const li = document.createElement("li");
