@@ -127,12 +127,12 @@
       tabla = $('#tablaProfesores').DataTable({
         ajax: {
           url: "http://localhost:3000/profesores",
-          dataSrc: ""
+          dataSrc: "data"   // corregido
         },
         columns: [
           { data: 'id' },
           { data: 'nombre' },
-          { data: 'correo' },   // asegúrate que coincide con tu backend
+          { data: 'email' },   // corregido
           { data: 'departamento' },
           { data: 'carrera' },
           { data: 'asignaturas' },
@@ -184,10 +184,11 @@
     fetch(`http://localhost:3000/profesores/${id}`)
       .then(res => res.json())
       .then(profesor => {
-        document.getElementById("profesorId").value = profesor.id;
-        document.getElementById("profesorDepartamento").value = profesor.departamento;
-        document.getElementById("profesorCarrera").value = profesor.carrera;
-        document.getElementById("profesorAsignaturas").value = profesor.asignaturas;
+        const p = profesor.data[0];   // corregido
+        document.getElementById("profesorId").value = p.id;
+        document.getElementById("profesorDepartamento").value = p.departamento;
+        document.getElementById("profesorCarrera").value = p.carrera;
+        document.getElementById("profesorAsignaturas").value = p.asignaturas;
         cargarUsuarios();
         new bootstrap.Modal(document.getElementById("modalProfesor")).show();
       });
@@ -204,6 +205,7 @@
     }
   });
 </script>
+
 
 </body>
 </html>
