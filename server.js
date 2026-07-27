@@ -202,6 +202,7 @@ app.delete('/profesores/:id', async (req, res) => {
 
 
 
+
 // ---------------- ESTUDIANTES CRUD ----------------
 app.get('/estudiantes', async (req, res) => {
   try {
