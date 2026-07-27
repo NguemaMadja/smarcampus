@@ -111,94 +111,174 @@ app.delete('/usuarios/:id', async (req, res) => {
 });
 
 // ---------------- PROFESORES CRUD ----------------
+
+// Obtener todos los profesores con sus departamentos, carreras y asignaturas
 app.get('/profesores', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT p.id_profesor AS id,
              u.nombre,
-             u.correo AS email,
-             p.departamento,
-             p.carrera,
-             p.asignaturas
+             u.correo,
+             u.rol,
+             COALESCE(STRING_AGG(DISTINCT d.nombre, ', '), '') AS departamentos,
+             COALESCE(STRING_AGG(DISTINCT c.nombre, ', '), '') AS carreras,
+             COALESCE(STRING_AGG(DISTINCT a.nombre, ', '), '') AS asignaturas
       FROM profesores p
       JOIN usuarios u ON p.id_usuario = u.id_usuario
+      LEFT JOIN profesor_departamento pd ON p.id_profesor = pd.id_profesor
+      LEFT JOIN departamentos d ON pd.id_departamento = d.id_departamento
+      LEFT JOIN profesor_carrera pc ON p.id_profesor = pc.id_profesor
+      LEFT JOIN carreras c ON pc.id_carrera = c.id_carrera
+      LEFT JOIN profesor_asignatura pa ON p.id_profesor = pa.id_profesor
+      LEFT JOIN asignaturas a ON pa.id_asignatura = a.id_asignatura
+      GROUP BY p.id_profesor, u.nombre, u.correo, u.rol
       ORDER BY p.id_profesor
     `);
-    res.json(result.rows);   // 👈 devolver array plano
+    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// Obtener un profesor por ID
 app.get('/profesores/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(`
       SELECT p.id_profesor AS id,
              u.nombre,
-             u.correo AS email,
-             p.departamento,
-             p.carrera,
-             p.asignaturas
+             u.correo,
+             u.rol,
+             COALESCE(STRING_AGG(DISTINCT d.nombre, ', '), '') AS departamentos,
+             COALESCE(STRING_AGG(DISTINCT c.nombre, ', '), '') AS carreras,
+             COALESCE(STRING_AGG(DISTINCT a.nombre, ', '), '') AS asignaturas
       FROM profesores p
       JOIN usuarios u ON p.id_usuario = u.id_usuario
+      LEFT JOIN profesor_departamento pd ON p.id_profesor = pd.id_profesor
+      LEFT JOIN departamentos d ON pd.id_departamento = d.id_departamento
+      LEFT JOIN profesor_carrera pc ON p.id_profesor = pc.id_profesor
+      LEFT JOIN carreras c ON pc.id_carrera = c.id_carrera
+      LEFT JOIN profesor_asignatura pa ON p.id_profesor = pa.id_profesor
+      LEFT JOIN asignaturas a ON pa.id_asignatura = a.id_asignatura
       WHERE p.id_profesor=$1
+      GROUP BY p.id_profesor, u.nombre, u.correo, u.rol
     `, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json(result.rows[0]);   // 👈 devolver objeto plano
+    res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// Crear un profesor
 app.post('/profesores', async (req, res) => {
   try {
-    const { id_usuario, departamento, carrera, asignaturas } = req.body;
+    const { id_usuario, departamentos, carreras, asignaturas } = req.body;
+
+    // Insertar profesor
     const result = await pool.query(
-      `INSERT INTO profesores (id_usuario, departamento, carrera, asignaturas)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
-      [id_usuario, departamento, carrera, asignaturas]
+      `INSERT INTO profesores (id_usuario, departamento)
+       VALUES ($1, NULL) RETURNING id_profesor AS id`,
+      [id_usuario]
     );
-    res.json(result.rows[0]);   // 👈 devolver objeto plano
+    const profesorId = result.rows[0].id;
+
+    // Insertar relaciones si vienen en el body
+    if (departamentos && departamentos.length > 0) {
+      for (const depId of departamentos) {
+        await pool.query(
+          `INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)`,
+          [profesorId, depId]
+        );
+      }
+    }
+    if (carreras && carreras.length > 0) {
+      for (const carId of carreras) {
+        await pool.query(
+          `INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)`,
+          [profesorId, carId]
+        );
+      }
+    }
+    if (asignaturas && asignaturas.length > 0) {
+      for (const asigId of asignaturas) {
+        await pool.query(
+          `INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)`,
+          [profesorId, asigId]
+        );
+      }
+    }
+
+    res.json({ mensaje: 'Profesor creado correctamente', id: profesorId });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
+// Actualizar un profesor
 app.put('/profesores/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_usuario, departamento, carrera, asignaturas } = req.body;
-    const result = await pool.query(
-      `UPDATE profesores
-       SET id_usuario=$1, departamento=$2, carrera=$3, asignaturas=$4
-       WHERE id_profesor=$5
-       RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
-      [id_usuario, departamento, carrera, asignaturas, id]
+    const { id_usuario, departamentos, carreras, asignaturas } = req.body;
+
+    // Actualizar profesor
+    await pool.query(
+      `UPDATE profesores SET id_usuario=$1 WHERE id_profesor=$2`,
+      [id_usuario, id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json(result.rows[0]);   // 👈 devolver objeto plano
+
+    // Limpiar relaciones previas
+    await pool.query(`DELETE FROM profesor_departamento WHERE id_profesor=$1`, [id]);
+    await pool.query(`DELETE FROM profesor_carrera WHERE id_profesor=$1`, [id]);
+    await pool.query(`DELETE FROM profesor_asignatura WHERE id_profesor=$1`, [id]);
+
+    // Insertar nuevas relaciones
+    if (departamentos && departamentos.length > 0) {
+      for (const depId of departamentos) {
+        await pool.query(
+          `INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)`,
+          [id, depId]
+        );
+      }
+    }
+    if (carreras && carreras.length > 0) {
+      for (const carId of carreras) {
+        await pool.query(
+          `INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)`,
+          [id, carId]
+        );
+      }
+    }
+    if (asignaturas && asignaturas.length > 0) {
+      for (const asigId of asignaturas) {
+        await pool.query(
+          `INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)`,
+          [id, asigId]
+        );
+      }
+    }
+
+    res.json({ mensaje: 'Profesor actualizado correctamente', id });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
+// Eliminar un profesor
 app.delete('/profesores/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      `DELETE FROM profesores
-       WHERE id_profesor=$1
-       RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
+      `DELETE FROM profesores WHERE id_profesor=$1 RETURNING id_profesor AS id`,
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json({ mensaje: 'Profesor eliminado correctamente', ...result.rows[0] });
+    res.json({ mensaje: 'Profesor eliminado correctamente', id: result.rows[0].id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
