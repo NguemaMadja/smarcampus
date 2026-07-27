@@ -101,8 +101,9 @@
 <script>
   let tabla;
 
+  // Función para cargar usuarios en el select del modal de profesores
   function cargarUsuarios() {
-    fetch("https://smartcampusguide.onrender.com/usuarios")
+    fetch("https://smarcampus.onrender.com/usuarios")
       .then(res => res.json())
       .then(usuarios => {
         const select = document.getElementById("profesorUsuario");
@@ -113,26 +114,29 @@
           option.textContent = `${u.nombre} (${u.correo}) - ${u.rol}`;
           select.appendChild(option);
         });
-      });
+      })
+      .catch(err => console.error("Error cargando usuarios:", err));
   }
 
+  // Al abrir el modal, cargar usuarios
   document.querySelector('[data-bs-target="#modalProfesor"]').addEventListener("click", () => {
     cargarUsuarios();
   });
 
+  // Inicialización de DataTable para profesores
   function cargarProfesores() {
     if (tabla) {
       tabla.ajax.reload();
     } else {
       tabla = $('#tablaProfesores').DataTable({
         ajax: {
-          url: "https://smartcampusguide.onrender.com/profesores",
-          dataSrc: "data"
+          url: "https://smarcampus.onrender.com/profesores",
+          dataSrc: ""   // 👈 array plano
         },
         columns: [
           { data: 'id' },
           { data: 'nombre' },
-          { data: 'email' },
+          { data: 'correo' },        // 👈 usar 'correo'
           { data: 'departamento' },
           { data: 'carrera' },
           { data: 'asignaturas' },
@@ -152,6 +156,7 @@
 
   cargarProfesores();
 
+  // Manejo del formulario de profesor (crear/editar)
   document.getElementById("formProfesor").addEventListener("submit", function(e) {
     e.preventDefault();
     const id = document.getElementById("profesorId").value;
@@ -162,7 +167,7 @@
       asignaturas: document.getElementById("profesorAsignaturas").value
     };
 
-    const url = id ? `https://smartcampusguide.onrender.com/profesores/${id}` : "https://smartcampusguide.onrender.com/profesores";
+    const url = id ? `https://smarcampus.onrender.com/profesores/${id}` : "https://smarcampus.onrender.com/profesores";
     const method = id ? "PUT" : "POST";
 
     fetch(url, {
@@ -179,12 +184,13 @@
     });
   });
 
+  // Botón editar profesor
   $(document).on("click", ".btnEditar", function() {
     const id = $(this).data("id");
-    fetch(`https://smartcampusguide.onrender.com/profesores/${id}`)
+    fetch(`https://smarcampus.onrender.com/profesores/${id}`)
       .then(res => res.json())
-      .then(profesor => {
-        const p = profesor.data[0];
+      .then(p => {
+        // 👈 ahora backend devuelve objeto plano
         document.getElementById("profesorId").value = p.id;
         document.getElementById("profesorDepartamento").value = p.departamento;
         document.getElementById("profesorCarrera").value = p.carrera;
@@ -194,10 +200,11 @@
       });
   });
 
+  // Botón eliminar profesor
   $(document).on("click", ".btnEliminar", function() {
     const id = $(this).data("id");
     if (confirm("¿Seguro que quieres eliminar este profesor?")) {
-      fetch(`https://smartcampusguide.onrender.com/profesores/${id}`, { method: "DELETE" })
+      fetch(`https://smarcampus.onrender.com/profesores/${id}`, { method: "DELETE" })
         .then(res => res.json())
         .then(() => {
           cargarProfesores();
@@ -205,6 +212,7 @@
     }
   });
 </script>
+
 
 </body>
 </html>
