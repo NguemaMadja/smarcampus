@@ -223,10 +223,10 @@ app.get('/estudiantes/:id', async (req, res) => {
     const { id } = req.params;
     const result = await pool.query(`
       SELECT e.id_estudiante AS id,
-             u.nombre,
-             u.correo,
+             e.id_usuario,
              e.matricula,
-             e.id_usuario
+             u.nombre,
+             u.correo
       FROM estudiantes e
       JOIN usuarios u ON e.id_usuario = u.id_usuario
       WHERE e.id_estudiante=$1
@@ -286,6 +286,7 @@ app.delete('/estudiantes/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ---------------- QR Y ASISTENCIA ----------------
 
