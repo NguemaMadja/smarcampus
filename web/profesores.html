@@ -102,7 +102,7 @@
   let tabla;
 
   function cargarUsuarios() {
-    fetch("http://localhost:3000/usuarios")
+    fetch("https://smartcampusguide.onrender.com/usuarios")
       .then(res => res.json())
       .then(usuarios => {
         const select = document.getElementById("profesorUsuario");
@@ -126,13 +126,13 @@
     } else {
       tabla = $('#tablaProfesores').DataTable({
         ajax: {
-          url: "http://localhost:3000/profesores",
-          dataSrc: "data"   // corregido
+          url: "https://smartcampusguide.onrender.com/profesores",
+          dataSrc: "data"
         },
         columns: [
           { data: 'id' },
           { data: 'nombre' },
-          { data: 'email' },   // corregido
+          { data: 'email' },
           { data: 'departamento' },
           { data: 'carrera' },
           { data: 'asignaturas' },
@@ -162,7 +162,7 @@
       asignaturas: document.getElementById("profesorAsignaturas").value
     };
 
-    const url = id ? `http://localhost:3000/profesores/${id}` : "http://localhost:3000/profesores";
+    const url = id ? `https://smartcampusguide.onrender.com/profesores/${id}` : "https://smartcampusguide.onrender.com/profesores";
     const method = id ? "PUT" : "POST";
 
     fetch(url, {
@@ -181,10 +181,10 @@
 
   $(document).on("click", ".btnEditar", function() {
     const id = $(this).data("id");
-    fetch(`http://localhost:3000/profesores/${id}`)
+    fetch(`https://smartcampusguide.onrender.com/profesores/${id}`)
       .then(res => res.json())
       .then(profesor => {
-        const p = profesor.data[0];   // corregido
+        const p = profesor.data[0];
         document.getElementById("profesorId").value = p.id;
         document.getElementById("profesorDepartamento").value = p.departamento;
         document.getElementById("profesorCarrera").value = p.carrera;
@@ -197,7 +197,7 @@
   $(document).on("click", ".btnEliminar", function() {
     const id = $(this).data("id");
     if (confirm("¿Seguro que quieres eliminar este profesor?")) {
-      fetch(`http://localhost:3000/profesores/${id}`, { method: "DELETE" })
+      fetch(`https://smartcampusguide.onrender.com/profesores/${id}`, { method: "DELETE" })
         .then(res => res.json())
         .then(() => {
           cargarProfesores();
@@ -205,7 +205,6 @@
     }
   });
 </script>
-
 
 </body>
 </html>
