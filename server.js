@@ -124,7 +124,7 @@ app.get('/profesores', async (req, res) => {
       JOIN usuarios u ON p.id_usuario = u.id_usuario
       ORDER BY p.id_profesor
     `);
-    res.json({ data: result.rows });
+    res.json({ data: result.rows });   // 👈 importante: devolver { data: [...] }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -145,31 +145,31 @@ app.get('/profesores/:id', async (req, res) => {
       WHERE p.id_profesor=$1
     `, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json({ data: result.rows });
+    res.json({ data: result.rows });   // 👈 devolver dentro de { data: [...] }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.post('/profesores', async (req, res) => {
-  const { id_usuario, departamento, carrera, asignaturas } = req.body;
   try {
+    const { id_usuario, departamento, carrera, asignaturas } = req.body;
     const result = await pool.query(
       `INSERT INTO profesores (id_usuario, departamento, carrera, asignaturas)
        VALUES ($1, $2, $3, $4)
        RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
       [id_usuario, departamento, carrera, asignaturas]
     );
-    res.json({ data: result.rows });
+    res.json({ data: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 
 app.put('/profesores/:id', async (req, res) => {
-  const { id } = req.params;
-  const { id_usuario, departamento, carrera, asignaturas } = req.body;
   try {
+    const { id } = req.params;
+    const { id_usuario, departamento, carrera, asignaturas } = req.body;
     const result = await pool.query(
       `UPDATE profesores
        SET id_usuario=$1, departamento=$2, carrera=$3, asignaturas=$4
@@ -177,27 +177,29 @@ app.put('/profesores/:id', async (req, res) => {
        RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
       [id_usuario, departamento, carrera, asignaturas, id]
     );
-    res.json({ data: result.rows });
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
+    res.json({ data: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 
 app.delete('/profesores/:id', async (req, res) => {
-  const { id } = req.params;
   try {
+    const { id } = req.params;
     const result = await pool.query(
       `DELETE FROM profesores
        WHERE id_profesor=$1
        RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
       [id]
     );
-    if (result.rowCount === 0) return res.status(404).json({ error: "Profesor no encontrado" });
-    res.json({ mensaje: "Profesor eliminado correctamente", data: result.rows[0] });
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
+    res.json({ mensaje: 'Profesor eliminado correctamente', data: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ---------------- ESTUDIANTES CRUD ----------------
 app.get('/estudiantes', async (req, res) => {
