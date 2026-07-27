@@ -124,7 +124,7 @@ app.get('/profesores', async (req, res) => {
       JOIN usuarios u ON p.id_usuario = u.id_usuario
       ORDER BY p.id_profesor
     `);
-    res.json({ data: result.rows });   // 👈 importante: devolver { data: [...] }
+    res.json(result.rows);   // 👈 devolver array plano
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -145,7 +145,7 @@ app.get('/profesores/:id', async (req, res) => {
       WHERE p.id_profesor=$1
     `, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json({ data: result.rows });   // 👈 devolver dentro de { data: [...] }
+    res.json(result.rows[0]);   // 👈 devolver objeto plano
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -160,7 +160,7 @@ app.post('/profesores', async (req, res) => {
        RETURNING id_profesor AS id, id_usuario, departamento, carrera, asignaturas`,
       [id_usuario, departamento, carrera, asignaturas]
     );
-    res.json({ data: result.rows[0] });
+    res.json(result.rows[0]);   // 👈 devolver objeto plano
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -178,7 +178,7 @@ app.put('/profesores/:id', async (req, res) => {
       [id_usuario, departamento, carrera, asignaturas, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json({ data: result.rows[0] });
+    res.json(result.rows[0]);   // 👈 devolver objeto plano
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -194,11 +194,12 @@ app.delete('/profesores/:id', async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json({ mensaje: 'Profesor eliminado correctamente', data: result.rows[0] });
+    res.json({ mensaje: 'Profesor eliminado correctamente', ...result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 // ---------------- ESTUDIANTES CRUD ----------------
