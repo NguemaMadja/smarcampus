@@ -7,9 +7,15 @@ const { Pool } = require('pg');
 const path = require('path');
 const QRCode = require('qrcode');
 const cron = require('node-cron');
+const cors = require('cors');   // 👈 habilitar CORS
 
 const app = express();
 app.use(express.json());
+
+// ---------------- CONFIGURACIÓN CORS ----------------
+app.use(cors({
+  origin: "https://smarcampus.onrender.com"
+}));
 
 // ---------------- CONFIGURACIÓN FRONTEND ----------------
 app.use(express.static(path.join(__dirname, 'web')));
@@ -39,7 +45,6 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // ---------------- USUARIOS CRUD ----------------
 app.get('/usuarios', async (req, res) => {
   try {
@@ -139,7 +144,6 @@ app.get('/profesores', async (req, res) => {
   }
 });
 
-
 // Obtener un profesor por ID
 app.get('/profesores/:id', async (req, res) => {
   try {
@@ -148,7 +152,6 @@ app.get('/profesores/:id', async (req, res) => {
       SELECT p.id_profesor AS id,
              u.nombre,
              u.correo,
-             u.rol,
              COALESCE(STRING_AGG(DISTINCT d.nombre, ', '), '') AS departamentos,
              COALESCE(STRING_AGG(DISTINCT c.nombre, ', '), '') AS carreras,
              COALESCE(STRING_AGG(DISTINCT a.nombre, ', '), '') AS asignaturas
@@ -161,7 +164,7 @@ app.get('/profesores/:id', async (req, res) => {
       LEFT JOIN profesor_asignatura pa ON p.id_profesor = pa.id_profesor
       LEFT JOIN asignaturas a ON pa.id_asignatura = a.id_asignatura
       WHERE p.id_profesor=$1
-      GROUP BY p.id_profesor, u.nombre, u.correo, u.rol
+      GROUP BY p.id_profesor, u.nombre, u.correo
     `, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
     res.json(result.rows[0]);
@@ -169,13 +172,11 @@ app.get('/profesores/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // Crear un profesor
 app.post('/profesores', async (req, res) => {
   try {
     const { id_usuario, departamentos, carreras, asignaturas } = req.body;
 
-    // Insertar profesor (ya no usamos columna departamento)
     const result = await pool.query(
       `INSERT INTO profesores (id_usuario)
        VALUES ($1) RETURNING id_profesor AS id`,
@@ -183,7 +184,6 @@ app.post('/profesores', async (req, res) => {
     );
     const profesorId = result.rows[0].id;
 
-    // Insertar relaciones si vienen en el body
     if (departamentos && departamentos.length > 0) {
       for (const depId of departamentos) {
         await pool.query(
@@ -221,18 +221,15 @@ app.put('/profesores/:id', async (req, res) => {
     const { id } = req.params;
     const { id_usuario, departamentos, carreras, asignaturas } = req.body;
 
-    // Actualizar profesor
     await pool.query(
       `UPDATE profesores SET id_usuario=$1 WHERE id_profesor=$2`,
       [id_usuario, id]
     );
 
-    // Limpiar relaciones previas
     await pool.query(`DELETE FROM profesor_departamento WHERE id_profesor=$1`, [id]);
     await pool.query(`DELETE FROM profesor_carrera WHERE id_profesor=$1`, [id]);
     await pool.query(`DELETE FROM profesor_asignatura WHERE id_profesor=$1`, [id]);
 
-    // Insertar nuevas relaciones
     if (departamentos && departamentos.length > 0) {
       for (const depId of departamentos) {
         await pool.query(
@@ -278,11 +275,6 @@ app.delete('/profesores/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
-
-
-
 // ---------------- ESTUDIANTES CRUD ----------------
 app.get('/estudiantes', async (req, res) => {
   try {
@@ -370,8 +362,6 @@ app.delete('/estudiantes/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 // ---------------- QR Y ASISTENCIA ----------------
 
 // Generar QR para un aula
@@ -407,7 +397,6 @@ app.post('/asistencia_profesores', async (req, res) => {
   );
   res.json({ message: 'Asistencia registrada' });
 });
-
 // ---------------- CRON JOB SEMANAL ----------------
 cron.schedule('0 8 * * MON', async () => {
   try {
