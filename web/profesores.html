@@ -158,33 +158,54 @@ function cargarProfesores() {
 
   cargarProfesores();
 
-  // Manejo del formulario de profesor (crear/editar)
-  document.getElementById("formProfesor").addEventListener("submit", function(e) {
-    e.preventDefault();
-    const id = document.getElementById("profesorId").value;
-    const profesor = {
-      id_usuario: document.getElementById("profesorUsuario").value,
-      departamento: document.getElementById("profesorDepartamento").value,
-      carrera: document.getElementById("profesorCarrera").value,
-      asignaturas: document.getElementById("profesorAsignaturas").value
-    };
+// Manejo del formulario de profesor (crear/editar)
+document.getElementById("formProfesor").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const id = document.getElementById("profesorId").value;
 
-    const url = id ? `https://smarcampus.onrender.com/profesores/${id}` : "https://smarcampus.onrender.com/profesores";
-    const method = id ? "PUT" : "POST";
+  // Capturar el usuario seleccionado
+  const id_usuario = document.getElementById("usuario").value;
 
-    fetch(url, {
-      method: method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(profesor)
-    })
-    .then(res => res.json())
-    .then(() => {
-      cargarProfesores();
-      document.getElementById("formProfesor").reset();
-      document.getElementById("profesorId").value = "";
-      bootstrap.Modal.getInstance(document.getElementById("modalProfesor")).hide();
-    });
-  });
+  // Capturar múltiples valores seleccionados en cada campo
+  const departamentos = Array.from(document.querySelectorAll('#departamentos option:checked'))
+                             .map(opt => parseInt(opt.value));
+
+  const carreras = Array.from(document.querySelectorAll('#carreras option:checked'))
+                        .map(opt => parseInt(opt.value));
+
+  const asignaturas = Array.from(document.querySelectorAll('#asignaturas option:checked'))
+                           .map(opt => parseInt(opt.value));
+
+  // Armar el objeto profesor con arrays de IDs
+  const profesor = {
+    id_usuario,
+    departamentos,
+    carreras,
+    asignaturas
+  };
+
+  // Decidir si es creación o edición
+  const url = id 
+    ? `https://smarcampusguide.onrender.com/profesores/${id}` 
+    : "https://smarcampusguide.onrender.com/profesores";
+  const method = id ? "PUT" : "POST";
+
+  // Enviar al backend
+  fetch(url, {
+    method: method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profesor)
+  })
+  .then(res => res.json())
+  .then(() => {
+    cargarProfesores(); // refresca la tabla
+    document.getElementById("formProfesor").reset();
+    document.getElementById("profesorId").value = "";
+    bootstrap.Modal.getInstance(document.getElementById("modalProfesor")).hide();
+  })
+  .catch(err => console.error("Error:", err));
+});
+
 
   // Botón editar profesor
   $(document).on("click", ".btnEditar", function() {
