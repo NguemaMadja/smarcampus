@@ -119,7 +119,6 @@ app.get('/profesores', async (req, res) => {
       SELECT p.id_profesor AS id,
              u.nombre,
              u.correo,
-             u.rol,
              COALESCE(STRING_AGG(DISTINCT d.nombre, ', '), '') AS departamentos,
              COALESCE(STRING_AGG(DISTINCT c.nombre, ', '), '') AS carreras,
              COALESCE(STRING_AGG(DISTINCT a.nombre, ', '), '') AS asignaturas
@@ -131,14 +130,15 @@ app.get('/profesores', async (req, res) => {
       LEFT JOIN carreras c ON pc.id_carrera = c.id_carrera
       LEFT JOIN profesor_asignatura pa ON p.id_profesor = pa.id_profesor
       LEFT JOIN asignaturas a ON pa.id_asignatura = a.id_asignatura
-      GROUP BY p.id_profesor, u.nombre, u.correo, u.rol
-      ORDER BY p.id_profesor
+      GROUP BY p.id_profesor, u.nombre, u.correo
+      ORDER BY p.id_profesor;
     `);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // Obtener un profesor por ID
 app.get('/profesores/:id', async (req, res) => {
