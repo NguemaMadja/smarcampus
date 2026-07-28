@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Profesores - SmartCampusGuide</title>
+  <title>Profesores - SmartCampusPLXIV</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 </head>
@@ -130,7 +130,7 @@ function cargarProfesores() {
   } else {
     tabla = $('#tablaProfesores').DataTable({
       ajax: {
-        url: "https://smarcampusguide.onrender.com/profesores",
+        url: "https://smarcampus.onrender.com/profesores",
         dataSrc: ""   // 👈 porque el backend devuelve array plano
       },
       columns: [
@@ -186,8 +186,8 @@ const profesor = {
 
 // Decidir si es creación o edición
 const url = id 
-  ? `https://smarcampusguide.onrender.com/profesores/${id}` 
-  : "https://smarcampusguide.onrender.com/profesores";
+  ? `https://smarcampus.onrender.com/profesores/${id}` 
+  : "https://smarcampus.onrender.com/profesores";
 const method = id ? "PUT" : "POST";
 
 // Enviar al backend
@@ -209,7 +209,7 @@ fetch(url, {
 // Botón editar profesor
 $(document).on("click", ".btnEditar", function() {
   const id = $(this).data("id");
-  fetch(`https://smarcampusguide.onrender.com/profesores/${id}`)
+  fetch(`https://smarcampus.onrender.com/profesores/${id}`)
     .then(res => res.json())
     .then(p => {
       document.getElementById("profesorId").value = p.id;
@@ -234,7 +234,7 @@ $(document).on("click", ".btnEditar", function() {
 $(document).on("click", ".btnEliminar", function() {
   const id = $(this).data("id");
   if (confirm("¿Seguro que quieres eliminar este profesor?")) {
-    fetch(`https://smarcampusguide.onrender.com/profesores/${id}`, { method: "DELETE" })
+    fetch(`https://smarcampus.onrender.com/profesores/${id}`, { method: "DELETE" })
       .then(res => res.json())
       .then(() => {
         cargarProfesores();
