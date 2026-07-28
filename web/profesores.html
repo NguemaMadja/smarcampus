@@ -123,34 +123,37 @@
     cargarUsuarios();
   });
 
-  // Inicialización de DataTable para profesores
-  function cargarProfesores() {
-    if (tabla) {
-      tabla.ajax.reload();
-    } else {
-     tabla = $('#tablaProfesores').DataTable({
-  ajax: {
-    url: "https://smarcampus.onrender.com/profesores",
-    dataSrc: ""   // 👈 porque el backend devuelve array plano
-  },
-  columns: [
-    { data: 'id' },
-    { data: 'nombre' },
-    { data: 'correo' },
-    { data: 'departamentos' },   // 👈 plural, coincide con backend
-    { data: 'carreras' },        // 👈 nuevo campo
-    { data: 'asignaturas' },     // 👈 nuevo campo
-    {
-      data: null,
-      render: function (row) {
-        return `
-          <button class="btn btn-sm btn-primary btnEditar" data-id="${row.id}">✏️ Editar</button>
-          <button class="btn btn-sm btn-danger btnEliminar" data-id="${row.id}">🗑️ Eliminar</button>
-        `;
-      }
-    }
-  ]
-});
+ // Inicialización de DataTable para profesores
+function cargarProfesores() {
+  if (tabla) {
+    tabla.ajax.reload();
+  } else {
+    tabla = $('#tablaProfesores').DataTable({
+      ajax: {
+        url: "https://smarcampusguide.onrender.com/profesores",
+        dataSrc: ""   // 👈 porque el backend devuelve array plano
+      },
+      columns: [
+        { data: 'id' },
+        { data: 'nombre' },
+        { data: 'correo' },
+        { data: 'departamentos' },   // plural, coincide con backend
+        { data: 'carreras' },        // nuevo campo
+        { data: 'asignaturas' },     // nuevo campo
+        {
+          data: null,
+          render: function (row) {
+            return `
+              <button class="btn btn-sm btn-primary btnEditar" data-id="${row.id}">✏️ Editar</button>
+              <button class="btn btn-sm btn-danger btnEliminar" data-id="${row.id}">🗑️ Eliminar</button>
+            `;
+          }
+        }
+      ]
+    }); // 👈 cierre de DataTable
+  }
+} // 👈 cierre de la función
+
 
 
   cargarProfesores();
