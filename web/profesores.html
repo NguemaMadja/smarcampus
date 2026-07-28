@@ -100,7 +100,7 @@
 
   // Cargar usuarios en el select
   function cargarUsuarios() {
-    fetch("https://smarcampusguide.onrender.com/usuarios")
+    fetch("https://smarcampus.onrender.com/usuarios")
       .then(res => res.json())
       .then(usuarios => {
         const select = document.getElementById("profesorUsuario");
@@ -122,7 +122,7 @@
     } else {
       tabla = $('#tablaProfesores').DataTable({
         ajax: {
-          url: "https://smarcampusguide.onrender.com/profesores",
+          url: "https://smarcampus.onrender.com/profesores",
           dataSrc: ""
         },
         columns: [
@@ -160,8 +160,8 @@
     };
 
     const url = id 
-      ? `https://smarcampusguide.onrender.com/profesores/${id}` 
-      : "https://smarcampusguide.onrender.com/profesores";
+      ? `https://smarcampus.onrender.com/profesores/${id}` 
+      : "https://smarcampus.onrender.com/profesores";
     const method = id ? "PUT" : "POST";
 
     fetch(url, {
@@ -182,7 +182,7 @@
   // Editar profesor
   $(document).on("click", ".btnEditar", function() {
     const id = $(this).data("id");
-    fetch(`https://smarcampusguide.onrender.com/profesores/${id}`)
+    fetch(`https://smarcampus.onrender.com/profesores/${id}`)
       .then(res => res.json())
       .then(p => {
         document.getElementById("profesorId").value = p.id;
@@ -200,7 +200,7 @@
   $(document).on("click", ".btnEliminar", function() {
     const id = $(this).data("id");
     if (confirm("¿Seguro que quieres eliminar este profesor?")) {
-      fetch(`https://smarcampusguide.onrender.com/profesores/${id}`, { method: "DELETE" })
+      fetch(`https://smarcampus.onrender.com/profesores/${id}`, { method: "DELETE" })
         .then(res => res.json())
         .then(() => {
           cargarProfesores();
