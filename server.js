@@ -175,10 +175,10 @@ app.post('/profesores', async (req, res) => {
   try {
     const { id_usuario, departamentos, carreras, asignaturas } = req.body;
 
-    // Insertar profesor
+    // Insertar profesor (ya no usamos columna departamento)
     const result = await pool.query(
-      `INSERT INTO profesores (id_usuario, departamento)
-       VALUES ($1, NULL) RETURNING id_profesor AS id`,
+      `INSERT INTO profesores (id_usuario)
+       VALUES ($1) RETURNING id_profesor AS id`,
       [id_usuario]
     );
     const profesorId = result.rows[0].id;
