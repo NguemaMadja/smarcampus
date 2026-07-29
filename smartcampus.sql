@@ -37,7 +37,6 @@ DROP TABLE IF EXISTS Asignaturas CASCADE;
 CREATE TABLE Asignaturas (
     id_asignatura SERIAL PRIMARY KEY,
     nombre VARCHAR(100),
-    id_profesor INT REFERENCES Profesores(id_profesor)
 );
 
 
@@ -360,6 +359,25 @@ FROM Estadisticas_Escucha
 GROUP BY semestre, id_programa
 ORDER BY semestre DESC;
 
+CREATE TABLE Aula_QR (
+    id_qr SERIAL PRIMARY KEY,
+    id_aula INT REFERENCES Aulas(id_aula) ON DELETE CASCADE,
+    codigo_qr VARCHAR(255) UNIQUE NOT NULL,
+    fecha_inicio DATE,
+    fecha_fin DATE
+);
+
+
+CREATE TABLE Asistencias_Profesores (
+    id_asistencia SERIAL PRIMARY KEY,
+    id_profesor INT REFERENCES Profesores(id_profesor),
+    id_qr INT REFERENCES Aula_QR(id_qr),
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(20) CHECK (estado IN ('presente','ausente'))
+);
+
+
+
 -- =========================================
 -- ESTUDIANTES DE PRUEBA PARA MÉTRICAS (CORREGIDO)
 -- =========================================
@@ -482,3 +500,28 @@ INSERT INTO Carreras (nombre) VALUES
 ('Pedagogía'),
 ('Derecho'),
 ('Economía');
+
+-- Asignaturas de prueba
+INSERT INTO Asignaturas (nombre) VALUES
+('Matemáticas'),
+('Física'),
+('Historia');
+
+-- Relacionar profesores con asignaturas
+INSERT INTO Profesor_Asignatura (id_profesor, id_asignatura) VALUES
+(1, 1), -- Profesor 1 imparte Matemáticas
+(1, 2), -- Profesor 1 imparte Física
+(2, 3); -- Profesor 2 imparte Historia
+
+-- Registrar asistencia de profesores
+INSERT INTO Asistencias_Profesores (id_profesor, id_aula, estado)
+VALUES (1, 1, 'presente');
+
+
+-- Crear QR para Aula 1 válido del 28 julio al 3 agosto
+INSERT INTO Aula_QR (id_aula, codigo_qr, fecha_inicio, fecha_fin)
+VALUES (1, 'AULA1-SEMANA-2026-07-28', '2026-07-28', '2026-08-03');
+
+-- Profesor 1 ficha asistencia escaneando ese QR
+INSERT INTO Asistencias_Profesores (id_profesor, id_qr, estado)
+VALUES (1, 1, 'presente');
