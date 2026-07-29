@@ -16,7 +16,7 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
   <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide-PLXIV</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -69,12 +69,12 @@
           </div>
 
           <div class="mb-3">
-            <label for="profesorDepartamento" class="form-label">Departamento</label>
+            <label for="profesorDepartamento" class="form-label">Departamentos</label>
             <input type="text" class="form-control" id="profesorDepartamento" required>
           </div>
 
           <div class="mb-3">
-            <label for="profesorCarrera" class="form-label">Carrera</label>
+            <label for="profesorCarrera" class="form-label">Carreras</label>
             <input type="text" class="form-control" id="profesorCarrera" required>
           </div>
 
@@ -123,7 +123,7 @@
     } else {
       tabla = $('#tablaProfesores').DataTable({
         ajax: {
-          url: "https://smarcampusguide.onrender.com/profesores",
+          url: "https://smarcampus.onrender.com/profesores",
           dataSrc: ""
         },
         columns: [
@@ -168,8 +168,8 @@
     };
 
     const url = id 
-      ? `https://smarcampusguide.onrender.com/profesores/${id}` 
-      : "https://smarcampusguide.onrender.com/profesores";
+      ? `https://smarcampus.onrender.com/profesores/${id}` 
+      : "https://smarcampus.onrender.com/profesores";
     const method = id ? "PUT" : "POST";
 
     fetch(url, {
@@ -193,7 +193,7 @@
   // Editar profesor
   $(document).on("click", ".btnEditar", function() {
     const id = $(this).data("id");
-    fetch(`https://smarcampusguide.onrender.com/profesores/${id}`)
+    fetch(`https://smarcampus.onrender.com/profesores/${id}`)
       .then(res => res.json())
       .then(p => {
         document.getElementById("profesorId").value = p.id;
@@ -211,7 +211,7 @@
   $(document).on("click", ".btnEliminar", function() {
     const id = $(this).data("id");
     if (confirm("¿Seguro que quieres eliminar este profesor?")) {
-      fetch(`https://smarcampusguide.onrender.com/profesores/${id}`, { method: "DELETE" })
+      fetch(`https://smarcampus.onrender.com/profesores/${id}`, { method: "DELETE" })
         .then(res => {
           if (!res.ok) throw new Error("Error eliminando profesor");
           return res.json();
