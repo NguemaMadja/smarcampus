@@ -91,6 +91,129 @@
     </div>
   </div>
 </div>
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  let tabla;
+
+  // Cargar usuarios en el select
+  function cargarUsuarios() {
+    fetch("https://smarcampusguide.onrender.com/usuarios")
+      .then(res => res.json())
+      .then(usuarios => {
+        const select = document.getElementById("profesorUsuario");
+        select.innerHTML = "";
+        usuarios.forEach(u => {
+          const option = document.createElement("option");
+          option.value = u.id_usuario;
+          option.textContent = `${u.nombre} (${u.correo}) - ${u.rol}`;
+          select.appendChild(option);
+        });
+      })
+      .catch(err => console.error("Error cargando usuarios:", err));
+  }
+
+  // Cargar departamentos
+  function cargarDepartamentos() {
+    fetch("https://smarcampusguide.onrender.com/departamentos")
+      .then(res => res.json())
+      .then(deps => {
+        const select = document.getElementById("profesorDepartamento");
+        select.innerHTML = "";
+        deps.forEach(d => {
+          const option = document.createElement("option");
+          option.value = d.id_departamento;
+          option.textContent = d.nombre;
+          select.appendChild(option);
+        });
+      });
+  }
+
+  // Cargar carreras
+  function cargarCarreras() {
+    fetch("https://smarcampusguide.onrender.com/carreras")
+      .then(res => res.json())
+      .then(cars => {
+        const select = document.getElementById("profesorCarrera");
+        select.innerHTML = "";
+        cars.forEach(c => {
+          const option = document.createElement("option");
+          option.value = c.id_carrera;
+          option.textContent = c.nombre;
+          select.appendChild(option);
+        });
+      });
+  }
+
+  // Cargar asignaturas
+  function cargarAsignaturas() {
+    fetch("https://smarcampusguide.onrender.com/asignaturas")
+      .then(res => res.json())
+      .then(asigs => {
+        const select = document.getElementById("profesorAsignaturas");
+        select.innerHTML = "";
+        asigs.forEach(a => {
+          const option = document.createElement("option");
+          option.value = a.id_asignatura;
+          option.textContent = a.nombre;
+          select.appendChild(option);
+        });
+      });
+  }
+
+  // Inicializar DataTable
+  function cargarProfesores() {
+    if (tabla) {
+      tabla.ajax.reload();
+    } else {
+      tabla = $('#tablaProfesores').DataTable({
+        ajax: {
+          url: "https://smarcampusguide.onrender.com/profesores",
+          dataSrc: ""
+        },
+        columns: [
+          { data: 'id' },
+          { data: 'nombre' },
+          { data: 'correo' },
+          { data: 'departamentos' },
+          { data: 'carreras' },
+          { data: 'asignaturas' },
+          {
+            data: null,
+            render: function (row) {
+              return `
+                <button class="btn btn-sm btn-primary btnEditar" data-id="${row.id}">✏️ Editar</button>
+                <button class="btn btn-sm btn-danger btnEliminar" data-id="${row.id}">🗑️ Eliminar</button>
+              `;
+            }
+          }
+        ]
+      });
+    }
+  }
+
+  cargarProfesores();
+
+  // Abrir modal para nuevo profesor
+  document.querySelector('[data-bs-target="#modalProfesor"]').addEventListener("click", () => {
+    document.getElementById("formProfesor").reset();
+    document.getElementById("profesorId").value = "";
+    cargarUsuarios();
+    cargarDepartamentos();
+    cargarCarreras();
+    cargarAsignaturas();
+  });
+  // Guardar profesor
+  document.getElementById("formProfesor").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const id = document.getElementById("profesorId").value;
+
+    const id_usuario = document.getElementById("profesorUsuario").value;
+    const departamentos = Array.from(document.querySelectorAll('#profesorDepartamento option:checked'))
+                               .map(opt => parseInt(opt.value));
     const carreras = Array.from(document.querySelectorAll('#profesorCarrera option:checked'))
                           .map(opt => parseInt(opt.value));
     const asignaturas = Array.from(document.querySelectorAll('#profesorAsignaturas option:checked'))
@@ -108,7 +231,10 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profesor)
     })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error("Error guardando profesor");
+      return res.json();
+    })
     .then(() => {
       cargarProfesores();
       document.getElementById("formProfesor").reset();
@@ -117,6 +243,7 @@
     })
     .catch(err => console.error("Error:", err));
   });
+
   // Editar profesor
   $(document).on("click", ".btnEditar", function() {
     const id = $(this).data("id");
@@ -138,7 +265,8 @@
 
         cargarUsuarios();
         new bootstrap.Modal(document.getElementById("modalProfesor")).show();
-      });
+      })
+      .catch(err => console.error("Error cargando profesor:", err));
   });
 
   // Eliminar profesor
@@ -146,6 +274,10 @@
     const id = $(this).data("id");
     if (confirm("¿Seguro que quieres eliminar este profesor?")) {
       fetch(`https://smarcampusguide.onrender.com/profesores/${id}`, { method: "DELETE" })
+        .then(res => {
+          if (!res.ok) throw new Error("Error eliminando profesor");
+          return res.json();
+        })
         .then(() => {
           cargarProfesores();
         })
