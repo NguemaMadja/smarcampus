@@ -179,19 +179,23 @@ app.get('/profesores/:id', async (req, res) => {
   }
 });
 
+
+
+
 // Crear un profesor
 app.post('/profesores', async (req, res) => {
   try {
     const { id_usuario, departamentos, carreras, asignaturas } = req.body;
 
+    // Insertar profesor
     const result = await pool.query(
-      `INSERT INTO profesores (id_usuario)
-       VALUES ($1) RETURNING id_profesor AS id`,
+      `INSERT INTO profesores (id_usuario) VALUES ($1) RETURNING id_profesor AS id`,
       [id_usuario]
     );
     const profesorId = result.rows[0].id;
 
-    if (departamentos && departamentos.length > 0) {
+    // Insertar relaciones en tablas intermedias
+    if (departamentos?.length) {
       for (const depId of departamentos) {
         await pool.query(
           `INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)`,
@@ -199,7 +203,7 @@ app.post('/profesores', async (req, res) => {
         );
       }
     }
-    if (carreras && carreras.length > 0) {
+    if (carreras?.length) {
       for (const carId of carreras) {
         await pool.query(
           `INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)`,
@@ -207,7 +211,7 @@ app.post('/profesores', async (req, res) => {
         );
       }
     }
-    if (asignaturas && asignaturas.length > 0) {
+    if (asignaturas?.length) {
       for (const asigId of asignaturas) {
         await pool.query(
           `INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)`,
@@ -228,16 +232,19 @@ app.put('/profesores/:id', async (req, res) => {
     const { id } = req.params;
     const { id_usuario, departamentos, carreras, asignaturas } = req.body;
 
+    // Actualizar profesor
     await pool.query(
       `UPDATE profesores SET id_usuario=$1 WHERE id_profesor=$2`,
       [id_usuario, id]
     );
 
+    // Borrar relaciones anteriores
     await pool.query(`DELETE FROM profesor_departamento WHERE id_profesor=$1`, [id]);
     await pool.query(`DELETE FROM profesor_carrera WHERE id_profesor=$1`, [id]);
     await pool.query(`DELETE FROM profesor_asignatura WHERE id_profesor=$1`, [id]);
 
-    if (departamentos && departamentos.length > 0) {
+    // Insertar nuevas relaciones
+    if (departamentos?.length) {
       for (const depId of departamentos) {
         await pool.query(
           `INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)`,
@@ -245,7 +252,7 @@ app.put('/profesores/:id', async (req, res) => {
         );
       }
     }
-    if (carreras && carreras.length > 0) {
+    if (carreras?.length) {
       for (const carId of carreras) {
         await pool.query(
           `INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)`,
@@ -253,7 +260,7 @@ app.put('/profesores/:id', async (req, res) => {
         );
       }
     }
-    if (asignaturas && asignaturas.length > 0) {
+    if (asignaturas?.length) {
       for (const asigId of asignaturas) {
         await pool.query(
           `INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)`,
@@ -267,6 +274,7 @@ app.put('/profesores/:id', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 // Eliminar un profesor
 app.delete('/profesores/:id', async (req, res) => {
