@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS Profesores CASCADE;
 CREATE TABLE Profesores (
     id_profesor SERIAL PRIMARY KEY,
     id_usuario INT REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
-    departamento VARCHAR(100)
+
 );
 
 DROP TABLE IF EXISTS Estudiantes CASCADE;
@@ -39,6 +39,51 @@ CREATE TABLE Asignaturas (
     nombre VARCHAR(100),
     id_profesor INT REFERENCES Profesores(id_profesor)
 );
+
+
+-- =========================================
+-- NUEVAS TABLAS PARA RELACIONES DE PROFESORES
+-- =========================================
+
+-- Tabla de Departamentos
+DROP TABLE IF EXISTS Departamentos CASCADE;
+CREATE TABLE Departamentos (
+    id_departamento SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) UNIQUE NOT NULL
+);
+
+-- Tabla de Carreras
+DROP TABLE IF EXISTS Carreras CASCADE;
+CREATE TABLE Carreras (
+    id_carrera SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) UNIQUE NOT NULL
+);
+
+-- Tabla intermedia profesor_departamento
+DROP TABLE IF EXISTS Profesor_Departamento CASCADE;
+CREATE TABLE Profesor_Departamento (
+    id_profesor INT REFERENCES Profesores(id_profesor) ON DELETE CASCADE,
+    id_departamento INT REFERENCES Departamentos(id_departamento) ON DELETE CASCADE,
+    PRIMARY KEY (id_profesor, id_departamento)
+);
+
+-- Tabla intermedia profesor_carrera
+DROP TABLE IF EXISTS Profesor_Carrera CASCADE;
+CREATE TABLE Profesor_Carrera (
+    id_profesor INT REFERENCES Profesores(id_profesor) ON DELETE CASCADE,
+    id_carrera INT REFERENCES Carreras(id_carrera) ON DELETE CASCADE,
+    PRIMARY KEY (id_profesor, id_carrera)
+);
+
+-- Tabla intermedia profesor_asignatura
+DROP TABLE IF EXISTS Profesor_Asignatura CASCADE;
+CREATE TABLE Profesor_Asignatura (
+    id_profesor INT REFERENCES Profesores(id_profesor) ON DELETE CASCADE,
+    id_asignatura INT REFERENCES Asignaturas(id_asignatura) ON DELETE CASCADE,
+    PRIMARY KEY (id_profesor, id_asignatura)
+);
+
+
 
 DROP TABLE IF EXISTS Edificios CASCADE;
 CREATE TABLE Edificios (
@@ -190,12 +235,12 @@ VALUES ('Carlos López', 'carlos@unge.edu', 'Administración General');
 INSERT INTO Registro (id_usuario, username, password, rol)
 VALUES (3, 'carlos', crypt('claveAdmin', gen_salt('bf')), 'admin');
 
--- Profesores de prueba (necesarios para RadioUNGE)
-INSERT INTO Profesores (id_usuario, departamento)
-VALUES 
-(1, 'Educación'),
-(2, 'Cultura'),
-(3, 'Informativo');
+INSERT INTO Profesor_Departamento (id_profesor, id_departamento)
+VALUES
+(1, 3), -- Profesor 1 en Educación
+(2, 2), -- Profesor 2 en Ciencias Sociales
+(3, 1); -- Profesor 3 en Ingeniería
+
 -- =========================================
 -- INSERCIONES DE EDIFICIOS Y MAPAS (16)
 -- =========================================
@@ -422,3 +467,18 @@ INSERT INTO Edificios (nombre, ubicacion) VALUES
 ('RESIDENCIA-PROFESORES-EDIF15', 'Campus UNGE'),
 ('SALA-ACTIVIDADES-CULTURALES', 'Campus UNGE'),
 ('SALA-DE-RECOGIDA-DE-RESIDUOS-CAMPOS', 'Campus UNGE');
+
+
+-- Departamentos de prueba
+INSERT INTO Departamentos (nombre) VALUES
+('Ingeniería'),
+('Ciencias Sociales'),
+('Educación'),
+('Informática');
+
+-- Carreras de prueba
+INSERT INTO Carreras (nombre) VALUES
+('Ingeniería Informática'),
+('Pedagogía'),
+('Derecho'),
+('Economía');
