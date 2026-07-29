@@ -7,7 +7,7 @@ const { Pool } = require('pg');
 const path = require('path');
 const QRCode = require('qrcode');
 const cron = require('node-cron');
-const cors = require('cors');   // 👈 habilitar CORS
+const cors = require('cors');
 
 const app = express();
 app.use(express.json());
@@ -45,6 +45,7 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 // ---------------- USUARIOS CRUD ----------------
 app.get('/usuarios', async (req, res) => {
   try {
@@ -179,44 +180,29 @@ app.get('/profesores/:id', async (req, res) => {
   }
 });
 
-
-
-
-// Crear un profesor
+// Crear profesor
 app.post('/profesores', async (req, res) => {
   try {
     const { id_usuario, departamentos, carreras, asignaturas } = req.body;
-
-    // Insertar profesor
     const result = await pool.query(
-      `INSERT INTO profesores (id_usuario) VALUES ($1) RETURNING id_profesor AS id`,
+      'INSERT INTO profesores (id_usuario) VALUES ($1) RETURNING id_profesor',
       [id_usuario]
     );
-    const profesorId = result.rows[0].id;
+    const profesorId = result.rows[0].id_profesor;
 
-    // Insertar relaciones en tablas intermedias
     if (departamentos?.length) {
       for (const depId of departamentos) {
-        await pool.query(
-          `INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)`,
-          [profesorId, depId]
-        );
+        await pool.query('INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)', [profesorId, depId]);
       }
     }
     if (carreras?.length) {
       for (const carId of carreras) {
-        await pool.query(
-          `INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)`,
-          [profesorId, carId]
-        );
+        await pool.query('INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)', [profesorId, carId]);
       }
     }
     if (asignaturas?.length) {
       for (const asigId of asignaturas) {
-        await pool.query(
-          `INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)`,
-          [profesorId, asigId]
-        );
+        await pool.query('INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)', [profesorId, asigId]);
       }
     }
 
@@ -226,46 +212,31 @@ app.post('/profesores', async (req, res) => {
   }
 });
 
-// Actualizar un profesor
+// Actualizar profesor
 app.put('/profesores/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { id_usuario, departamentos, carreras, asignaturas } = req.body;
 
-    // Actualizar profesor
-    await pool.query(
-      `UPDATE profesores SET id_usuario=$1 WHERE id_profesor=$2`,
-      [id_usuario, id]
-    );
+    await pool.query('UPDATE profesores SET id_usuario=$1 WHERE id_profesor=$2', [id_usuario, id]);
 
-    // Borrar relaciones anteriores
-    await pool.query(`DELETE FROM profesor_departamento WHERE id_profesor=$1`, [id]);
-    await pool.query(`DELETE FROM profesor_carrera WHERE id_profesor=$1`, [id]);
-    await pool.query(`DELETE FROM profesor_asignatura WHERE id_profesor=$1`, [id]);
+    await pool.query('DELETE FROM profesor_departamento WHERE id_profesor=$1', [id]);
+    await pool.query('DELETE FROM profesor_carrera WHERE id_profesor=$1', [id]);
+    await pool.query('DELETE FROM profesor_asignatura WHERE id_profesor=$1', [id]);
 
-    // Insertar nuevas relaciones
     if (departamentos?.length) {
       for (const depId of departamentos) {
-        await pool.query(
-          `INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)`,
-          [id, depId]
-        );
+        await pool.query('INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)', [id, depId]);
       }
     }
     if (carreras?.length) {
       for (const carId of carreras) {
-        await pool.query(
-          `INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)`,
-          [id, carId]
-        );
+        await pool.query('INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)', [id, carId]);
       }
     }
     if (asignaturas?.length) {
       for (const asigId of asignaturas) {
-        await pool.query(
-          `INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)`,
-          [id, asigId]
-        );
+        await pool.query('INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)', [id, asigId]);
       }
     }
 
@@ -275,21 +246,21 @@ app.put('/profesores/:id', async (req, res) => {
   }
 });
 
-
-// Eliminar un profesor
+// Eliminar profesor
 app.delete('/profesores/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      `DELETE FROM profesores WHERE id_profesor=$1 RETURNING id_profesor AS id`,
-      [id]
-    );
+    await pool.query('DELETE FROM profesor_departamento WHERE id_profesor=$1', [id]);
+    await pool.query('DELETE FROM profesor_carrera WHERE id_profesor=$1', [id]);
+    await pool.query('DELETE FROM profesor_asignatura WHERE id_profesor=$1', [id]);
+    const result = await pool.query('DELETE FROM profesores WHERE id_profesor=$1 RETURNING id_profesor', [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json({ mensaje: 'Profesor eliminado correctamente', id: result.rows[0].id });
+    res.json({ mensaje: 'Profesor eliminado correctamente', id: result.rows[0].id_profesor });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 // ---------------- ESTUDIANTES CRUD ----------------
 app.get('/estudiantes', async (req, res) => {
   try {
@@ -377,48 +348,99 @@ app.delete('/estudiantes/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 // ---------------- QR Y ASISTENCIA ----------------
 
-// Generar QR para un aula
+// Generar QR para un aula (semanal)
 app.post('/aulas/:id/generar_qr', async (req, res) => {
   const { id } = req.params;
   const codigoQR = Math.random().toString(36).substring(2, 10);
-  await pool.query('UPDATE aulas SET codigo_qr = $1 WHERE id_aula = $2', [codigoQR, id]);
+
+  const fechaInicio = new Date();
+  const fechaFin = new Date();
+  fechaFin.setDate(fechaInicio.getDate() + 7);
+
+  const result = await pool.query(
+    `INSERT INTO aula_qr (id_aula, codigo_qr, fecha_inicio, fecha_fin)
+     VALUES ($1, $2, $3, $4) RETURNING *`,
+    [id, codigoQR, fechaInicio, fechaFin]
+  );
+
   const qrImage = await QRCode.toDataURL(codigoQR);
-  res.json({ aula: id, codigo_qr: codigoQR, qr_image: qrImage });
+  res.json({ aula: id, codigo_qr: codigoQR, qr_image: qrImage, registro: result.rows[0] });
 });
 
 // Obtener QR actual de un aula
 app.get('/aulas/:id/qr', async (req, res) => {
   const { id } = req.params;
-  const result = await pool.query('SELECT codigo_qr FROM aulas WHERE id_aula = $1', [id]);
-  if (!result.rows.length) return res.status(404).json({ error: 'Aula no encontrada' });
+  const hoy = new Date();
+
+  const result = await pool.query(
+    `SELECT codigo_qr FROM aula_qr
+     WHERE id_aula=$1 AND $2 BETWEEN fecha_inicio AND fecha_fin
+     ORDER BY fecha_inicio DESC LIMIT 1`,
+    [id, hoy]
+  );
+
+  if (!result.rows.length) return res.status(404).json({ error: 'QR no encontrado o vencido' });
+
   const codigoQR = result.rows[0].codigo_qr;
   const qrImage = await QRCode.toDataURL(codigoQR);
   res.json({ aula: id, codigo_qr: codigoQR, qr_image: qrImage });
 });
 
-// Registrar asistencia profesor
+// ---------------- ASISTENCIA PROFESORES ----------------
+
+// Registrar asistencia profesor usando QR vigente
 app.post('/asistencia_profesores', async (req, res) => {
-  const { id_profesor, id_aula, id_asignatura, estado, codigo_qr } = req.body;
-  const result = await pool.query('SELECT codigo_qr FROM aulas WHERE id_aula = $1', [id_aula]);
-  if (!result.rows.length || result.rows[0].codigo_qr !== codigo_qr) {
-    return res.status(400).json({ error: 'QR inválido' });
+  const { id_profesor, id_aula, estado, codigo_qr } = req.body;
+
+  try {
+    // Buscar QR vigente en Aula_QR
+    const hoy = new Date();
+    const result = await pool.query(
+      `SELECT id_qr, codigo_qr FROM aula_qr
+       WHERE id_aula=$1 AND $2 BETWEEN fecha_inicio AND fecha_fin
+       ORDER BY fecha_inicio DESC LIMIT 1`,
+      [id_aula, hoy]
+    );
+
+    if (!result.rows.length || result.rows[0].codigo_qr !== codigo_qr) {
+      return res.status(400).json({ error: 'QR inválido o vencido' });
+    }
+
+    const id_qr = result.rows[0].id_qr;
+
+    // Insertar asistencia vinculada al QR
+    await pool.query(
+      `INSERT INTO asistencias_profesores (id_profesor, id_qr, estado)
+       VALUES ($1, $2, $3)`,
+      [id_profesor, id_qr, estado]
+    );
+
+    res.json({ message: 'Asistencia registrada correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-  await pool.query(
-    `INSERT INTO asistencia_profesores (id_profesor, id_aula, id_asignatura, estado, codigo_qr) 
-     VALUES ($1, $2, $3, $4, $5)`,
-    [id_profesor, id_aula, id_asignatura, estado, codigo_qr]
-  );
-  res.json({ message: 'Asistencia registrada' });
 });
+
 // ---------------- CRON JOB SEMANAL ----------------
+// Generar un nuevo QR semanal para cada aula
 cron.schedule('0 8 * * MON', async () => {
   try {
     const aulas = await pool.query('SELECT id_aula FROM aulas');
     for (const aula of aulas.rows) {
       const codigoQR = Math.random().toString(36).substring(2, 10);
-      await pool.query('UPDATE aulas SET codigo_qr = $1 WHERE id_aula = $2', [codigoQR, aula.id_aula]);
+      const fechaInicio = new Date();
+      const fechaFin = new Date();
+      fechaFin.setDate(fechaInicio.getDate() + 7);
+
+      await pool.query(
+        `INSERT INTO aula_qr (id_aula, codigo_qr, fecha_inicio, fecha_fin)
+         VALUES ($1, $2, $3, $4)`,
+        [aula.id_aula, codigoQR, fechaInicio, fechaFin]
+      );
+
       console.log(`Nuevo QR generado para aula ${aula.id_aula}: ${codigoQR}`);
     }
   } catch (err) {
