@@ -126,7 +126,10 @@ app.get('/profesores', async (req, res) => {
              u.correo,
              COALESCE(STRING_AGG(DISTINCT d.nombre, ', '), '') AS departamentos,
              COALESCE(STRING_AGG(DISTINCT c.nombre, ', '), '') AS carreras,
-             COALESCE(STRING_AGG(DISTINCT a.nombre, ', '), '') AS asignaturas
+             COALESCE(STRING_AGG(DISTINCT a.nombre, ', '), '') AS asignaturas,
+             ARRAY_REMOVE(ARRAY_AGG(DISTINCT d.id_departamento), NULL) AS departamentos_ids,
+             ARRAY_REMOVE(ARRAY_AGG(DISTINCT c.id_carrera), NULL) AS carreras_ids,
+             ARRAY_REMOVE(ARRAY_AGG(DISTINCT a.id_asignatura), NULL) AS asignaturas_ids
       FROM profesores p
       JOIN usuarios u ON p.id_usuario = u.id_usuario
       LEFT JOIN profesor_departamento pd ON p.id_profesor = pd.id_profesor
@@ -154,7 +157,10 @@ app.get('/profesores/:id', async (req, res) => {
              u.correo,
              COALESCE(STRING_AGG(DISTINCT d.nombre, ', '), '') AS departamentos,
              COALESCE(STRING_AGG(DISTINCT c.nombre, ', '), '') AS carreras,
-             COALESCE(STRING_AGG(DISTINCT a.nombre, ', '), '') AS asignaturas
+             COALESCE(STRING_AGG(DISTINCT a.nombre, ', '), '') AS asignaturas,
+             ARRAY_REMOVE(ARRAY_AGG(DISTINCT d.id_departamento), NULL) AS departamentos_ids,
+             ARRAY_REMOVE(ARRAY_AGG(DISTINCT c.id_carrera), NULL) AS carreras_ids,
+             ARRAY_REMOVE(ARRAY_AGG(DISTINCT a.id_asignatura), NULL) AS asignaturas_ids
       FROM profesores p
       JOIN usuarios u ON p.id_usuario = u.id_usuario
       LEFT JOIN profesor_departamento pd ON p.id_profesor = pd.id_profesor
@@ -172,6 +178,7 @@ app.get('/profesores/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 // Crear un profesor
 app.post('/profesores', async (req, res) => {
   try {
