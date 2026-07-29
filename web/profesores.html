@@ -69,18 +69,18 @@
           </div>
 
           <div class="mb-3">
-            <label for="profesorDepartamento" class="form-label">Departamentos</label>
-            <select id="profesorDepartamento" class="form-select" multiple required></select>
+            <label for="profesorDepartamento" class="form-label">Departamento</label>
+            <input type="text" class="form-control" id="profesorDepartamento" required>
           </div>
 
           <div class="mb-3">
-            <label for="profesorCarrera" class="form-label">Carreras</label>
-            <select id="profesorCarrera" class="form-select" multiple required></select>
+            <label for="profesorCarrera" class="form-label">Carrera</label>
+            <input type="text" class="form-control" id="profesorCarrera" required>
           </div>
 
           <div class="mb-3">
             <label for="profesorAsignaturas" class="form-label">Asignaturas</label>
-            <select id="profesorAsignaturas" class="form-select" multiple required></select>
+            <input type="text" class="form-control" id="profesorAsignaturas" required>
           </div>
         </div>
         <div class="modal-footer">
@@ -109,59 +109,11 @@
         usuarios.forEach(u => {
           const option = document.createElement("option");
           option.value = u.id_usuario;
-          option.textContent = `${u.nombre} (${u.correo}) - ${u.rol}`;
+          option.textContent = `${u.nombre} (${u.correo})`;
           select.appendChild(option);
         });
       })
       .catch(err => console.error("Error cargando usuarios:", err));
-  }
-
-  // Cargar departamentos
-  function cargarDepartamentos() {
-    fetch("https://smarcampusguide.onrender.com/departamentos")
-      .then(res => res.json())
-      .then(deps => {
-        const select = document.getElementById("profesorDepartamento");
-        select.innerHTML = "";
-        deps.forEach(d => {
-          const option = document.createElement("option");
-          option.value = d.id_departamento;
-          option.textContent = d.nombre;
-          select.appendChild(option);
-        });
-      });
-  }
-
-  // Cargar carreras
-  function cargarCarreras() {
-    fetch("https://smarcampusguide.onrender.com/carreras")
-      .then(res => res.json())
-      .then(cars => {
-        const select = document.getElementById("profesorCarrera");
-        select.innerHTML = "";
-        cars.forEach(c => {
-          const option = document.createElement("option");
-          option.value = c.id_carrera;
-          option.textContent = c.nombre;
-          select.appendChild(option);
-        });
-      });
-  }
-
-  // Cargar asignaturas
-  function cargarAsignaturas() {
-    fetch("https://smarcampusguide.onrender.com/asignaturas")
-      .then(res => res.json())
-      .then(asigs => {
-        const select = document.getElementById("profesorAsignaturas");
-        select.innerHTML = "";
-        asigs.forEach(a => {
-          const option = document.createElement("option");
-          option.value = a.id_asignatura;
-          option.textContent = a.nombre;
-          select.appendChild(option);
-        });
-      });
   }
 
   // Inicializar DataTable
@@ -202,24 +154,18 @@
     document.getElementById("formProfesor").reset();
     document.getElementById("profesorId").value = "";
     cargarUsuarios();
-    cargarDepartamentos();
-    cargarCarreras();
-    cargarAsignaturas();
   });
   // Guardar profesor
   document.getElementById("formProfesor").addEventListener("submit", function(e) {
     e.preventDefault();
     const id = document.getElementById("profesorId").value;
 
-    const id_usuario = document.getElementById("profesorUsuario").value;
-    const departamentos = Array.from(document.querySelectorAll('#profesorDepartamento option:checked'))
-                               .map(opt => parseInt(opt.value));
-    const carreras = Array.from(document.querySelectorAll('#profesorCarrera option:checked'))
-                          .map(opt => parseInt(opt.value));
-    const asignaturas = Array.from(document.querySelectorAll('#profesorAsignaturas option:checked'))
-                             .map(opt => parseInt(opt.value));
-
-    const profesor = { id_usuario, departamentos, carreras, asignaturas };
+    const profesor = {
+      id_usuario: document.getElementById("profesorUsuario").value,
+      departamentos: document.getElementById("profesorDepartamento").value,
+      carreras: document.getElementById("profesorCarrera").value,
+      asignaturas: document.getElementById("profesorAsignaturas").value
+    };
 
     const url = id 
       ? `https://smarcampusguide.onrender.com/profesores/${id}` 
@@ -251,17 +197,9 @@
       .then(res => res.json())
       .then(p => {
         document.getElementById("profesorId").value = p.id;
-
-        // Seleccionar opciones según nombres devueltos
-        document.querySelectorAll('#profesorDepartamento option').forEach(opt => {
-          opt.selected = p.departamentos?.split(", ").includes(opt.textContent) || false;
-        });
-        document.querySelectorAll('#profesorCarrera option').forEach(opt => {
-          opt.selected = p.carreras?.split(", ").includes(opt.textContent) || false;
-        });
-        document.querySelectorAll('#profesorAsignaturas option').forEach(opt => {
-          opt.selected = p.asignaturas?.split(", ").includes(opt.textContent) || false;
-        });
+        document.getElementById("profesorDepartamento").value = p.departamentos;
+        document.getElementById("profesorCarrera").value = p.carreras;
+        document.getElementById("profesorAsignaturas").value = p.asignaturas;
 
         cargarUsuarios();
         new bootstrap.Modal(document.getElementById("modalProfesor")).show();
