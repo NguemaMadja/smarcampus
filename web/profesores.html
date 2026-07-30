@@ -254,7 +254,7 @@
     .catch(err => console.error("Error:", err));
   });
 
- // Editar profesor
+// Editar profesor
 $(document).on("click", ".btnEditar", function() {
   const id = $(this).data("id");
   fetch(`https://smarcampus.onrender.com/profesores/${id}`)
@@ -262,29 +262,40 @@ $(document).on("click", ".btnEditar", function() {
     .then(p => {
       document.getElementById("profesorId").value = p.id;
 
-      // Primero cargar las listas
+      // Cargar usuarios
       cargarUsuarios();
-      cargarDepartamentos();
-      cargarCarreras();
-      cargarAsignaturas();
 
-      // Esperar a que se llenen los selects antes de marcar las opciones
-      setTimeout(() => {
-        document.querySelectorAll('#profesorDepartamento option').forEach(opt => {
-          opt.selected = p.departamentos_ids?.includes(parseInt(opt.value)) || false;
-        });
-        document.querySelectorAll('#profesorCarrera option').forEach(opt => {
-          opt.selected = p.carreras_ids?.includes(parseInt(opt.value)) || false;
-        });
-        document.querySelectorAll('#profesorAsignaturas option').forEach(opt => {
-          opt.selected = p.asignaturas_ids?.includes(parseInt(opt.value)) || false;
-        });
-      }, 300); // 300ms para dar tiempo a cargar las opciones
+      // Cargar departamentos y marcar seleccionados
+cargarDepartamentos(() => {
+  const select = document.getElementById("profesorDepartamento");
+  document.querySelectorAll('#profesorDepartamento option').forEach(opt => {
+    opt.selected = p.departamentos_ids?.includes(parseInt(opt.value)) || false;
+  });
+});
 
+// Cargar carreras y marcar seleccionadas
+cargarCarreras(() => {
+  const select = document.getElementById("profesorCarrera");
+  document.querySelectorAll('#profesorCarrera option').forEach(opt => {
+    opt.selected = p.carreras_ids?.includes(parseInt(opt.value)) || false;
+  });
+});
+
+// Cargar asignaturas y marcar seleccionadas
+cargarAsignaturas(() => {
+  const select = document.getElementById("profesorAsignaturas");
+  document.querySelectorAll('#profesorAsignaturas option').forEach(opt => {
+    opt.selected = p.asignaturas_ids?.includes(parseInt(opt.value)) || false;
+  });
+});
+
+
+      // Mostrar modal
       new bootstrap.Modal(document.getElementById("modalProfesor")).show();
     })
     .catch(err => console.error("Error cargando profesor:", err));
 });
+
 
 
   // Eliminar profesor
