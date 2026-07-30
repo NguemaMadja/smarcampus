@@ -254,15 +254,22 @@
     .catch(err => console.error("Error:", err));
   });
 
-  // Editar profesor
-  $(document).on("click", ".btnEditar", function() {
-    const id = $(this).data("id");
-    fetch(`https://smarcampus.onrender.com/profesores/${id}`)
-      .then(res => res.json())
-      .then(p => {
-        document.getElementById("profesorId").value = p.id;
+ // Editar profesor
+$(document).on("click", ".btnEditar", function() {
+  const id = $(this).data("id");
+  fetch(`https://smarcampus.onrender.com/profesores/${id}`)
+    .then(res => res.json())
+    .then(p => {
+      document.getElementById("profesorId").value = p.id;
 
-        // Seleccionar opciones según IDs devueltos por el backend
+      // Primero cargar las listas
+      cargarUsuarios();
+      cargarDepartamentos();
+      cargarCarreras();
+      cargarAsignaturas();
+
+      // Esperar a que se llenen los selects antes de marcar las opciones
+      setTimeout(() => {
         document.querySelectorAll('#profesorDepartamento option').forEach(opt => {
           opt.selected = p.departamentos_ids?.includes(parseInt(opt.value)) || false;
         });
@@ -272,15 +279,13 @@
         document.querySelectorAll('#profesorAsignaturas option').forEach(opt => {
           opt.selected = p.asignaturas_ids?.includes(parseInt(opt.value)) || false;
         });
+      }, 300); // 300ms para dar tiempo a cargar las opciones
 
-        cargarUsuarios();
-        cargarDepartamentos();
-        cargarCarreras();
-        cargarAsignaturas();
-        new bootstrap.Modal(document.getElementById("modalProfesor")).show();
-      })
-      .catch(err => console.error("Error cargando profesor:", err));
-  });
+      new bootstrap.Modal(document.getElementById("modalProfesor")).show();
+    })
+    .catch(err => console.error("Error cargando profesor:", err));
+});
+
 
   // Eliminar profesor
   $(document).on("click", ".btnEliminar", function() {
