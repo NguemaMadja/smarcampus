@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Asignaturas - SmartCampusGuide</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+</head>
+<body>
+
+<div class="d-flex justify-content-between mb-4">
+  <a href="admin.html" class="btn btn-outline-secondary">⬅️ Volver al Panel Principal</a>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menuPrincipal">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <!-- Submenú de Usuarios -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="menuUsuarios" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Usuarios
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="menuUsuarios">
+            <li><a class="dropdown-item" href="usuarios.html">Usuarios</a></li>
+            <li><a class="dropdown-item" href="profesores.html">Profesores</a></li>
+            <li><a class="dropdown-item" href="estudiantes.html">Estudiantes</a></li>
+            <li><a class="dropdown-item" href="departamentos.html">Departamentos</a></li>
+            <li><a class="dropdown-item" href="carreras.html">Carreras</a></li>
+            <li><a class="dropdown-item active" href="asignaturas.html">Asignaturas</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
+        <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="container mt-4">
+  <h2>Gestión de Asignaturas</h2>
+  <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAsignatura">➕ Nueva Asignatura</button>
+
+  <table id="tablaAsignaturas" class="display table table-striped" style="width:100%">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Se llenará dinámicamente -->
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal para crear/editar asignatura -->
+<div class="modal fade" id="modalAsignatura" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formAsignatura">
+        <div class="modal-header">
+          <h5 class="modal-title">Asignatura</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="asignaturaId">
+          <div class="mb-3">
+            <label for="asignaturaNombre" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="asignaturaNombre" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  let tabla;
+
+  function cargarAsignaturas() {
+    fetch("/asignaturas")
+      .then(res => res.json())
+      .then(data => {
+        if (tabla) {
+          tabla.clear().rows.add(data).draw();
+        } else {
+          tabla = $('#tablaAsignaturas').DataTable({
+            data: data,
+            columns: [
+              { data: 'id_asignatura' },
+              { data: 'nombre' },
+              {
+                data: null,
+                render: row => `
+                  <button class="btn btn-sm btn-primary btnEditar" data-id="${row.id_asignatura}">✏️ Editar</button>
+                  <button class="btn btn-sm btn-danger btnEliminar" data-id="${row.id_asignatura}">🗑️ Eliminar</button>
+                `
+              }
+            ],
+            destroy: true,
+            responsive: true,
+            language: {
+              url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            }
+          });
+        }
+      })
+      .catch(err => console.error("Error cargando asignaturas:", err));
+  }
+
+  // Guardar asignatura
+  document.getElementById("formAsignatura").addEventListener("submit", e => {
+    e.preventDefault();
+    const id = document.getElementById("asignaturaId").value;
+    const nombre = document.getElementById("asignaturaNombre").value;
+
+    const url = id ? `/asignaturas/${id}` : "/asignaturas";
+    const method = id ? "PUT" : "POST";
+
+    fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre })
+    })
+    .then(res => res.json())
+    .then(() => {
+      cargarAsignaturas();
+      document.getElementById("formAsignatura").reset();
+      document.getElementById("asignaturaId").value = "";
+      bootstrap.Modal.getInstance(document.getElementById("modalAsignatura")).hide();
+    })
+    .catch(err => alert("Error guardando asignatura: " + err.message));
+  });
+
+  // Editar asignatura
+  $(document).on("click", ".btnEditar", function() {
+    const id = $(this).data("id");
+    fetch(`/asignaturas/${id}`)
+      .then(res => res.json())
+      .then(asig => {
+        document.getElementById("asignaturaId").value = asig.id_asignatura;
+        document.getElementById("asignaturaNombre").value = asig.nombre;
+        new bootstrap.Modal(document.getElementById("modalAsignatura")).show();
+      })
+      .catch(err => alert("Error cargando asignatura: " + err.message));
+  });
+
+  // Eliminar asignatura
+  $(document).on("click", ".btnEliminar", function() {
+    const id = $(this).data("id");
+    if (confirm("¿Seguro que deseas eliminar esta asignatura?")) {
+      fetch(`/asignaturas/${id}`, { method: "DELETE" })
+        .then(res => res.json())
+        .then(() => cargarAsignaturas())
+        .catch(err => alert("Error eliminando asignatura: " + err.message));
+    }
+  });
+
+  // Cargar al inicio
+  cargarAsignaturas();
+</script>
+</body>
+</html>
