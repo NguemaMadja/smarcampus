@@ -28,7 +28,6 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://smartcampus_e3qk_user:VcilJQhBclQrE8dlUTEnOqQA3rUL1L1K@dpg-d9hstto4n6ts73bg0em0-a.oregon-postgres.render.com:5432/smartcampus_e3qk",
   ssl: { rejectUnauthorized: false }
 });
-
 // ---------------- LOGIN ----------------
 app.post('/login', async (req, res) => {
   const { correo, password } = req.body;
@@ -115,7 +114,6 @@ app.delete('/usuarios/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // ---------------- PROFESORES CRUD ----------------
 
 // Obtener todos los profesores con sus departamentos, carreras y asignaturas
@@ -183,25 +181,25 @@ app.get('/profesores/:id', async (req, res) => {
 // Crear profesor
 app.post('/profesores', async (req, res) => {
   try {
-    const { id_usuario, departamentos, carreras, asignaturas } = req.body;
+    const { id_usuario, departamentos_ids, carreras_ids, asignaturas_ids } = req.body;
     const result = await pool.query(
       'INSERT INTO profesores (id_usuario) VALUES ($1) RETURNING id_profesor',
       [id_usuario]
     );
     const profesorId = result.rows[0].id_profesor;
 
-    if (departamentos?.length) {
-      for (const depId of departamentos) {
+    if (departamentos_ids?.length) {
+      for (const depId of departamentos_ids) {
         await pool.query('INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)', [profesorId, depId]);
       }
     }
-    if (carreras?.length) {
-      for (const carId of carreras) {
+    if (carreras_ids?.length) {
+      for (const carId of carreras_ids) {
         await pool.query('INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)', [profesorId, carId]);
       }
     }
-    if (asignaturas?.length) {
-      for (const asigId of asignaturas) {
+    if (asignaturas_ids?.length) {
+      for (const asigId of asignaturas_ids) {
         await pool.query('INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)', [profesorId, asigId]);
       }
     }
@@ -216,7 +214,7 @@ app.post('/profesores', async (req, res) => {
 app.put('/profesores/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_usuario, departamentos, carreras, asignaturas } = req.body;
+    const { id_usuario, departamentos_ids, carreras_ids, asignaturas_ids } = req.body;
 
     await pool.query('UPDATE profesores SET id_usuario=$1 WHERE id_profesor=$2', [id_usuario, id]);
 
@@ -224,18 +222,18 @@ app.put('/profesores/:id', async (req, res) => {
     await pool.query('DELETE FROM profesor_carrera WHERE id_profesor=$1', [id]);
     await pool.query('DELETE FROM profesor_asignatura WHERE id_profesor=$1', [id]);
 
-    if (departamentos?.length) {
-      for (const depId of departamentos) {
+    if (departamentos_ids?.length) {
+      for (const depId of departamentos_ids) {
         await pool.query('INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)', [id, depId]);
       }
     }
-    if (carreras?.length) {
-      for (const carId of carreras) {
+    if (carreras_ids?.length) {
+      for (const carId of carreras_ids) {
         await pool.query('INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)', [id, carId]);
       }
     }
-    if (asignaturas?.length) {
-      for (const asigId of asignaturas) {
+    if (asignaturas_ids?.length) {
+      for (const asigId of asignaturas_ids) {
         await pool.query('INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)', [id, asigId]);
       }
     }
@@ -260,8 +258,9 @@ app.delete('/profesores/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // ---------------- ESTUDIANTES CRUD ----------------
+
+// Obtener todos los estudiantes
 app.get('/estudiantes', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -280,6 +279,7 @@ app.get('/estudiantes', async (req, res) => {
   }
 });
 
+// Obtener un estudiante por ID
 app.get('/estudiantes/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -300,6 +300,7 @@ app.get('/estudiantes/:id', async (req, res) => {
   }
 });
 
+// Crear estudiante
 app.post('/estudiantes', async (req, res) => {
   try {
     const { id_usuario, matricula } = req.body;
@@ -315,6 +316,7 @@ app.post('/estudiantes', async (req, res) => {
   }
 });
 
+// Actualizar estudiante
 app.put('/estudiantes/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -333,6 +335,7 @@ app.put('/estudiantes/:id', async (req, res) => {
   }
 });
 
+// Eliminar estudiante
 app.delete('/estudiantes/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -348,7 +351,6 @@ app.delete('/estudiantes/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // ---------------- QR Y ASISTENCIA ----------------
 
 // Generar QR para un aula (semanal)
@@ -396,7 +398,6 @@ app.post('/asistencia_profesores', async (req, res) => {
   const { id_profesor, id_aula, estado, codigo_qr } = req.body;
 
   try {
-    // Buscar QR vigente en Aula_QR
     const hoy = new Date();
     const result = await pool.query(
       `SELECT id_qr, codigo_qr FROM aula_qr
@@ -411,7 +412,6 @@ app.post('/asistencia_profesores', async (req, res) => {
 
     const id_qr = result.rows[0].id_qr;
 
-    // Insertar asistencia vinculada al QR
     await pool.query(
       `INSERT INTO asistencias_profesores (id_profesor, id_qr, estado)
        VALUES ($1, $2, $3)`,
