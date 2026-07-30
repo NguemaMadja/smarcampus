@@ -351,6 +351,199 @@ app.delete('/estudiantes/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+// ---------------- DEPARTAMENTOS CRUD ----------------
+app.get('/departamentos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM departamentos ORDER BY id_departamento');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/departamentos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM departamentos WHERE id_departamento=$1', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Departamento no encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/departamentos', async (req, res) => {
+  try {
+    const { nombre } = req.body;
+    const result = await pool.query(
+      'INSERT INTO departamentos (nombre) VALUES ($1) RETURNING *',
+      [nombre]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/departamentos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre } = req.body;
+    const result = await pool.query(
+      'UPDATE departamentos SET nombre=$1 WHERE id_departamento=$2 RETURNING *',
+      [nombre, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Departamento no encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/departamentos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM departamentos WHERE id_departamento=$1 RETURNING *',
+      [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Departamento no encontrado' });
+    res.json({ mensaje: 'Departamento eliminado correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------- CARRERAS CRUD ----------------
+app.get('/carreras', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM carreras ORDER BY id_carrera');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/carreras/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM carreras WHERE id_carrera=$1', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Carrera no encontrada' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/carreras', async (req, res) => {
+  try {
+    const { nombre } = req.body;
+    const result = await pool.query(
+      'INSERT INTO carreras (nombre) VALUES ($1) RETURNING *',
+      [nombre]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/carreras/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre } = req.body;
+    const result = await pool.query(
+      'UPDATE carreras SET nombre=$1 WHERE id_carrera=$2 RETURNING *',
+      [nombre, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Carrera no encontrada' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/carreras/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM carreras WHERE id_carrera=$1 RETURNING *',
+      [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Carrera no encontrada' });
+    res.json({ mensaje: 'Carrera eliminada correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------- ASIGNATURAS CRUD ----------------
+app.get('/asignaturas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM asignaturas ORDER BY id_asignatura');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/asignaturas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM asignaturas WHERE id_asignatura=$1', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Asignatura no encontrada' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/asignaturas', async (req, res) => {
+  try {
+    const { nombre } = req.body;
+    const result = await pool.query(
+      'INSERT INTO asignaturas (nombre) VALUES ($1) RETURNING *',
+      [nombre]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/asignaturas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre } = req.body;
+    const result = await pool.query(
+      'UPDATE asignaturas SET nombre=$1 WHERE id_asignatura=$2 RETURNING *',
+      [nombre, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Asignatura no encontrada' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/asignaturas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM asignaturas WHERE id_asignatura=$1 RETURNING *',
+      [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Asignatura no encontrada' });
+    res.json({ mensaje: 'Asignatura eliminada correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 // ---------------- QR Y ASISTENCIA ----------------
 
 // Generar QR para un aula (semanal)
