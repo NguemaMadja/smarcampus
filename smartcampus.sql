@@ -525,3 +525,9 @@ VALUES (1, 'AULA1-SEMANA-2026-07-28', '2026-07-28', '2026-08-03');
 -- Profesor 1 ficha asistencia escaneando ese QR
 INSERT INTO Asistencias_Profesores (id_profesor, id_qr, estado)
 VALUES (1, 1, 'presente');
+
+
+INSERT INTO Departamentos (nombre) VALUES ('Ingeniería'), ('Ciencias Sociales'), ('Educación');
+INSERT INTO Carreras (nombre) VALUES ('Informática'), ('Derecho'), ('Economía');
+INSERT INTO Asignaturas (nombre) VALUES ('Matemáticas'), ('Historia'), ('Física');
+
