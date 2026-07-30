@@ -10,7 +10,6 @@
 
 <div class="d-flex justify-content-between mb-4">
   <a href="admin.html" class="btn btn-outline-secondary">⬅️ Volver al Panel Principal</a>
-  <a href="profesores.html" class="btn btn-primary">Ir al Módulo Profesores ➡️</a>
 </div>
 
 <!-- Navbar -->
@@ -22,16 +21,27 @@
     </button>
     <div class="collapse navbar-collapse" id="menuPrincipal">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link active" href="usuarios.html">Usuarios</a></li>
-        <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
-        <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+        <!-- Submenú de Usuarios -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle active" href="#" id="menuUsuarios" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Usuarios
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="menuUsuarios">
+            <li><a class="dropdown-item" href="usuarios.html">Usuarios</a></li>
+            <li><a class="dropdown-item" href="profesores.html">Profesores</a></li>
+            <li><a class="dropdown-item" href="estudiantes.html">Estudiantes</a></li>
+            <li><a class="dropdown-item" href="departamentos.html">Departamentos</a></li>
+            <li><a class="dropdown-item" href="carreras.html">Carreras</a></li>
+            <li><a class="dropdown-item" href="asignaturas.html">Asignaturas</a></li>
+          </ul>
+        </li>
+        <!-- Otros módulos -->
         <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
         <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
       </ul>
     </div>
   </div>
 </nav>
-
 <div class="container mt-4">
   <h2>Gestión de Usuarios</h2>
   <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalUsuario">➕ Nuevo Usuario</button>
@@ -92,7 +102,6 @@
     </div>
   </div>
 </div>
-
 <!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -135,7 +144,6 @@
       })
       .catch(err => console.error("Error cargando usuarios:", err));
   }
-
   // Guardar usuario (crear/editar)
   document.getElementById("formUsuario").addEventListener("submit", function(e) {
     e.preventDefault();
@@ -167,38 +175,7 @@
     })
     .catch(err => alert("No se pudo guardar el usuario: " + err.message));
   });
-
   // Editar usuario
-  $(document).on("click", ".btnEditar", function() {
-    const id = $(this).data("id");
-    fetch(`/usuarios/${id}`)
-      .then(res => {
-        if (!res.ok) throw new Error("Usuario no encontrado");
-        return res.json();
-      })
-      .then(usuario => {
-        document.getElementById("usuarioId").value = usuario.id_usuario;
-        document.getElementById("usuarioNombre").value = usuario.nombre;
-        document.getElementById("usuarioEmail").value = usuario.correo;
-        document.getElementById("usuarioRol").value = usuario.rol;
-        new bootstrap.Modal(document.getElementById("modalUsuario")).show();
-      })
-      .catch(err => alert("Error al cargar usuario: " + err.message));
-  });
-  // Eliminar usuario
-  $(document).on("click", ".btnEliminar", function() {
-    const id = $(this).data("id");
-    if (confirm("¿Seguro que deseas eliminar este usuario?")) {
-      fetch(`/usuarios/${id}`, { method: "DELETE" })
-        .then(res => {
-          if (!res.ok) throw new Error("Error al eliminar usuario");
-          cargarUsuarios();
-        })
-        .catch(err => alert("No se pudo eliminar el usuario: " + err.message));
-    }
-  });
-
-  // Cargar usuarios al inicio  // Editar usuario
   $(document).on("click", ".btnEditar", function() {
     const id = $(this).data("id");
     fetch(`/usuarios/${id}`)
@@ -229,6 +206,7 @@
         .catch(err => alert("No se pudo eliminar el usuario: " + err.message));
     }
   });
+
   // Cargar usuarios al inicio
   cargarUsuarios();
 </script>
