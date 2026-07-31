@@ -5,15 +5,19 @@
   <title>Sensores - SmartCampusGuide</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+    footer { margin-top: auto; }
+    .modal-header { background-color: rgba(0, 64, 128, 0.85); color: white; }
+    .btn-rounded { border-radius: 20px; }
+  </style>
 </head>
 <body>
-
 <div class="d-flex justify-content-between mb-4">
-  <a href="admin.html" class="btn btn-outline-secondary">⬅️ Volver al Panel Principal</a>
-  <a href="estadisticas.html" class="btn btn-primary">Ir al Módulo Estadísticas ➡️</a>
+  <a href="admin.html" class="btn btn-outline-secondary btn-rounded">⬅️ Volver al Panel Principal</a>
+  <a href="estadisticas.html" class="btn btn-primary btn-rounded">Ir al Módulo Estadísticas ➡️</a>
 </div>
 
-<!-- Navbar persistente -->
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
   <div class="container-fluid">
     <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
@@ -22,13 +26,11 @@
     </button>
     <div class="collapse navbar-collapse" id="menuPrincipal">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
         <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
         <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
         <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
         <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
         <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
-        <li class="nav-item"><a class="nav-link" href="asistencia_profesores.html">Asistencia Profesores</a></li>
         <li class="nav-item"><a class="nav-link active" href="sensores.html">Sensores</a></li>
         <li class="nav-item"><a class="nav-link" href="estadisticas.html">Estadísticas</a></li>
         <li class="nav-item"><a class="nav-link" href="radiounge.html">Radio UNGE</a></li>
@@ -41,8 +43,9 @@
 
 <div class="container mt-4">
   <h2>Datos de Sensores</h2>
-  <table id="tablaSensores" class="display" style="width:100%">
-    <thead>
+  <button class="btn btn-success mb-3 btn-rounded" data-bs-toggle="modal" data-bs-target="#modalAgregar">➕ Agregar Sensor</button>
+  <table id="tablaSensores" class="display table table-striped table-bordered" style="width:100%">
+    <thead class="table-dark">
       <tr>
         <th>ID Sensor</th>
         <th>Tipo</th>
@@ -50,48 +53,107 @@
         <th>Valor</th>
         <th>Fecha</th>
         <th>Hora</th>
+        <th>Acciones</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- Se llenará dinámicamente -->
-    </tbody>
+    <tbody></tbody>
   </table>
 </div>
-
+<!-- Modal Agregar -->
+<div class="modal fade" id="modalAgregar" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Agregar Sensor</h5></div>
+      <div class="modal-body">
+        <form id="formAgregar">
+          <div class="mb-3"><label class="form-label">Tipo</label><input type="text" class="form-control" id="tipo"></div>
+          <div class="mb-3"><label class="form-label">Ubicación</label><input type="text" class="form-control" id="ubicacion"></div>
+          <div class="mb-3"><label class="form-label">Valor</label><input type="text" class="form-control" id="valor"></div>
+          <div class="mb-3"><label class="form-label">Fecha</label><input type="date" class="form-control" id="fecha"></div>
+          <div class="mb-3"><label class="form-label">Hora</label><input type="time" class="form-control" id="hora"></div>
+          <button type="submit" class="btn btn-primary btn-rounded">Guardar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
   TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
 </footer>
 
-<!-- jQuery y DataTables -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Script para cargar datos -->
 <script>
   $(document).ready(function() {
     const tablaSensores = $('#tablaSensores').DataTable();
 
-    fetch("/sensores")
-      .then(res => res.json())
-      .then(data => {
-        tablaSensores.clear();
-        data.forEach(s => {
-          tablaSensores.row.add([
-            s.id_sensor,
-            s.tipo,
-            s.ubicacion,
-            s.valor,
-            s.fecha,
-            s.hora
-          ]);
-        });
-        tablaSensores.draw();
-      })
-      .catch(err => console.error("Error cargando sensores:", err));
+    function cargarSensores(){
+      fetch("/sensores")
+        .then(res => res.json())
+        .then(data => {
+          tablaSensores.clear();
+          data.forEach(s => {
+            tablaSensores.row.add([
+              s.id_sensor,
+              s.tipo,
+              s.ubicacion,
+              s.valor,
+              s.fecha,
+              s.hora,
+              `<button class="btn btn-warning btn-sm btnEditar" data-id="${s.id_sensor}">✏️</button>
+               <button class="btn btn-danger btn-sm btnEliminar" data-id="${s.id_sensor}">🗑️</button>`
+            ]);
+          });
+          tablaSensores.draw();
+        })
+        .catch(err => console.error("Error cargando sensores:", err));
+    }
+
+    cargarSensores();
+
+    // Agregar sensor
+    $('#formAgregar').on('submit', function(e){
+      e.preventDefault();
+      const nuevo = {
+        tipo: $('#tipo').val(),
+        ubicacion: $('#ubicacion').val(),
+        valor: $('#valor').val(),
+        fecha: $('#fecha').val(),
+        hora: $('#hora').val()
+      };
+      fetch("/sensores", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(nuevo)
+      }).then(()=> {
+        $('#modalAgregar').modal('hide');
+        cargarSensores();
+      });
+    });
+
+    // Eliminar sensor
+    $('#tablaSensores').on('click','.btnEliminar', function(){
+      const id = $(this).data('id');
+      if(confirm("¿Seguro que deseas eliminar este sensor?")){
+        fetch(`/sensores/${id}`, {method:"DELETE"}).then(()=> cargarSensores());
+      }
+    });
+
+    // Editar sensor (ejemplo simple)
+    $('#tablaSensores').on('click','.btnEditar', function(){
+      const id = $(this).data('id');
+      const nuevoValor = prompt("Introduce nuevo valor:");
+      if(nuevoValor){
+        fetch(`/sensores/${id}`, {
+          method:"PUT",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({valor: nuevoValor})
+        }).then(()=> cargarSensores());
+      }
+    });
   });
 </script>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
