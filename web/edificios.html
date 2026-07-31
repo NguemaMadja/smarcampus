@@ -107,10 +107,11 @@
           tabla = $('#tablaEdificios').DataTable({
             data: data,
             columns: [
-              { data: 'id' },
+              { data: 'id' },          // alias en SQL
               { data: 'nombre' },
               { data: 'ubicacion' },
-              { data: 'capacidad' },
+              { data: 'lat' },
+              { data: 'lng' },
               {
                 data: null,
                 render: function (row) {
@@ -133,7 +134,8 @@
     const edificio = {
       nombre: document.getElementById("edificioNombre").value,
       ubicacion: document.getElementById("edificioUbicacion").value,
-      capacidad: document.getElementById("edificioCapacidad").value
+      lat: document.getElementById("edificioLat").value,
+      lng: document.getElementById("edificioLng").value
     };
 
     const url = id ? `/edificios/${id}` : "/edificios";
@@ -162,7 +164,8 @@
         document.getElementById("edificioId").value = edificio.id;
         document.getElementById("edificioNombre").value = edificio.nombre;
         document.getElementById("edificioUbicacion").value = edificio.ubicacion;
-        document.getElementById("edificioCapacidad").value = edificio.capacidad;
+        document.getElementById("edificioLat").value = edificio.lat;
+        document.getElementById("edificioLng").value = edificio.lng;
         new bootstrap.Modal(document.getElementById("modalEdificio")).show();
       });
   });
