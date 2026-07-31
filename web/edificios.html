@@ -114,15 +114,16 @@
         } else {
           tabla = $('#tablaEdificios').DataTable({
             data: data,
-            responsive: true, // activa modo responsive
+            responsive: true,
             columns: [
-              { data: 'id' },
-              { data: 'nombre' },
-              { data: 'ubicacion' },
-              { data: 'lat' },
-              { data: 'lng' },
+              { data: 'id', responsivePriority: 2 },
+              { data: 'nombre', responsivePriority: 3 },
+              { data: 'ubicacion', responsivePriority: 4 },
+              { data: 'lat', responsivePriority: 5 },
+              { data: 'lng', responsivePriority: 6 },
               {
                 data: null,
+                responsivePriority: 1, // 🔑 asegura que esta columna siempre se muestre
                 render: function (row) {
                   return `
                     <button class="btn btn-sm btn-primary btnEditar" data-id="${row.id}">✏️ Editar</button>
