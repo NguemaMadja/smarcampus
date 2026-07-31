@@ -62,7 +62,7 @@
   <h2>Mapa Interactivo del Campus</h2>
   <input type="text" id="searchBar" class="form-control mb-3" placeholder="Buscar edificio o lugar de interés...">
   <div id="map"></div>
-  <button id="btnMiUbicacion">📍 Mi Ubicación</button>
+  <button id="btnMiUbicacion">📍 Centrar en mi ubicación</button>
 </div>
 
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
@@ -101,7 +101,7 @@
     });
   }
 
-  // Botón "Mi ubicación"
+  // Botón "Centrar en mi ubicación"
   document.getElementById("btnMiUbicacion").addEventListener("click", () => {
     if(userMarker) map.setView(userMarker.getLatLng(), 16);
   });
@@ -123,7 +123,7 @@
     });
   });
 
-  // Buscar edificio con autocompletado
+  // Autocompletado en el buscador
   document.getElementById("searchBar").addEventListener("input", async e => {
     let res = await fetch("/edificios");
     let data = await res.json();
@@ -147,7 +147,7 @@
     if(edificio){
       map.setView([edificio.lat, edificio.lng], 18);
       L.marker([edificio.lat, edificio.lng]).addTo(map)
-        .bindPopup(`<b>${edificio.nombre}</b><br>Bienvenido!`).openPopup();
+        .bindPopup(`<b>${edificio.nombre}</b><br>¡Bienvenido!`).openPopup();
 
       // Calcular distancia y tiempo estimado
       if(userMarker){
@@ -191,7 +191,7 @@
         body: JSON.stringify({usuario_id: 1, edificio_id: edificio.id})
       });
     } else {
-      mostrarToast("Edificio no encontrado");
+      mostrarToast("⚠️ Edificio no encontrado");
     }
   }
 
