@@ -483,7 +483,7 @@ app.delete('/carreras/:id', async (req, res) => {
 // ---------------- EDIFICIOS CRUD ----------------
 app.get('/edificios', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM edificios ORDER BY id_edificio');
+    const result = await pool.query('SELECT id_edificio AS id, nombre, ubicacion, lat, lng FROM edificios ORDER BY id_edificio');
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
