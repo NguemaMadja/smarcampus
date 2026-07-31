@@ -479,6 +479,121 @@ app.delete('/carreras/:id', async (req, res) => {
   }
 });
 
+
+// ---------------- EDIFICIOS CRUD ----------------
+app.get('/edificios', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM edificios ORDER BY id_edificio');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/edificios/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM edificios WHERE id_edificio=$1', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Edificio no encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/edificios', async (req, res) => {
+  try {
+    const { nombre, ubicacion, lat, lng } = req.body;
+    const result = await pool.query(
+      'INSERT INTO edificios (nombre, ubicacion, lat, lng) VALUES ($1, $2, $3, $4) RETURNING *',
+      [nombre, ubicacion, lat, lng]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/edificios/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, ubicacion, lat, lng } = req.body;
+    const result = await pool.query(
+      'UPDATE edificios SET nombre=$1, ubicacion=$2, lat=$3, lng=$4 WHERE id_edificio=$5 RETURNING *',
+      [nombre, ubicacion, lat, lng, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Edificio no encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/edificios/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM edificios WHERE id_edificio=$1 RETURNING *',
+      [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Edificio no encontrado' });
+    res.json({ mensaje: 'Edificio eliminado correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ---------------- MAPA: BÚSQUEDA Y HUELLA ----------------
+
+// Buscar edificio por nombre
+app.get('/api/map/search', async (req, res) => {
+  try {
+    const { nombre } = req.query;
+    const result = await pool.query(
+      "SELECT * FROM edificios WHERE nombre ILIKE $1 LIMIT 1",
+      [nombre]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: "Edificio no encontrado" });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Registrar huella de usuario
+app.post('/api/map/huella', async (req, res) => {
+  try {
+    const { usuario_id, edificio_id } = req.body;
+    const result = await pool.query(
+      "INSERT INTO huella_usuarios (usuario_id, edificio_id, fecha_busqueda) VALUES ($1, $2, NOW()) RETURNING *",
+      [usuario_id, edificio_id]
+    );
+    res.json({ mensaje: "Huella registrada", data: result.rows[0] });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Marcar llegada y enviar mensaje
+app.post('/api/map/arrived', async (req, res) => {
+  try {
+    const { usuario_id, edificio_id } = req.body;
+    const result = await pool.query(
+      "UPDATE huella_usuarios SET tiempo_llegada=NOW(), mensaje_enviado=TRUE WHERE usuario_id=$1 AND edificio_id=$2 RETURNING *",
+      [usuario_id, edificio_id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: "Huella no encontrada" });
+    res.json({ mensaje: "Bienvenido al edificio!", data: result.rows[0] });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
+
+
+
 // ---------------- ASIGNATURAS CRUD ----------------
 app.get('/asignaturas', async (req, res) => {
   try {
