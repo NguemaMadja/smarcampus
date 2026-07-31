@@ -5,6 +5,7 @@
   <title>Mapa - SmartCampusGuide</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
   <style>
     body, html {
       height: 100%;
@@ -48,6 +49,7 @@
     </div>
   </div>
 </nav>
+
 <div class="container mt-4">
   <h2>Mapa Interactivo del Campus</h2>
   <input type="text" id="searchBar" class="form-control mb-3" placeholder="Buscar edificio o lugar de interés...">
@@ -60,7 +62,9 @@
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf/turf.min.js"></script> <!-- Turf para métricas -->
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf/turf.min.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
 <script>
   // Inicializar mapa centrado en Malabo (ejemplo coordenadas UNGE)
   var map = L.map('map').setView([3.75, 8.78], 15);
@@ -72,6 +76,26 @@
   }).addTo(map);
 
   let markers = [];
+  let userMarker = null;
+  let routingControl = null;
+
+  // Geolocalización del navegador
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      userMarker = L.marker([lat, lng], {
+        icon: L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
+          iconSize:[32,32]
+        })
+      })
+        .addTo(map)
+        .bindPopup("📍 Tu ubicación actual")
+        .openPopup();
+      map.setView([lat, lng], 16);
+    });
+  }
 
   // Cargar edificios desde API y dibujar marcadores
   fetch("/edificios")
@@ -97,6 +121,26 @@
       L.marker([edificio.lat, edificio.lng]).addTo(map)
         .bindPopup(`<b>${edificio.nombre}</b><br>Bienvenido!`).openPopup();
 
+      // Calcular distancia desde usuario
+      if(userMarker){
+        const puntoUsuario = turf.point([userMarker.getLatLng().lng, userMarker.getLatLng().lat]);
+        const puntoEdificio = turf.point([edificio.lng, edificio.lat]);
+        const distancia = turf.distance(puntoUsuario, puntoEdificio, {units: 'kilometers'});
+        alert(`Distancia aproximada: ${distancia.toFixed(2)} km`);
+
+        // Mostrar ruta óptima
+        if(routingControl){
+          map.removeControl(routingControl);
+        }
+        routingControl = L.Routing.control({
+          waypoints: [
+            L.latLng(userMarker.getLatLng().lat, userMarker.getLatLng().lng),
+            L.latLng(edificio.lat, edificio.lng)
+          ],
+          routeWhileDragging: false
+        }).addTo(map);
+      }
+
       // Registrar huella del usuario (ejemplo)
       await fetch("/api/map/huella", {
         method: "POST",
@@ -111,13 +155,6 @@
   document.getElementById("searchBar").addEventListener("change", e => {
     buscarEdificio(e.target.value);
   });
-
-  // Ejemplo de métrica: calcular distancia entre dos edificios
-  function calcularDistancia(ed1, ed2) {
-    const punto1 = turf.point([ed1.lng, ed1.lat]);
-    const punto2 = turf.point([ed2.lng, ed2.lat]);
-    return turf.distance(punto1, punto2, {units: 'kilometers'});
-  }
 </script>
 
 <!-- Bootstrap JS -->
