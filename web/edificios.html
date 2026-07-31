@@ -5,6 +5,7 @@
   <title>Edificios - SmartCampusGuide</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
 </head>
 <body>
 
@@ -36,20 +37,23 @@
   <h2>Gestión de Edificios</h2>
   <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalEdificio">➕ Nuevo Edificio</button>
 
-  <table id="tablaEdificios" class="display table table-striped" style="width:100%">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Nombre</th>
-        <th>Ubicación</th>
-        <th>Capacidad</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Se llenará dinámicamente -->
-    </tbody>
-  </table>
+  <div class="table-responsive">
+    <table id="tablaEdificios" class="display table table-striped nowrap" style="width:100%">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Ubicación</th>
+          <th>Latitud</th>
+          <th>Longitud</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Se llenará dinámicamente -->
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- Modal para crear/editar edificio -->
@@ -75,8 +79,13 @@
           </div>
 
           <div class="mb-3">
-            <label for="edificioCapacidad" class="form-label">Capacidad</label>
-            <input type="number" class="form-control" id="edificioCapacidad" required>
+            <label for="edificioLat" class="form-label">Latitud</label>
+            <input type="text" class="form-control" id="edificioLat" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="edificioLng" class="form-label">Longitud</label>
+            <input type="text" class="form-control" id="edificioLng" required>
           </div>
         </div>
         <div class="modal-footer">
@@ -91,6 +100,7 @@
 <!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -106,8 +116,9 @@
         } else {
           tabla = $('#tablaEdificios').DataTable({
             data: data,
+            responsive: true, // activa modo responsive
             columns: [
-              { data: 'id' },          // alias en SQL
+              { data: 'id' },
               { data: 'nombre' },
               { data: 'ubicacion' },
               { data: 'lat' },
