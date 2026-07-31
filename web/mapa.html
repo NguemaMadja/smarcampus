@@ -6,39 +6,28 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
   <style>
-    body, html {
-      height: 100%;
-      margin: 0;
-    }
-    #map {
-      height: calc(100vh - 200px);
-      width: 100%;
-    }
-    /* Estilo visual para el botón Aceptar */
+    body, html { height: 100%; margin: 0; }
+    #map { height: calc(100vh - 200px); width: 100%; }
     .leaflet-routing-container #btnCerrarRuta {
-      display: inline-block;
-      margin-left: 10px;
-      padding: 6px 12px;
-      background-color: #004080;
-      color: #fff;
-      font-weight: bold;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
+      display: inline-block; margin-left: 10px; padding: 6px 12px;
+      background-color: #004080; color: #fff; font-weight: bold;
+      border: none; border-radius: 5px; cursor: pointer;
     }
-    .leaflet-routing-container #btnCerrarRuta:hover {
-      background-color: #0066cc;
+    .leaflet-routing-container #btnCerrarRuta:hover { background-color: #0066cc; }
+    .leaflet-routing-container .ruta-header { font-weight: bold; margin-bottom: 8px; }
+    /* Botón flotante de mi ubicación */
+    #btnMiUbicacion {
+      position: absolute; top: 80px; right: 20px;
+      z-index: 1000; background: #004080; color: #fff;
+      padding: 8px 12px; border-radius: 5px; cursor: pointer;
     }
-    /* Estilo para la barra superior dentro del panel */
-    .leaflet-routing-container .ruta-header {
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
+    #btnMiUbicacion:hover { background: #0066cc; }
   </style>
 </head>
 <body>
-
 <div class="d-flex justify-content-between mb-4">
   <a href="admin.html" class="btn btn-outline-secondary">⬅️ Volver al Panel Principal</a>
   <a href="usuarios.html" class="btn btn-primary">Ir al Módulo Usuarios ➡️</a>
@@ -73,61 +62,84 @@
   <h2>Mapa Interactivo del Campus</h2>
   <input type="text" id="searchBar" class="form-control mb-3" placeholder="Buscar edificio o lugar de interés...">
   <div id="map"></div>
+  <button id="btnMiUbicacion">📍 Mi Ubicación</button>
 </div>
 
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
   TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
 </footer>
-
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf/turf.min.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
 <script>
   var map = L.map('map').setView([3.75, 8.78], 15);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
+    maxZoom: 19, attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  let markers = [];
+  let markersCluster = L.markerClusterGroup();
+  map.addLayer(markersCluster);
+
   let userMarker = null;
   let routingControl = null;
+  let historial = [];
 
-  // Geolocalización del navegador
+  // Geolocalización inicial
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(pos => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
       userMarker = L.marker([lat, lng], {
         icon: L.icon({
           iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
           iconSize:[32,32]
         })
-      })
-        .addTo(map)
-        .bindPopup("📍 Tu ubicación actual")
-        .openPopup();
+      }).addTo(map).bindPopup("📍 Tu ubicación actual").openPopup();
       map.setView([lat, lng], 16);
     });
   }
 
-  // Cargar edificios desde API
-  fetch("/edificios")
-    .then(res => res.json())
-    .then(data => {
-      data.forEach(ed => {
-        if (ed.lat && ed.lng) {
-          let marker = L.marker([ed.lat, ed.lng]).addTo(map)
-            .bindPopup(`<b>${ed.nombre}</b><br>${ed.ubicacion}`);
-          markers.push({ ...ed, marker });
-        }
-      });
-    })
-    .catch(err => console.error("Error cargando edificios:", err));
+  // Botón "Mi ubicación"
+  document.getElementById("btnMiUbicacion").addEventListener("click", () => {
+    if(userMarker) map.setView(userMarker.getLatLng(), 16);
+  });
 
-  // Buscar edificio por nombre
+  // Cargar edificios con iconos personalizados
+  fetch("/edificios").then(res => res.json()).then(data => {
+    data.forEach(ed => {
+      if (ed.lat && ed.lng) {
+        let icono = L.icon({
+          iconUrl: ed.tipo === "biblioteca" ? "https://cdn-icons-png.flaticon.com/512/29/29302.png" :
+                   ed.tipo === "laboratorio" ? "https://cdn-icons-png.flaticon.com/512/1046/1046857.png" :
+                   "https://cdn-icons-png.flaticon.com/512/854/854878.png",
+          iconSize:[32,32]
+        });
+        let marker = L.marker([ed.lat, ed.lng], {icon: icono})
+          .bindPopup(`<b>${ed.nombre}</b><br>${ed.ubicacion}`);
+        markersCluster.addLayer(marker);
+      }
+    });
+  });
+
+  // Buscar edificio con autocompletado
+  document.getElementById("searchBar").addEventListener("input", async e => {
+    let res = await fetch("/edificios");
+    let data = await res.json();
+    let sugerencias = data.filter(ed => ed.nombre.toLowerCase().includes(e.target.value.toLowerCase()));
+    if(sugerencias.length > 0) {
+      document.getElementById("searchBar").setAttribute("list","listaEdificios");
+      let datalist = document.getElementById("listaEdificios") || document.createElement("datalist");
+      datalist.id = "listaEdificios"; datalist.innerHTML = "";
+      sugerencias.forEach(ed => {
+        let opt = document.createElement("option"); opt.value = ed.nombre; datalist.appendChild(opt);
+      });
+      document.body.appendChild(datalist);
+    }
+  });
+
+  // Buscar edificio y mostrar ruta
   async function buscarEdificio(nombre) {
     let res = await fetch("/edificios");
     let data = await res.json();
@@ -137,16 +149,16 @@
       L.marker([edificio.lat, edificio.lng]).addTo(map)
         .bindPopup(`<b>${edificio.nombre}</b><br>Bienvenido!`).openPopup();
 
-      // Calcular distancia desde usuario
+      // Calcular distancia y tiempo estimado
       if(userMarker){
         const puntoUsuario = turf.point([userMarker.getLatLng().lng, userMarker.getLatLng().lat]);
         const puntoEdificio = turf.point([edificio.lng, edificio.lat]);
         const distancia = turf.distance(puntoUsuario, puntoEdificio, {units: 'kilometers'});
+        const tiempo = (distancia / 5 * 60).toFixed(0); // caminando ~5km/h
+        mostrarToast(`Distancia: ${distancia.toFixed(2)} km | Tiempo estimado: ${tiempo} min`);
 
         // Mostrar ruta óptima con botón "Aceptar"
-        if(routingControl){
-          map.removeControl(routingControl);
-        }
+        if(routingControl){ map.removeControl(routingControl); }
         routingControl = L.Routing.control({
           waypoints: [
             L.latLng(userMarker.getLatLng().lat, userMarker.getLatLng().lng),
@@ -159,32 +171,43 @@
         routingControl.on('routesfound', () => {
           const container = document.querySelector('.leaflet-routing-container');
           if(container && !document.getElementById('btnCerrarRuta')){
-            // Crear barra superior con distancia y botón
             const header = document.createElement('div');
             header.className = 'ruta-header';
-            header.innerHTML = `Distancia aproximada: ${distancia.toFixed(2)} km 
+            header.innerHTML = `Distancia: ${distancia.toFixed(2)} km | Tiempo: ${tiempo} min 
               <button id="btnCerrarRuta">Aceptar</button>`;
             container.insertBefore(header, container.firstChild);
-
             document.getElementById('btnCerrarRuta').onclick = () => container.style.display = 'none';
           }
         });
       }
 
-      // Registrar huella del usuario (ejemplo)
+      // Guardar historial
+      historial.push(edificio.nombre);
+
+      // Registrar huella del usuario
       await fetch("/api/map/huella", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({usuario_id: 1, edificio_id: edificio.id})
       });
     } else {
-      alert("Edificio no encontrado");
+      mostrarToast("Edificio no encontrado");
     }
   }
 
   document.getElementById("searchBar").addEventListener("change", e => {
     buscarEdificio(e.target.value);
   });
+
+  // Notificación visual (toast)
+  function mostrarToast(msg){
+    let toast = document.createElement("div");
+    toast.className = "alert alert-info position-fixed bottom-0 end-0 m-3";
+    toast.style.zIndex = 2000;
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(()=> toast.remove(), 5000);
+  }
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
