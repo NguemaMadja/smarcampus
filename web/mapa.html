@@ -48,7 +48,6 @@
     </div>
   </div>
 </nav>
-
 <div class="container mt-4">
   <h2>Mapa Interactivo del Campus</h2>
   <input type="text" id="searchBar" class="form-control mb-3" placeholder="Buscar edificio o lugar de interés...">
@@ -61,7 +60,7 @@
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf/turf.min.js"></script> <!-- Turf para métricas -->
 <script>
   // Inicializar mapa centrado en Malabo (ejemplo coordenadas UNGE)
   var map = L.map('map').setView([3.75, 8.78], 15);
@@ -72,40 +71,53 @@
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  // Cargar edificios desde API
+  let markers = [];
+
+  // Cargar edificios desde API y dibujar marcadores
   fetch("/edificios")
     .then(res => res.json())
     .then(data => {
       data.forEach(ed => {
         if (ed.lat && ed.lng) {
-          L.marker([ed.lat, ed.lng]).addTo(map)
+          let marker = L.marker([ed.lat, ed.lng]).addTo(map)
             .bindPopup(`<b>${ed.nombre}</b><br>${ed.ubicacion}`);
+          markers.push({ ...ed, marker });
         }
       });
     })
     .catch(err => console.error("Error cargando edificios:", err));
 
-  // Buscar edificio y registrar huella
+  // Buscar edificio por nombre
   async function buscarEdificio(nombre) {
-    let res = await fetch(`/api/map/search?nombre=${nombre}`);
-    let edificio = await res.json();
+    let res = await fetch("/edificios");
+    let data = await res.json();
+    let edificio = data.find(e => e.nombre.toLowerCase() === nombre.toLowerCase());
     if(edificio){
-      let destino = L.marker([edificio.lat, edificio.lng]).addTo(map)
-        .bindPopup(`<b>${edificio.nombre}</b><br>Bienvenido!`).openPopup();
       map.setView([edificio.lat, edificio.lng], 18);
+      L.marker([edificio.lat, edificio.lng]).addTo(map)
+        .bindPopup(`<b>${edificio.nombre}</b><br>Bienvenido!`).openPopup();
 
-      // Registrar huella del usuario
+      // Registrar huella del usuario (ejemplo)
       await fetch("/api/map/huella", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({usuario_id: 1, edificio_id: edificio.id})
       });
+    } else {
+      alert("Edificio no encontrado");
     }
   }
 
   document.getElementById("searchBar").addEventListener("change", e => {
     buscarEdificio(e.target.value);
   });
+
+  // Ejemplo de métrica: calcular distancia entre dos edificios
+  function calcularDistancia(ed1, ed2) {
+    const punto1 = turf.point([ed1.lng, ed1.lat]);
+    const punto2 = turf.point([ed2.lng, ed2.lat]);
+    return turf.distance(punto1, punto2, {units: 'kilometers'});
+  }
 </script>
 
 <!-- Bootstrap JS -->
