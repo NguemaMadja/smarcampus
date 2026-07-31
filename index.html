@@ -56,7 +56,6 @@
   </style>
 </head>
 <body>
-
   <!-- Cabecera -->
   <header>
     BIENVENIDO A LA UNGE, CAMPUS-LEON XIV
@@ -65,7 +64,7 @@
   <!-- Barra de navegación -->
   <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">SmartCampusGuide</a>
+      <a class="navbar-brand" href="index.html">SmartCampusGuide</a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><a class="nav-link" href="#radio">Radio UNGE</a></li>
@@ -76,7 +75,6 @@
       </div>
     </div>
   </nav>
-
   <!-- Sección Radio UNGE -->
   <div class="container" id="radio">
     <div class="card">
@@ -93,8 +91,9 @@
     <div class="card">
       <div class="card-header">Mapa Interactivo</div>
       <div class="card-body">
-        <input type="text" class="form-control" placeholder="Buscar edificio...">
-        <button class="btn btn-success mt-2">Buscar</button>
+        <p>Accede al mapa interactivo del campus sin necesidad de registrarte.</p>
+        <input type="text" id="buscadorMapa" class="form-control mb-2" placeholder="Buscar edificio...">
+        <button id="btnBuscarMapa" class="btn btn-success">🌍 Abrir Mapa Interactivo</button>
       </div>
     </div>
   </div>
@@ -109,7 +108,6 @@
       </div>
     </div>
   </div>
-
   <!-- Login -->
   <div class="container" id="login">
     <div class="card">
@@ -151,7 +149,7 @@
       const password = document.getElementById('password').value;
 
       try {
-        const response = await fetch('http://10.70.200.112:4000/login', { // usa la IP de tu Raspberry + puerto del backend
+        const response = await fetch('http://10.70.200.112:4000/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
@@ -161,7 +159,6 @@
 
         if (response.ok) {
           resultado.innerHTML = `✅ Bienvenido ${data.usuario} (Rol: ${data.rol})`;
-          // Redirigir según rol
           if (data.rol === 'admin') window.location.href = '/admin.html';
           if (data.rol === 'profesor') window.location.href = '/profesor.html';
           if (data.rol === 'estudiante') window.location.href = '/estudiante.html';
@@ -170,6 +167,17 @@
         }
       } catch (err) {
         resultado.innerHTML = '⚠️ Error de conexión con el servidor';
+      }
+    });
+
+    // Script para enlazar buscador y botón al mapa
+    const btnBuscarMapa = document.getElementById('btnBuscarMapa');
+    btnBuscarMapa.addEventListener('click', () => {
+      const valor = document.getElementById('buscadorMapa').value;
+      if(valor){
+        window.location.href = `mapa.html?buscar=${encodeURIComponent(valor)}`;
+      } else {
+        window.location.href = "mapa.html";
       }
     });
   </script>
