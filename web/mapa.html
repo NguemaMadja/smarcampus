@@ -12,25 +12,28 @@
       margin: 0;
     }
     #map {
-      height: calc(100vh - 200px); /* ocupa toda la pantalla menos navbar y footer */
+      height: calc(100vh - 200px);
       width: 100%;
     }
-    /* Estilo visual para el botón Aceptar dentro del panel */
+    /* Estilo visual para el botón Aceptar */
     .leaflet-routing-container #btnCerrarRuta {
-      display: block;
-      width: 100%;
-      margin-top: 10px;
-      padding: 8px;
+      display: inline-block;
+      margin-left: 10px;
+      padding: 6px 12px;
       background-color: #004080;
       color: #fff;
       font-weight: bold;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      text-align: center;
     }
     .leaflet-routing-container #btnCerrarRuta:hover {
       background-color: #0066cc;
+    }
+    /* Estilo para la barra superior dentro del panel */
+    .leaflet-routing-container .ruta-header {
+      font-weight: bold;
+      margin-bottom: 8px;
     }
   </style>
 </head>
@@ -41,7 +44,6 @@
   <a href="usuarios.html" class="btn btn-primary">Ir al Módulo Usuarios ➡️</a>
 </div>
 
-<!-- Navbar persistente -->
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
   <div class="container-fluid">
     <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
@@ -77,7 +79,6 @@
   TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
 </footer>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf/turf.min.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
@@ -141,7 +142,6 @@
         const puntoUsuario = turf.point([userMarker.getLatLng().lng, userMarker.getLatLng().lat]);
         const puntoEdificio = turf.point([edificio.lng, edificio.lat]);
         const distancia = turf.distance(puntoUsuario, puntoEdificio, {units: 'kilometers'});
-        alert(`Distancia aproximada: ${distancia.toFixed(2)} km`);
 
         // Mostrar ruta óptima con botón "Aceptar"
         if(routingControl){
@@ -159,11 +159,14 @@
         routingControl.on('routesfound', () => {
           const container = document.querySelector('.leaflet-routing-container');
           if(container && !document.getElementById('btnCerrarRuta')){
-            const btn = document.createElement('button');
-            btn.id = 'btnCerrarRuta';
-            btn.innerText = 'Aceptar';
-            container.appendChild(btn);
-            btn.onclick = () => container.style.display = 'none';
+            // Crear barra superior con distancia y botón
+            const header = document.createElement('div');
+            header.className = 'ruta-header';
+            header.innerHTML = `Distancia aproximada: ${distancia.toFixed(2)} km 
+              <button id="btnCerrarRuta">Aceptar</button>`;
+            container.insertBefore(header, container.firstChild);
+
+            document.getElementById('btnCerrarRuta').onclick = () => container.style.display = 'none';
           }
         });
       }
@@ -184,7 +187,6 @@
   });
 </script>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
