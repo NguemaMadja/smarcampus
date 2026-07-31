@@ -5,10 +5,13 @@
   <title>Mapa - SmartCampusGuide</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
   <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+    }
     #map {
-      height: 600px;
+      height: calc(100vh - 200px); /* ocupa toda la pantalla menos navbar y footer */
       width: 100%;
     }
   </style>
@@ -48,6 +51,7 @@
 
 <div class="container mt-4">
   <h2>Mapa Interactivo del Campus</h2>
+  <input type="text" id="searchBar" class="form-control mb-3" placeholder="Buscar edificio o lugar de interés...">
   <div id="map"></div>
 </div>
 
@@ -57,11 +61,9 @@
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
-<!-- Script para inicializar mapa -->
 <script>
-  // Inicializar mapa centrado en UNGE (ejemplo coordenadas de Malabo)
+  // Inicializar mapa centrado en Malabo (ejemplo coordenadas UNGE)
   var map = L.map('map').setView([3.75, 8.78], 15);
 
   // Cargar tiles de OpenStreetMap
@@ -69,22 +71,6 @@
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
-
-  // Añadir buscador
-  L.Control.geocoder().addTo(map);
-
-  // Marcadores fijos de edificios (ejemplo)
-  var edificiosFijos = [
-    {nombre: "Facultad de Ingeniería", lat: 3.751, lng: 8.780},
-    {nombre: "Biblioteca Central", lat: 3.752, lng: 8.782},
-    {nombre: "Facultad de Medicina", lat: 3.749, lng: 8.779},
-    {nombre: "Rectorado", lat: 3.750, lng: 8.781}
-  ];
-
-  edificiosFijos.forEach(ed => {
-    L.marker([ed.lat, ed.lng]).addTo(map)
-      .bindPopup(`<b>${ed.nombre}</b>`);
-  });
 
   // Cargar edificios desde API
   fetch("/edificios")
@@ -98,6 +84,28 @@
       });
     })
     .catch(err => console.error("Error cargando edificios:", err));
+
+  // Buscar edificio y registrar huella
+  async function buscarEdificio(nombre) {
+    let res = await fetch(`/api/map/search?nombre=${nombre}`);
+    let edificio = await res.json();
+    if(edificio){
+      let destino = L.marker([edificio.lat, edificio.lng]).addTo(map)
+        .bindPopup(`<b>${edificio.nombre}</b><br>Bienvenido!`).openPopup();
+      map.setView([edificio.lat, edificio.lng], 18);
+
+      // Registrar huella del usuario
+      await fetch("/api/map/huella", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({usuario_id: 1, edificio_id: edificio.id})
+      });
+    }
+  }
+
+  document.getElementById("searchBar").addEventListener("change", e => {
+    buscarEdificio(e.target.value);
+  });
 </script>
 
 <!-- Bootstrap JS -->
