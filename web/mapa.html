@@ -18,7 +18,6 @@
     }
     .leaflet-routing-container #btnCerrarRuta:hover { background-color: #0066cc; }
     .leaflet-routing-container .ruta-header { font-weight: bold; margin-bottom: 8px; }
-    /* Botón flotante de mi ubicación */
     #btnMiUbicacion {
       position: absolute; top: 80px; right: 20px;
       z-index: 1000; background: #004080; color: #fff;
@@ -123,22 +122,6 @@
     });
   });
 
-  // Autocompletado en el buscador
-  document.getElementById("searchBar").addEventListener("input", async e => {
-    let res = await fetch("/edificios");
-    let data = await res.json();
-    let sugerencias = data.filter(ed => ed.nombre.toLowerCase().includes(e.target.value.toLowerCase()));
-    if(sugerencias.length > 0) {
-      document.getElementById("searchBar").setAttribute("list","listaEdificios");
-      let datalist = document.getElementById("listaEdificios") || document.createElement("datalist");
-      datalist.id = "listaEdificios"; datalist.innerHTML = "";
-      sugerencias.forEach(ed => {
-        let opt = document.createElement("option"); opt.value = ed.nombre; datalist.appendChild(opt);
-      });
-      document.body.appendChild(datalist);
-    }
-  });
-
   // Buscar edificio y mostrar ruta
   async function buscarEdificio(nombre) {
     let res = await fetch("/edificios");
@@ -149,15 +132,13 @@
       L.marker([edificio.lat, edificio.lng]).addTo(map)
         .bindPopup(`<b>${edificio.nombre}</b><br>¡Bienvenido!`).openPopup();
 
-      // Calcular distancia y tiempo estimado
       if(userMarker){
         const puntoUsuario = turf.point([userMarker.getLatLng().lng, userMarker.getLatLng().lat]);
         const puntoEdificio = turf.point([edificio.lng, edificio.lat]);
         const distancia = turf.distance(puntoUsuario, puntoEdificio, {units: 'kilometers'});
-        const tiempo = (distancia / 5 * 60).toFixed(0); // caminando ~5km/h
+        const tiempo = (distancia / 5 * 60).toFixed(0);
         mostrarToast(`Distancia: ${distancia.toFixed(2)} km | Tiempo estimado: ${tiempo} min`);
 
-        // Mostrar ruta óptima con botón "Aceptar"
         if(routingControl){ map.removeControl(routingControl); }
         routingControl = L.Routing.control({
           waypoints: [
@@ -181,10 +162,8 @@
         });
       }
 
-      // Guardar historial
       historial.push(edificio.nombre);
 
-      // Registrar huella del usuario
       await fetch("/api/map/huella", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
@@ -207,6 +186,13 @@
     toast.innerText = msg;
     document.body.appendChild(toast);
     setTimeout(()=> toast.remove(), 5000);
+  }
+
+  // 🚀 Nuevo: leer parámetro "buscar" desde la URL
+  const params = new URLSearchParams(window.location.search);
+  const edificioBuscado = params.get("buscar");
+  if(edificioBuscado){
+    buscarEdificio(edificioBuscado);
   }
 </script>
 
