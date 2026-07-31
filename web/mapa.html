@@ -66,10 +66,8 @@
 <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 
 <script>
-  // Inicializar mapa centrado en Malabo (ejemplo coordenadas UNGE)
   var map = L.map('map').setView([3.75, 8.78], 15);
 
-  // Cargar tiles de OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
@@ -97,7 +95,7 @@
     });
   }
 
-  // Cargar edificios desde API y dibujar marcadores
+  // Cargar edificios desde API
   fetch("/edificios")
     .then(res => res.json())
     .then(data => {
@@ -128,7 +126,7 @@
         const distancia = turf.distance(puntoUsuario, puntoEdificio, {units: 'kilometers'});
         alert(`Distancia aproximada: ${distancia.toFixed(2)} km`);
 
-        // Mostrar ruta óptima
+        // Mostrar ruta óptima con botón "Aceptar"
         if(routingControl){
           map.removeControl(routingControl);
         }
@@ -137,8 +135,21 @@
             L.latLng(userMarker.getLatLng().lat, userMarker.getLatLng().lng),
             L.latLng(edificio.lat, edificio.lng)
           ],
-          routeWhileDragging: false
+          routeWhileDragging: false,
+          show: true
         }).addTo(map);
+
+        routingControl.on('routesfound', () => {
+          const container = document.querySelector('.leaflet-routing-container');
+          if(container && !document.getElementById('btnCerrarRuta')){
+            const btn = document.createElement('button');
+            btn.id = 'btnCerrarRuta';
+            btn.className = 'btn btn-sm btn-primary mt-2';
+            btn.innerText = 'Aceptar';
+            btn.onclick = () => container.style.display = 'none';
+            container.appendChild(btn);
+          }
+        });
       }
 
       // Registrar huella del usuario (ejemplo)
@@ -161,3 +172,4 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
