@@ -370,14 +370,14 @@ app.get('/usuarios_estadisticas', async (req, res) => {
   }
 });
 
-// Visitas de la aplicación (ejemplo: tabla visitas_app con fecha y total)
+// Visitas de la aplicación
 app.get('/visitas_app', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT fecha, COUNT(*) AS total
-      FROM visitas_app
-      GROUP BY fecha
-      ORDER BY fecha
+      SELECT DATE(fecha) AS fecha, COUNT(*) AS total
+      FROM visitasapp
+      GROUP BY DATE(fecha)
+      ORDER BY DATE(fecha)
     `);
     res.json(result.rows);
   } catch (err) {
@@ -385,29 +385,14 @@ app.get('/visitas_app', async (req, res) => {
   }
 });
 
-// Navegación en el mapa (ejemplo: tabla mapa_logs con zona y fecha)
-app.get('/mapa_estadisticas', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT zona, COUNT(*) AS total
-      FROM mapa_logs
-      GROUP BY zona
-      ORDER BY total DESC
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
-// Asistencia de profesores (ejemplo: tabla asistencia con profesor y fecha)
+// Asistencia de estudiantes/profesores
 app.get('/asistencia_estadisticas', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT p.nombre AS profesor, COUNT(a.id) AS asistencias
+      SELECT a.id_asignatura, COUNT(*) AS asistencias
       FROM asistencia a
-      JOIN profesores p ON a.id_profesor = p.id_profesor
-      GROUP BY p.nombre
+      GROUP BY a.id_asignatura
       ORDER BY asistencias DESC
     `);
     res.json(result.rows);
@@ -416,14 +401,30 @@ app.get('/asistencia_estadisticas', async (req, res) => {
   }
 });
 
+// Navegación en el mapa (acciones registradas)
+app.get('/mapa_estadisticas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT accion AS zona, COUNT(*) AS total
+      FROM logsactividad
+      GROUP BY accion
+      ORDER BY total DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-// Oyentes de Radio UNGE (ejemplo: tabla oyentes con programa y oyentes)
+
+// Oyentes de Radio UNGE
 app.get('/oyentes_radio', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT programa, COUNT(*) AS oyentes
-      FROM oyentes_radio
-      GROUP BY programa
+      SELECT r.titulo_programa AS programa, COUNT(e.usuario_id) AS oyentes
+      FROM estadisticas_escucha e
+      JOIN radiounge r ON e.id_programa = r.id
+      GROUP BY r.titulo_programa
       ORDER BY oyentes DESC
     `);
     res.json(result.rows);
@@ -432,17 +433,24 @@ app.get('/oyentes_radio', async (req, res) => {
   }
 });
 
-// Condiciones ambientales (ejemplo: tabla sensores con fecha y valores)
+
+// Condiciones ambientales
 app.get('/sensores_estadisticas', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT fecha,
-             AVG(CASE WHEN tipo='temperatura' THEN valor END) AS temperatura,
-             AVG(CASE WHEN tipo='humedad' THEN valor END) AS humedad,
-             AVG(CASE WHEN tipo='co2' THEN valor END) AS co2
-      FROM sensores
-      GROUP BY fecha
-      ORDER BY fecha
+      SELECT DATE(fecha) AS fecha,
+             AVG(valor) FILTER (WHERE id_sensor IN (
+               SELECT id_sensor FROM sensores WHERE tipo='temperatura'
+             )) AS temperatura,
+             AVG(valor) FILTER (WHERE id_sensor IN (
+               SELECT id_sensor FROM sensores WHERE tipo='humedad'
+             )) AS humedad,
+             AVG(valor) FILTER (WHERE id_sensor IN (
+               SELECT id_sensor FROM sensores WHERE tipo='co2'
+             )) AS co2
+      FROM medicionesambientales
+      GROUP BY DATE(fecha)
+      ORDER BY DATE(fecha)
     `);
     res.json(result.rows);
   } catch (err) {
@@ -450,26 +458,26 @@ app.get('/sensores_estadisticas', async (req, res) => {
   }
 });
 
-
-// QoS de la red WiFi (ejemplo: tabla qos_wifi con métricas)
+// QoS de la red WiFi
 app.get('/qos_wifi', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT fecha,
+      SELECT DATE(fecha) AS fecha,
              AVG(latencia) AS latencia,
              AVG(jitter) AS jitter,
-             AVG(velocidad) AS velocidad,
-             AVG(rssi) AS rssi,
-             AVG(perdida) AS perdida
-      FROM qos_wifi
-      GROUP BY fecha
-      ORDER BY fecha
+             AVG(ancho_banda) AS velocidad,
+             AVG(nivel_senal) AS rssi,
+             AVG(perdida_paquetes) AS perdida
+      FROM metricaswifi
+      GROUP BY DATE(fecha)
+      ORDER BY DATE(fecha)
     `);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
