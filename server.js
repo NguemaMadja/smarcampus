@@ -664,6 +664,127 @@ app.delete('/asignaturas/:id', async (req, res) => {
 });
 
 
+// ---------------- TIPOS DE SENSORES CRUD ----------------
+app.get('/tipos_sensores', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM tipos_sensores ORDER BY id_tipo');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/tipos_sensores', async (req, res) => {
+  try {
+    const { nombre } = req.body;
+    const result = await pool.query(
+      'INSERT INTO tipos_sensores (nombre) VALUES ($1) RETURNING *',
+      [nombre]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/tipos_sensores/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM tipos_sensores WHERE id_tipo=$1 RETURNING *',
+      [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Tipo no encontrado' });
+    res.json({ mensaje: 'Tipo eliminado correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------- SENSORES CRUD ----------------
+app.get('/sensores', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT s.id_sensor, s.tipo, s.ubicacion,
+             l.valor, l.fecha, l.hora
+      FROM sensores s
+      LEFT JOIN LATERAL (
+        SELECT valor, fecha, hora
+        FROM lecturas
+        WHERE id_sensor = s.id_sensor
+        ORDER BY fecha DESC, hora DESC
+        LIMIT 1
+      ) l ON true
+      ORDER BY s.id_sensor
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/sensores', async (req, res) => {
+  try {
+    const { tipo, ubicacion } = req.body;
+    const result = await pool.query(
+      'INSERT INTO sensores (tipo, ubicacion) VALUES ($1, $2) RETURNING *',
+      [tipo, ubicacion]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/sensores/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { ubicacion } = req.body;
+    const result = await pool.query(
+      'UPDATE sensores SET ubicacion=$1 WHERE id_sensor=$2 RETURNING *',
+      [ubicacion, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Sensor no encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/sensores/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM sensores WHERE id_sensor=$1 RETURNING *',
+      [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Sensor no encontrado' });
+    res.json({ mensaje: 'Sensor eliminado correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ---------------- LECTURAS DE SENSORES ----------------
+app.post('/sensores/data', async (req, res) => {
+  try {
+    const { id_sensor, valor } = req.body;
+    const fecha = new Date().toISOString().split("T")[0];
+    const hora = new Date().toISOString().split("T")[1].split(".")[0];
+
+    const result = await pool.query(
+      'INSERT INTO lecturas (id_sensor, valor, fecha, hora) VALUES ($1, $2, $3, $4) RETURNING *',
+      [id_sensor, valor, fecha, hora]
+    );
+    res.json({ mensaje: 'Lectura registrada', data: result.rows[0] });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
+
 
 // ---------------- QR Y ASISTENCIA ----------------
 
