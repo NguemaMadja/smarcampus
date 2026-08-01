@@ -43,7 +43,10 @@
 
 <div class="container mt-4">
   <h2>Datos de Sensores</h2>
-  <button class="btn btn-success mb-3 btn-rounded" data-bs-toggle="modal" data-bs-target="#modalAgregar">➕ Registrar Sensor</button>
+  <div class="mb-3">
+    <button class="btn btn-success btn-rounded" data-bs-toggle="modal" data-bs-target="#modalAgregar">➕ Registrar Sensor</button>
+    <button class="btn btn-info btn-rounded" data-bs-toggle="modal" data-bs-target="#modalTipos">⚙️ Gestionar Tipos de Sensores</button>
+  </div>
   <table id="tablaSensores" class="display table table-striped table-bordered" style="width:100%">
     <thead class="table-dark">
       <tr>
@@ -68,12 +71,7 @@
         <form id="formAgregar">
           <div class="mb-3">
             <label class="form-label">Tipo</label>
-            <select class="form-select" id="tipo">
-              <option value="Temperatura">Temperatura</option>
-              <option value="Humedad">Humedad</option>
-              <option value="CO2">CO₂</option>
-              <option value="Red WiFi">Red WiFi</option>
-            </select>
+            <select class="form-select" id="tipo"></select>
           </div>
           <div class="mb-3">
             <label class="form-label">Ubicación</label>
@@ -81,6 +79,31 @@
           </div>
           <button type="submit" class="btn btn-primary btn-rounded">Guardar</button>
         </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Tipos de Sensores -->
+<div class="modal fade" id="modalTipos" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Gestionar Tipos de Sensores</h5></div>
+      <div class="modal-body">
+        <form id="formTipo" class="mb-3 d-flex">
+          <input type="text" class="form-control me-2" id="nuevoTipo" placeholder="Nuevo tipo de sensor">
+          <button type="submit" class="btn btn-success btn-rounded">➕ Añadir</button>
+        </form>
+        <table id="tablaTipos" class="table table-striped table-bordered">
+          <thead class="table-dark">
+            <tr>
+              <th>ID Tipo</th>
+              <th>Nombre</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -96,7 +119,9 @@
 <script>
   $(document).ready(function() {
     const tablaSensores = $('#tablaSensores').DataTable();
+    const tablaTipos = $('#tablaTipos').DataTable();
 
+    // Cargar sensores
     function cargarSensores(){
       fetch("/sensores")
         .then(res => res.json())
@@ -119,9 +144,38 @@
         .catch(err => console.error("Error cargando sensores:", err));
     }
 
-    cargarSensores();
+    // Cargar tipos de sensores
+    function cargarTipos(){
+      fetch("/tipos_sensores")
+        .then(res => res.json())
+        .then(data => {
+          tablaTipos.clear();
+          data.forEach(t => {
+            tablaTipos.row.add([
+              t.id_tipo,
+              t.nombre,
+              `<button class="btn btn-danger btn-sm btnEliminarTipo" data-id="${t.id_tipo}">🗑️</button>`
+            ]);
+          });
+          tablaTipos.draw();
 
-    // Registrar sensor (solo tipo y ubicación)
+          // llenar select del modal de registrar sensor
+          const select = document.getElementById("tipo");
+          select.innerHTML = "";
+          data.forEach(t => {
+            const opt = document.createElement("option");
+            opt.value = t.nombre;
+            opt.textContent = t.nombre;
+            select.appendChild(opt);
+          });
+        })
+        .catch(err => console.error("Error cargando tipos:", err));
+    }
+
+    cargarSensores();
+    cargarTipos();
+
+    // Registrar sensor
     $('#formAgregar').on('submit', function(e){
       e.preventDefault();
       const nuevo = {
@@ -138,15 +192,37 @@
       });
     });
 
+    // Añadir tipo de sensor
+    $('#formTipo').on('submit', function(e){
+      e.preventDefault();
+      const nuevoTipo = $('#nuevoTipo').val();
+      fetch("/tipos_sensores", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({nombre: nuevoTipo})
+      }).then(()=> {
+        $('#nuevoTipo').val("");
+        cargarTipos();
+      });
+    });
+
+    // Eliminar tipo
+    $('#tablaTipos').on('click','.btnEliminarTipo', function(){
+      const id = $(this).data('id');
+      if(confirm("¿Eliminar este tipo de sensor?")){
+        fetch(`/tipos_sensores/${id}`, {method:"DELETE"}).then(()=> cargarTipos());
+      }
+    });
+
     // Eliminar sensor
     $('#tablaSensores').on('click','.btnEliminar', function(){
       const id = $(this).data('id');
-      if(confirm("¿Seguro que deseas eliminar este sensor?")){
+      if(confirm("¿Eliminar este sensor?")){
         fetch(`/sensores/${id}`, {method:"DELETE"}).then(()=> cargarSensores());
       }
     });
 
-    // Editar sensor (ejemplo simple: cambiar ubicación)
+    // Editar sensor (cambiar ubicación)
     $('#tablaSensores').on('click','.btnEditar', function(){
       const id = $(this).data('id');
       const nuevaUbicacion = prompt("Introduce nueva ubicación:");
