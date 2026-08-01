@@ -5,6 +5,11 @@
   <title>Estadísticas - SmartCampusGuide</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+    footer { margin-top: auto; }
+    .card-header { background-color: rgba(0, 64, 128, 0.85); color: white; }
+  </style>
 </head>
 <body>
 
@@ -22,13 +27,12 @@
     </button>
     <div class="collapse navbar-collapse" id="menuPrincipal">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
         <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
         <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
         <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+        <li class="nav-item"><a class="nav-link" href="aulas.html">Aulas</a></li>
         <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
         <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
-        <li class="nav-item"><a class="nav-link" href="asistencia_profesores.html">Asistencia Profesores</a></li>
         <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
         <li class="nav-item"><a class="nav-link active" href="estadisticas.html">Estadísticas</a></li>
         <li class="nav-item"><a class="nav-link" href="radiounge.html">Radio UNGE</a></li>
@@ -56,14 +60,6 @@
           <input type="date" id="fechaFin" class="form-control">
         </div>
         <div class="col-md-3">
-          <label for="nombreProfesor" class="form-label">Profesor</label>
-          <input type="text" id="nombreProfesor" class="form-control" placeholder="Nombre">
-        </div>
-        <div class="col-md-3">
-          <label for="programaRadio" class="form-label">Programa Radio</label>
-          <input type="text" id="programaRadio" class="form-control" placeholder="Programa">
-        </div>
-        <div class="col-md-3">
           <label for="parametroAmbiental" class="form-label">Parámetro Ambiental</label>
           <select id="parametroAmbiental" class="form-select">
             <option value="temperatura">Temperatura</option>
@@ -77,47 +73,118 @@
       </form>
     </div>
   </div>
-
-  <!-- Gráficas -->
-  <div class="card mb-4">
-    <div class="card-header">Asistencia de Profesores</div>
-    <div class="card-body">
-      <canvas id="graficoAsistencia"></canvas>
+  <!-- Gráficas en grid responsive -->
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">Usuarios por Rol</div>
+        <div class="card-body"><canvas id="graficoUsuarios"></canvas></div>
+      </div>
     </div>
-  </div>
 
-  <div class="card mb-4">
-    <div class="card-header">QoS de la Red WiFi</div>
-    <div class="card-body">
-      <canvas id="graficoQoS"></canvas>
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">Visitas de la Aplicación</div>
+        <div class="card-body"><canvas id="graficoVisitas"></canvas></div>
+      </div>
     </div>
-  </div>
 
-  <div class="card mb-4">
-    <div class="card-header">Oyentes de Radio UNGE</div>
-    <div class="card-body">
-      <canvas id="graficoRadio"></canvas>
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">Navegación en el Mapa</div>
+        <div class="card-body"><canvas id="graficoMapa"></canvas></div>
+      </div>
     </div>
-  </div>
 
-  <div class="card mb-4">
-    <div class="card-header">Condiciones Ambientales</div>
-    <div class="card-body">
-      <canvas id="graficoAmbiental"></canvas>
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">Asistencia de Profesores</div>
+        <div class="card-body"><canvas id="graficoAsistencia"></canvas></div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">Oyentes de Radio UNGE</div>
+        <div class="card-body"><canvas id="graficoRadio"></canvas></div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">Condiciones Ambientales</div>
+        <div class="card-body"><canvas id="graficoSensores"></canvas></div>
+      </div>
+    </div>
+
+    <div class="col-md-12 mb-4">
+      <div class="card">
+        <div class="card-header">QoS de la Red WiFi</div>
+        <div class="card-body"><canvas id="graficoQoS"></canvas></div>
+      </div>
     </div>
   </div>
 </div>
-
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
   TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
 </footer>
 
-<!-- Script -->
 <script>
-  let graficoAsistencia, graficoQoS, graficoRadio, graficoAmbiental;
+  let graficoUsuarios, graficoVisitas, graficoMapa, graficoAsistencia, graficoRadio, graficoSensores, graficoQoS;
 
   function cargarGraficas(filtros = {}) {
-    // Asistencia
+    // Usuarios por rol
+    fetch("/usuarios_estadisticas?" + new URLSearchParams(filtros))
+      .then(res => res.json())
+      .then(data => {
+        if (graficoUsuarios) graficoUsuarios.destroy();
+        graficoUsuarios = new Chart(document.getElementById('graficoUsuarios'), {
+          type: 'bar',
+          data: {
+            labels: data.map(d => d.rol),
+            datasets: [{ label: 'Cantidad', data: data.map(d => d.total), backgroundColor: 'rgba(0,128,255,0.7)' }]
+          }
+        });
+      });
+
+    // Visitas de la aplicación
+    fetch("/visitas_app?" + new URLSearchParams(filtros))
+      .then(res => res.json())
+      .then(data => {
+        if (graficoVisitas) graficoVisitas.destroy();
+        graficoVisitas = new Chart(document.getElementById('graficoVisitas'), {
+          type: 'line',
+          data: {
+            labels: data.map(d => d.fecha),
+            datasets: [{ label: 'Visitas', data: data.map(d => d.total), borderColor: 'rgba(75,192,192,0.8)', fill: false }]
+          }
+        });
+      });
+
+    // Navegación en el mapa
+    fetch("/mapa_estadisticas?" + new URLSearchParams(filtros))
+      .then(res => res.json())
+      .then(data => {
+        if (graficoMapa) graficoMapa.destroy();
+        graficoMapa = new Chart(document.getElementById('graficoMapa'), {
+          type: 'doughnut',
+          data: {
+            labels: data.map(d => d.zona),
+            datasets: [{
+              label: 'Consultas',
+              data: data.map(d => d.total),
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)'
+              ]
+            }]
+          }
+        });
+      });
+
+    // Asistencia de profesores
     fetch("/asistencia_estadisticas?" + new URLSearchParams(filtros))
       .then(res => res.json())
       .then(data => {
@@ -126,33 +193,12 @@
           type: 'bar',
           data: {
             labels: data.map(d => d.profesor),
-            datasets: [{
-              label: 'Asistencias',
-              data: data.map(d => d.asistencias),
-              backgroundColor: 'rgba(0, 128, 255, 0.7)'
-            }]
+            datasets: [{ label: 'Asistencias', data: data.map(d => d.asistencias), backgroundColor: 'rgba(0,128,255,0.7)' }]
           }
         });
       });
 
-    // QoS
-    fetch("/qos_wifi?" + new URLSearchParams(filtros))
-      .then(res => res.json())
-      .then(data => {
-        if (graficoQoS) graficoQoS.destroy();
-        graficoQoS = new Chart(document.getElementById('graficoQoS'), {
-          type: 'line',
-          data: {
-            labels: data.map(d => d.fecha),
-            datasets: [
-              { label: 'Latencia (ms)', data: data.map(d => d.latencia), borderColor: 'rgba(255, 99, 132, 0.8)', fill: false },
-              { label: 'Pérdida (%)', data: data.map(d => d.perdida), borderColor: 'rgba(54, 162, 235, 0.8)', fill: false }
-            ]
-          }
-        });
-      });
-
-    // Radio
+    // Oyentes de Radio UNGE
     fetch("/oyentes_radio?" + new URLSearchParams(filtros))
       .then(res => res.json())
       .then(data => {
@@ -168,14 +214,50 @@
                 'rgba(255, 206, 86, 0.7)',
                 'rgba(75, 192, 192, 0.7)',
                 'rgba(153, 102, 255, 0.7)',
-                'rgba
-
-
-                                ]
-              }]
-            }
-          });
+                'rgba(255, 99, 132, 0.7)'
+              ]
+            }]
+          }
         });
+      });
+
+    // Condiciones ambientales (sensores)
+    fetch("/sensores_estadisticas?" + new URLSearchParams(filtros))
+      .then(res => res.json())
+      .then(data => {
+        if (graficoSensores) graficoSensores.destroy();
+        graficoSensores = new Chart(document.getElementById('graficoSensores'), {
+          type: 'line',
+          data: {
+            labels: data.map(d => d.fecha),
+            datasets: [
+              { label: 'Temperatura', data: data.map(d => d.temperatura), borderColor: 'rgba(255,99,132,0.8)', fill: false },
+              { label: 'Humedad', data: data.map(d => d.humedad), borderColor: 'rgba(54,162,235,0.8)', fill: false },
+              { label: 'CO₂', data: data.map(d => d.co2), borderColor: 'rgba(255,206,86,0.8)', fill: false }
+            ]
+          }
+        });
+      });
+
+    // QoS de la red WiFi
+    fetch("/qos_wifi?" + new URLSearchParams(filtros))
+      .then(res => res.json())
+      .then(data => {
+        if (graficoQoS) graficoQoS.destroy();
+        graficoQoS = new Chart(document.getElementById('graficoQoS'), {
+          type: 'line',
+          data: {
+            labels: data.map(d => d.fecha),
+            datasets: [
+              { label: 'Latencia (ms)', data: data.map(d => d.latencia), borderColor: 'rgba(255,99,132,0.8)', fill: false },
+              { label: 'Jitter (ms)', data: data.map(d => d.jitter), borderColor: 'rgba(54,162,235,0.8)', fill: false },
+              { label: 'Velocidad (Mbps)', data: data.map(d => d.velocidad), borderColor: 'rgba(75,192,192,0.8)', fill: false },
+              { label: 'RSSI (dBm)', data: data.map(d => d.rssi), borderColor: 'rgba(153,102,255,0.8)', fill: false },
+              { label: 'Pérdida (%)', data: data.map(d => d.perdida), borderColor: 'rgba(255,206,86,0.8)', fill: false }
+            ]
+          }
+        });
+      });
   }
 
   // Botón aplicar filtros
@@ -183,8 +265,6 @@
     const filtros = {
       fechaInicio: document.getElementById('fechaInicio').value,
       fechaFin: document.getElementById('fechaFin').value,
-      profesor: document.getElementById('nombreProfesor').value,
-      programa: document.getElementById('programaRadio').value,
       parametro: document.getElementById('parametroAmbiental').value
     };
     cargarGraficas(filtros);
