@@ -43,7 +43,7 @@
 
 <div class="container mt-4">
   <h2>Datos de Sensores</h2>
-  <button class="btn btn-success mb-3 btn-rounded" data-bs-toggle="modal" data-bs-target="#modalAgregar">➕ Agregar Sensor</button>
+  <button class="btn btn-success mb-3 btn-rounded" data-bs-toggle="modal" data-bs-target="#modalAgregar">➕ Registrar Sensor</button>
   <table id="tablaSensores" class="display table table-striped table-bordered" style="width:100%">
     <thead class="table-dark">
       <tr>
@@ -59,18 +59,26 @@
     <tbody></tbody>
   </table>
 </div>
-<!-- Modal Agregar -->
+<!-- Modal Registrar Sensor -->
 <div class="modal fade" id="modalAgregar" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title">Agregar Sensor</h5></div>
+      <div class="modal-header"><h5 class="modal-title">Registrar Sensor</h5></div>
       <div class="modal-body">
         <form id="formAgregar">
-          <div class="mb-3"><label class="form-label">Tipo</label><input type="text" class="form-control" id="tipo"></div>
-          <div class="mb-3"><label class="form-label">Ubicación</label><input type="text" class="form-control" id="ubicacion"></div>
-          <div class="mb-3"><label class="form-label">Valor</label><input type="text" class="form-control" id="valor"></div>
-          <div class="mb-3"><label class="form-label">Fecha</label><input type="date" class="form-control" id="fecha"></div>
-          <div class="mb-3"><label class="form-label">Hora</label><input type="time" class="form-control" id="hora"></div>
+          <div class="mb-3">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" id="tipo">
+              <option value="Temperatura">Temperatura</option>
+              <option value="Humedad">Humedad</option>
+              <option value="CO2">CO₂</option>
+              <option value="Red WiFi">Red WiFi</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ubicación</label>
+            <input type="text" class="form-control" id="ubicacion">
+          </div>
           <button type="submit" class="btn btn-primary btn-rounded">Guardar</button>
         </form>
       </div>
@@ -99,9 +107,9 @@
               s.id_sensor,
               s.tipo,
               s.ubicacion,
-              s.valor,
-              s.fecha,
-              s.hora,
+              s.valor || "-",
+              s.fecha || "-",
+              s.hora || "-",
               `<button class="btn btn-warning btn-sm btnEditar" data-id="${s.id_sensor}">✏️</button>
                <button class="btn btn-danger btn-sm btnEliminar" data-id="${s.id_sensor}">🗑️</button>`
             ]);
@@ -113,15 +121,12 @@
 
     cargarSensores();
 
-    // Agregar sensor
+    // Registrar sensor (solo tipo y ubicación)
     $('#formAgregar').on('submit', function(e){
       e.preventDefault();
       const nuevo = {
         tipo: $('#tipo').val(),
-        ubicacion: $('#ubicacion').val(),
-        valor: $('#valor').val(),
-        fecha: $('#fecha').val(),
-        hora: $('#hora').val()
+        ubicacion: $('#ubicacion').val()
       };
       fetch("/sensores", {
         method: "POST",
@@ -141,15 +146,15 @@
       }
     });
 
-    // Editar sensor (ejemplo simple)
+    // Editar sensor (ejemplo simple: cambiar ubicación)
     $('#tablaSensores').on('click','.btnEditar', function(){
       const id = $(this).data('id');
-      const nuevoValor = prompt("Introduce nuevo valor:");
-      if(nuevoValor){
+      const nuevaUbicacion = prompt("Introduce nueva ubicación:");
+      if(nuevaUbicacion){
         fetch(`/sensores/${id}`, {
           method:"PUT",
           headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({valor: nuevoValor})
+          body: JSON.stringify({ubicacion: nuevaUbicacion})
         }).then(()=> cargarSensores());
       }
     });
