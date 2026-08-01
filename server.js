@@ -1078,6 +1078,45 @@ cron.schedule('0 8 * * MON', async () => {
   }
 });
 
+
+// Métricas WiFi - listado con filtros opcionales
+app.get('/metricaswifi', async (req, res) => {
+  try {
+    const { fechaInicio, fechaFin, idAula } = req.query;
+
+    let query = `
+      SELECT id_wifi, id_aula, usuarios_conectados, ancho_banda, latencia, jitter,
+             perdida_paquetes, nivel_senal, fecha
+      FROM metricaswifi
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (fechaInicio) {
+      params.push(fechaInicio);
+      query += ` AND fecha >= $${params.length}`;
+    }
+    if (fechaFin) {
+      params.push(fechaFin);
+      query += ` AND fecha <= $${params.length}`;
+    }
+    if (idAula) {
+      params.push(idAula);
+      query += ` AND id_aula = $${params.length}`;
+    }
+
+    query += ` ORDER BY fecha ASC`;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error en /metricaswifi:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 // ---------------- INICIO SERVIDOR ----------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
