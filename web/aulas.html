@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Aulas - SmartCampusGuide</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+    footer { margin-top: auto; }
+    .modal-header { background-color: rgba(0, 64, 128, 0.85); color: white; }
+    .btn-rounded { border-radius: 20px; }
+  </style>
+</head>
+<body>
+<div class="d-flex justify-content-between mb-4">
+  <a href="admin.html" class="btn btn-outline-secondary btn-rounded">⬅️ Volver al Panel Principal</a>
+  <a href="sensores.html" class="btn btn-primary btn-rounded">Ir al Módulo Sensores ➡️</a>
+</div>
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menuPrincipal">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+        <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
+        <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+        <li class="nav-item"><a class="nav-link active" href="aulas.html">Aulas</a></li>
+        <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
+        <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+        <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
+        <li class="nav-item"><a class="nav-link" href="estadisticas.html">Estadísticas</a></li>
+        <li class="nav-item"><a class="nav-link" href="radiounge.html">Radio UNGE</a></li>
+        <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
+        <li class="nav-item"><a class="nav-link" href="mapa.html">Mapa</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <h2>Gestión de Aulas</h2>
+  <div class="mb-3">
+    <button class="btn btn-success btn-rounded" data-bs-toggle="modal" data-bs-target="#modalAgregar">➕ Registrar Aula</button>
+  </div>
+  <table id="tablaAulas" class="display table table-striped table-bordered" style="width:100%">
+    <thead class="table-dark">
+      <tr>
+        <th>ID Aula</th>
+        <th>Nombre</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- Modal Registrar Aula -->
+<div class="modal fade" id="modalAgregar" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Registrar Aula</h5></div>
+      <div class="modal-body">
+        <form id="formAgregar">
+          <div class="mb-3">
+            <label class="form-label">Nombre del Aula</label>
+            <input type="text" class="form-control" id="nombreAula">
+          </div>
+          <button type="submit" class="btn btn-primary btn-rounded">Guardar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
+  TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    const tablaAulas = $('#tablaAulas').DataTable();
+
+    // Cargar aulas
+    function cargarAulas(){
+      fetch("/aulas")
+        .then(res => res.json())
+        .then(data => {
+          tablaAulas.clear();
+          data.forEach(a => {
+            tablaAulas.row.add([
+              a.id_aula,
+              a.nombre,
+              `<button class="btn btn-warning btn-sm btnEditar" data-id="${a.id_aula}">✏️</button>
+               <button class="btn btn-danger btn-sm btnEliminar" data-id="${a.id_aula}">🗑️</button>`
+            ]);
+          });
+          tablaAulas.draw();
+        })
+        .catch(err => console.error("Error cargando aulas:", err));
+    }
+
+    cargarAulas();
+
+    // Registrar aula
+    $('#formAgregar').on('submit', function(e){
+      e.preventDefault();
+      const nueva = { nombre: $('#nombreAula').val() };
+      fetch("/aulas", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(nueva)
+      }).then(()=> {
+        $('#modalAgregar').modal('hide');
+        $('#nombreAula').val("");
+        cargarAulas();
+      });
+    });
+
+    // Eliminar aula
+    $('#tablaAulas').on('click','.btnEliminar', function(){
+      const id = $(this).data('id');
+      if(confirm("¿Eliminar esta aula?")){
+        fetch(`/aulas/${id}`, {method:"DELETE"}).then(()=> cargarAulas());
+      }
+    });
+
+    // Editar aula
+    $('#tablaAulas').on('click','.btnEditar', function(){
+      const id = $(this).data('id');
+      const nuevoNombre = prompt("Introduce nuevo nombre del aula:");
+      if(nuevoNombre){
+        fetch(`/aulas/${id}`, {
+          method:"PUT",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({nombre: nuevoNombre})
+        }).then(()=> cargarAulas());
+      }
+    });
+  });
+</script>
+</body>
+</html>
