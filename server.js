@@ -353,6 +353,126 @@ app.delete('/estudiantes/:id', async (req, res) => {
 });
 
 
+// ---------------- ESTADÍSTICAS ----------------
+
+// Usuarios por rol
+app.get('/usuarios_estadisticas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT rol, COUNT(*) AS total
+      FROM usuarios
+      GROUP BY rol
+      ORDER BY rol
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Visitas de la aplicación (ejemplo: tabla visitas_app con fecha y total)
+app.get('/visitas_app', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT fecha, COUNT(*) AS total
+      FROM visitas_app
+      GROUP BY fecha
+      ORDER BY fecha
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Navegación en el mapa (ejemplo: tabla mapa_logs con zona y fecha)
+app.get('/mapa_estadisticas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT zona, COUNT(*) AS total
+      FROM mapa_logs
+      GROUP BY zona
+      ORDER BY total DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Asistencia de profesores (ejemplo: tabla asistencia con profesor y fecha)
+app.get('/asistencia_estadisticas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT p.nombre AS profesor, COUNT(a.id) AS asistencias
+      FROM asistencia a
+      JOIN profesores p ON a.id_profesor = p.id_profesor
+      GROUP BY p.nombre
+      ORDER BY asistencias DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Oyentes de Radio UNGE (ejemplo: tabla oyentes con programa y oyentes)
+app.get('/oyentes_radio', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT programa, COUNT(*) AS oyentes
+      FROM oyentes_radio
+      GROUP BY programa
+      ORDER BY oyentes DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Condiciones ambientales (ejemplo: tabla sensores con fecha y valores)
+app.get('/sensores_estadisticas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT fecha,
+             AVG(CASE WHEN tipo='temperatura' THEN valor END) AS temperatura,
+             AVG(CASE WHEN tipo='humedad' THEN valor END) AS humedad,
+             AVG(CASE WHEN tipo='co2' THEN valor END) AS co2
+      FROM sensores
+      GROUP BY fecha
+      ORDER BY fecha
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// QoS de la red WiFi (ejemplo: tabla qos_wifi con métricas)
+app.get('/qos_wifi', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT fecha,
+             AVG(latencia) AS latencia,
+             AVG(jitter) AS jitter,
+             AVG(velocidad) AS velocidad,
+             AVG(rssi) AS rssi,
+             AVG(perdida) AS perdida
+      FROM qos_wifi
+      GROUP BY fecha
+      ORDER BY fecha
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 // ---------------- DEPARTAMENTOS CRUD ----------------
 app.get('/departamentos', async (req, res) => {
   try {
