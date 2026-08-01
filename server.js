@@ -701,6 +701,65 @@ app.delete('/tipos_sensores/:id', async (req, res) => {
   }
 });
 
+
+// ---------------- AULAS CRUD ----------------
+
+// Listar todas las aulas
+app.get('/aulas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id_aula, nombre FROM aulas ORDER BY id_aula');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Crear aula
+app.post('/aulas', async (req, res) => {
+  try {
+    const { nombre } = req.body;
+    const result = await pool.query(
+      'INSERT INTO aulas (nombre) VALUES ($1) RETURNING *',
+      [nombre]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Actualizar aula
+app.put('/aulas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre } = req.body;
+    const result = await pool.query(
+      'UPDATE aulas SET nombre=$1 WHERE id_aula=$2 RETURNING *',
+      [nombre, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Aula no encontrada' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Eliminar aula
+app.delete('/aulas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM aulas WHERE id_aula=$1 RETURNING *', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Aula no encontrada' });
+    res.json({ message: 'Aula eliminada correctamente' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
+
+
+
 // ---------------- SENSORES CRUD ----------------
 app.get('/sensores', async (req, res) => {
   try {
