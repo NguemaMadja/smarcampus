@@ -52,6 +52,7 @@
       <tr>
         <th>ID Sensor</th>
         <th>Tipo</th>
+        <th>Aula</th>
         <th>Ubicación</th>
         <th>Valor</th>
         <th>Fecha</th>
@@ -72,6 +73,10 @@
           <div class="mb-3">
             <label class="form-label">Tipo</label>
             <select class="form-select" id="tipo"></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Aula</label>
+            <select class="form-select" id="aula"></select>
           </div>
           <div class="mb-3">
             <label class="form-label">Ubicación</label>
@@ -131,6 +136,7 @@
             tablaSensores.row.add([
               s.id_sensor,
               s.tipo,
+              s.aula,
               s.ubicacion,
               s.valor || "-",
               s.fecha || "-",
@@ -159,12 +165,12 @@
           });
           tablaTipos.draw();
 
-          // llenar select del modal de registrar sensor
+          // llenar select de tipos
           const select = document.getElementById("tipo");
           select.innerHTML = "";
           data.forEach(t => {
             const opt = document.createElement("option");
-            opt.value = t.nombre;
+            opt.value = t.id_tipo;
             opt.textContent = t.nombre;
             select.appendChild(opt);
           });
@@ -172,14 +178,34 @@
         .catch(err => console.error("Error cargando tipos:", err));
     }
 
+    // Cargar aulas
+    function cargarAulas(){
+      fetch("/aulas")
+        .then(res => res.json())
+        .then(data => {
+          const select = document.getElementById("aula");
+          select.innerHTML = "";
+          data.forEach(a => {
+            const opt = document.createElement("option");
+            opt.value = a.id_aula;
+            opt.textContent = a.nombre;
+            select.appendChild(opt);
+          });
+        })
+        .catch(err => console.error("Error cargando aulas:", err));
+    }
+
+    // Inicializar carga
     cargarSensores();
     cargarTipos();
+    cargarAulas();
 
     // Registrar sensor
     $('#formAgregar').on('submit', function(e){
       e.preventDefault();
       const nuevo = {
-        tipo: $('#tipo').val(),
+        id_tipo: $('#tipo').val(),
+        id_aula: $('#aula').val(),
         ubicacion: $('#ubicacion').val()
       };
       fetch("/sensores", {
@@ -222,7 +248,7 @@
       }
     });
 
-    // Editar sensor (cambiar ubicación)
+    // Editar sensor (solo ubicación por ahora)
     $('#tablaSensores').on('click','.btnEditar', function(){
       const id = $(this).data('id');
       const nuevaUbicacion = prompt("Introduce nueva ubicación:");
