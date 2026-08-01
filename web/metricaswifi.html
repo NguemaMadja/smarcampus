@@ -5,10 +5,14 @@
   <title>Métricas WiFi - SmartCampusGuide</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { min-height: 100vh; display: flex; flex-direction: column; }
     footer { margin-top: auto; }
     .card-header { background-color: rgba(0, 64, 128, 0.85); color: white; }
+    .alert-high { background-color: rgba(255, 99, 132, 0.2); }
+    .alert-medium { background-color: rgba(255, 206, 86, 0.2); }
   </style>
 </head>
 <body>
@@ -62,13 +66,13 @@
         </div>
         <div class="col-md-12">
           <button type="button" id="btnAplicarFiltros" class="btn btn-primary">Aplicar filtros</button>
+          <button type="button" id="btnAutoRefresh" class="btn btn-outline-success">Auto-Refresh ON/OFF</button>
         </div>
       </form>
     </div>
   </div>
-
   <!-- Tabla -->
-  <div class="card">
+  <div class="card mb-4">
     <div class="card-header">Registros de Métricas WiFi</div>
     <div class="card-body">
       <table id="tablaWifi" class="display table table-striped table-bordered" style="width:100%">
@@ -89,26 +93,59 @@
       </table>
     </div>
   </div>
+
+  <!-- Gráficos -->
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">Evolución de Latencia y Jitter</div>
+        <div class="card-body"><canvas id="graficoLatencia"></canvas></div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">Velocidad y Nivel de Señal</div>
+        <div class="card-body"><canvas id="graficoVelocidad"></canvas></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
   TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
 </footer>
-
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
   $(document).ready(function() {
-    const tablaWifi = $('#tablaWifi').DataTable();
+    let autoRefresh = false;
+    let refreshInterval;
+
+    const tablaWifi = $('#tablaWifi').DataTable({
+      dom: 'Bfrtip',
+      buttons: ['csv', 'pdf', 'print']
+    });
+
+    let graficoLatencia, graficoVelocidad;
 
     function cargarMetricas(filtros = {}) {
       fetch("/metricaswifi?" + new URLSearchParams(filtros))
         .then(res => res.json())
         .then(data => {
+          // Tabla
           tablaWifi.clear();
           data.forEach(m => {
+            let rowClass = '';
+            if (m.latencia > 100 || m.nivel_senal < -80) {
+              rowClass = 'alert-high';
+            } else if (m.jitter > 30) {
+              rowClass = 'alert-medium';
+            }
             tablaWifi.row.add([
               m.id_wifi,
               m.id_aula,
@@ -119,9 +156,35 @@
               m.perdida_paquetes,
               m.nivel_senal,
               m.fecha
-            ]);
+            ]).node().className = rowClass;
           });
           tablaWifi.draw();
+
+          // Gráfico Latencia/Jitter
+          if (graficoLatencia) graficoLatencia.destroy();
+          graficoLatencia = new Chart(document.getElementById('graficoLatencia'), {
+            type: 'line',
+            data: {
+              labels: data.map(d => d.fecha),
+              datasets: [
+                { label: 'Latencia (ms)', data: data.map(d => d.latencia), borderColor: 'rgba(255,99,132,0.8)', fill: false },
+                { label: 'Jitter (ms)', data: data.map(d => d.jitter), borderColor: 'rgba(54,162,235,0.8)', fill: false }
+              ]
+            }
+          });
+
+          // Gráfico Velocidad/Nivel Señal
+          if (graficoVelocidad) graficoVelocidad.destroy();
+          graficoVelocidad = new Chart(document.getElementById('graficoVelocidad'), {
+            type: 'line',
+            data: {
+              labels: data.map(d => d.fecha),
+              datasets: [
+                { label: 'Velocidad (Mbps)', data: data.map(d => d.ancho_banda), borderColor: 'rgba(75,192,192,0.8)', fill: false },
+                { label: 'Nivel Señal (dBm)', data: data.map(d => d.nivel_senal), borderColor: 'rgba(153,102,255,0.8)', fill: false }
+              ]
+            }
+          });
         })
         .catch(err => console.error("Error cargando métricas WiFi:", err));
     }
@@ -134,6 +197,18 @@
         idAula: $('#idAula').val()
       };
       cargarMetricas(filtros);
+    });
+
+    // Botón auto-refresh
+    $('#btnAutoRefresh').on('click', function(){
+      autoRefresh = !autoRefresh;
+      if (autoRefresh) {
+        refreshInterval = setInterval(() => cargarMetricas(), 5000);
+        $(this).text("Auto-Refresh ON").removeClass("btn-outline-success").addClass("btn-success");
+      } else {
+        clearInterval(refreshInterval);
+        $(this).text("Auto-Refresh OFF").removeClass("btn-success").addClass("btn-outline-success");
+      }
     });
 
     // Cargar al inicio
