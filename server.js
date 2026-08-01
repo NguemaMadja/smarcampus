@@ -705,9 +705,14 @@ app.delete('/tipos_sensores/:id', async (req, res) => {
 app.get('/sensores', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT s.id_sensor, s.tipo, s.ubicacion,
+      SELECT s.id_sensor,
+             ts.nombre AS tipo,
+             a.nombre AS aula,
+             s.ubicacion,
              l.valor, l.fecha, l.hora
       FROM sensores s
+      JOIN tipos_sensores ts ON s.id_tipo = ts.id_tipo
+      JOIN aulas a ON s.id_aula = a.id_aula
       LEFT JOIN LATERAL (
         SELECT valor, fecha, hora
         FROM lecturas
@@ -723,12 +728,13 @@ app.get('/sensores', async (req, res) => {
   }
 });
 
+
 app.post('/sensores', async (req, res) => {
   try {
-    const { tipo, ubicacion } = req.body;
+    const { id_aula, id_tipo, ubicacion } = req.body;
     const result = await pool.query(
-      'INSERT INTO sensores (tipo, ubicacion) VALUES ($1, $2) RETURNING *',
-      [tipo, ubicacion]
+      'INSERT INTO sensores (id_aula, id_tipo, ubicacion) VALUES ($1, $2, $3) RETURNING *',
+      [id_aula, id_tipo, ubicacion]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -736,13 +742,14 @@ app.post('/sensores', async (req, res) => {
   }
 });
 
+
 app.put('/sensores/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { ubicacion } = req.body;
+    const { id_aula, id_tipo, ubicacion } = req.body;
     const result = await pool.query(
-      'UPDATE sensores SET ubicacion=$1 WHERE id_sensor=$2 RETURNING *',
-      [ubicacion, id]
+      'UPDATE sensores SET id_aula=$1, id_tipo=$2, ubicacion=$3 WHERE id_sensor=$4 RETURNING *',
+      [id_aula, id_tipo, ubicacion, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Sensor no encontrado' });
     res.json(result.rows[0]);
@@ -750,6 +757,7 @@ app.put('/sensores/:id', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 app.delete('/sensores/:id', async (req, res) => {
   try {
