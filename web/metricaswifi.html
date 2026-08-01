@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Métricas WiFi - SmartCampusGuide</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+    footer { margin-top: auto; }
+    .card-header { background-color: rgba(0, 64, 128, 0.85); color: white; }
+  </style>
+</head>
+<body>
+
+<div class="d-flex justify-content-between mb-4">
+  <a href="admin.html" class="btn btn-outline-secondary">⬅️ Volver al Panel Principal</a>
+  <a href="estadisticas.html" class="btn btn-primary">Ir a Estadísticas ➡️</a>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menuPrincipal">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+        <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
+        <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+        <li class="nav-item"><a class="nav-link" href="aulas.html">Aulas</a></li>
+        <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
+        <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
+        <li class="nav-item"><a class="nav-link active" href="metricaswifi.html">Métricas WiFi</a></li>
+        <li class="nav-item"><a class="nav-link" href="estadisticas.html">Estadísticas</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <h2>Métricas de la Red WiFi</h2>
+
+  <!-- Filtros -->
+  <div class="card mb-4">
+    <div class="card-header">Filtros</div>
+    <div class="card-body">
+      <form id="formFiltros" class="row g-3">
+        <div class="col-md-3">
+          <label for="fechaInicio" class="form-label">Fecha inicio</label>
+          <input type="date" id="fechaInicio" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label for="fechaFin" class="form-label">Fecha fin</label>
+          <input type="date" id="fechaFin" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label for="idAula" class="form-label">Aula</label>
+          <input type="number" id="idAula" class="form-control" placeholder="ID Aula">
+        </div>
+        <div class="col-md-12">
+          <button type="button" id="btnAplicarFiltros" class="btn btn-primary">Aplicar filtros</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card">
+    <div class="card-header">Registros de Métricas WiFi</div>
+    <div class="card-body">
+      <table id="tablaWifi" class="display table table-striped table-bordered" style="width:100%">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Aula</th>
+            <th>Usuarios Conectados</th>
+            <th>Ancho Banda (Mbps)</th>
+            <th>Latencia (ms)</th>
+            <th>Jitter (ms)</th>
+            <th>Pérdida (%)</th>
+            <th>Nivel Señal (dBm)</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
+  TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    const tablaWifi = $('#tablaWifi').DataTable();
+
+    function cargarMetricas(filtros = {}) {
+      fetch("/metricaswifi?" + new URLSearchParams(filtros))
+        .then(res => res.json())
+        .then(data => {
+          tablaWifi.clear();
+          data.forEach(m => {
+            tablaWifi.row.add([
+              m.id_wifi,
+              m.id_aula,
+              m.usuarios_conectados,
+              m.ancho_banda,
+              m.latencia,
+              m.jitter,
+              m.perdida_paquetes,
+              m.nivel_senal,
+              m.fecha
+            ]);
+          });
+          tablaWifi.draw();
+        })
+        .catch(err => console.error("Error cargando métricas WiFi:", err));
+    }
+
+    // Botón aplicar filtros
+    $('#btnAplicarFiltros').on('click', function(){
+      const filtros = {
+        fechaInicio: $('#fechaInicio').val(),
+        fechaFin: $('#fechaFin').val(),
+        idAula: $('#idAula').val()
+      };
+      cargarMetricas(filtros);
+    });
+
+    // Cargar al inicio
+    cargarMetricas();
+  });
+</script>
+</body>
+</html>
