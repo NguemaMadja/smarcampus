@@ -18,12 +18,6 @@
     }
     .leaflet-routing-container #btnCerrarRuta:hover { background-color: #0066cc; }
     .leaflet-routing-container .ruta-header { font-weight: bold; margin-bottom: 8px; }
-    #btnMiUbicacion {
-      position: absolute; top: 80px; right: 20px;
-      z-index: 1000; background: #004080; color: #fff;
-      padding: 8px 12px; border-radius: 5px; cursor: pointer;
-    }
-    #btnMiUbicacion:hover { background: #0066cc; }
     /* Autocompletado */
     #autocompleteList { position: absolute; z-index: 2000; background: #fff; border: 1px solid #ccc; width: 100%; max-height: 150px; overflow-y: auto; }
     #autocompleteList div { padding: 8px; cursor: pointer; }
@@ -68,10 +62,11 @@
 <div class="container mt-4">
   <h2>Mapa Interactivo del Campus</h2>
   
-  <!-- Barra de búsqueda con botón -->
+  <!-- Barra de búsqueda con botón y centrar ubicación -->
   <div class="input-group mb-3 position-relative">
     <input type="text" id="searchBar" class="form-control" placeholder="Buscar edificio o lugar de interés...">
     <button id="btnBuscar" class="btn btn-primary">🔍 Buscar</button>
+    <button id="btnMiUbicacion" class="btn btn-outline-success">📍 Mi ubicación</button>
     <div id="autocompleteList"></div>
   </div>
 
@@ -115,7 +110,6 @@
 
   <!-- Mapa -->
   <div id="map"></div>
-  <button id="btnMiUbicacion">📍 Centrar en mi ubicación</button>
 </div>
 
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
@@ -143,8 +137,8 @@
     toggleBtn.textContent = isDark ? "☀️ Modo Claro" : "🌙 Modo Oscuro";
   });
 
-  // Tiles claros/oscuros
-  let tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // Tiles claros
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19, attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
@@ -207,7 +201,6 @@
         const puntoEdificio = turf.point([edificio.lng, edificio.lat]);
         const distancia = turf.distance(puntoUsuario, puntoEdificio, {units: 'kilometers'});
         const tiempo = (distancia / 5 * 60).toFixed(0);
-        mostrarToast(`Distancia: ${distancia.toFixed(2)} km | Tiempo estimado: ${tiempo} min`);
 
         if(routingControl){ map.removeControl(routingControl); }
         routingControl = L.Routing.control({
@@ -218,6 +211,18 @@
           routeWhileDragging: false,
           show: true
         }).addTo(map);
+
+        routingControl.on('routesfound', () => {
+          const container = document.querySelector('.leaflet-routing-container');
+          if(container && !document.getElementById('btnCerrarRuta')){
+            const header = document.createElement('div');
+            header.className = 'ruta-header';
+            header.innerHTML = `Distancia: ${distancia.toFixed(2)} km | Tiempo: ${tiempo} min 
+              <button id="btnCerrarRuta">Aceptar</button>`;
+            container.insertBefore(header, container.firstChild);
+            document.getElementById('btnCerrarRuta').onclick = () => container.style.display = 'none';
+          }
+        });
       }
 
       historial.push(edificio.nombre);
@@ -254,16 +259,12 @@
 
   // Métricas simuladas
   function actualizarMetricas(){
-    // Lugar más visitado
     let conteo = {};
     historial.forEach(l => conteo[l] = (conteo[l]||0)+1);
     let topLugar = Object.keys(conteo).sort((a,b)=>conteo[b]-conteo[a])[0];
     document.getElementById("lugarMasVisitado").textContent = topLugar || "-";
-
-    // Consultas anónimas
     document.getElementById("consultasAnonimas").textContent = historial.length;
 
-    // Ranking
     let ranking = Object.keys(conteo).sort((a,b)=>conteo[b]-conteo[a]);
     let ul = document.getElementById("rankingLugares");
     ul.innerHTML = "";
@@ -272,7 +273,6 @@
       ul.innerHTML += `<li>${medalla} ${lugar} (${conteo[lugar]})</li>`;
     });
 
-    // Gráfico visitas
     const ctx = document.getElementById('graficoVisitas').getContext('2d');
     if(window.graficoVisitas) window.graficoVisitas.destroy();
     window.graficoVisitas = new Chart(ctx, {
@@ -300,7 +300,7 @@
     setTimeout(()=> toast.remove(), 5000);
   }
 
-  // 🚀 Nuevo: leer parámetro "buscar" desde la URL
+  // 🚀 Leer parámetro "buscar" desde la URL
   const params = new URLSearchParams(window.location.search);
   const edificioBuscado = params.get("buscar");
   if(edificioBuscado){
