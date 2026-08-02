@@ -417,6 +417,9 @@ app.get('/mapa_estadisticas', async (req, res) => {
 });
 
 
+// ✅ Permitir lectura de JSON en las peticiones
+app.use(express.json());
+
 // Oyentes de Radio UNGE
 app.get('/oyentes_radio', async (req, res) => {
   try {
@@ -433,13 +436,25 @@ app.get('/oyentes_radio', async (req, res) => {
   }
 });
 
-
-
 // 📻 CRUD de Programas de Radio UNGE
 app.get('/radiounge', async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM radiounge ORDER BY id ASC");
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ✅ Obtener un programa por ID (necesario para edición)
+app.get('/radiounge/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query("SELECT * FROM radiounge WHERE id=$1", [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Programa no encontrado" });
+    }
+    res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -481,6 +496,7 @@ app.delete('/radiounge/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 // Condiciones ambientales
