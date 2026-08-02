@@ -7,14 +7,16 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <style>
-    body { min-height: 100vh; display: flex; flex-direction: column; }
+    body { min-height: 100vh; display: flex; flex-direction: column; background-color: #f8f9fa; }
     footer { margin-top: auto; }
-    .banner { background: url('radio_banner.jpg') center/cover no-repeat; color: white; padding: 60px 20px; text-align: center; }
-    .banner h1 { font-size: 2.5rem; font-weight: bold; }
+    .banner { background: linear-gradient(rgba(0,64,128,0.7), rgba(0,64,128,0.7)), url('radio_banner.jpg') center/cover no-repeat; color: white; padding: 60px 20px; text-align: center; }
+    .banner h1 { font-size: 2.8rem; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
     .modal-header, .card-header { background-color: rgba(0, 64, 128, 0.85); color: white; }
     .btn-rounded { border-radius: 20px; }
-    .card { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .card { box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: none; }
     .alert-info { background-color: rgba(54,162,235,0.1); border-left: 4px solid rgba(54,162,235,0.7); }
+    .kpi-card h5 { font-weight: bold; color: #555; }
+    .kpi-value { font-size: 2rem; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -47,30 +49,31 @@
   <h1>🎙️ Radio UNGE</h1>
   <p>La voz del campus, conectando estudiantes y comunidad</p>
 </div>
+
 <div class="container mt-4">
   <!-- KPIs -->
   <div class="row mb-4">
     <div class="col-md-4 col-sm-12 mb-3">
-      <div class="card text-center">
+      <div class="card kpi-card text-center">
         <div class="card-body">
           <h5>Total Oyentes</h5>
-          <p id="totalOyentes" class="fs-4 fw-bold text-success">0</p>
+          <p id="totalOyentes" class="kpi-value text-success">0</p>
         </div>
       </div>
     </div>
     <div class="col-md-4 col-sm-12 mb-3">
-      <div class="card text-center">
+      <div class="card kpi-card text-center">
         <div class="card-body">
           <h5>Promedio por Programa</h5>
-          <p id="promedioOyentes" class="fs-4 fw-bold text-primary">0</p>
+          <p id="promedioOyentes" class="kpi-value text-primary">0</p>
         </div>
       </div>
     </div>
     <div class="col-md-4 col-sm-12 mb-3">
-      <div class="card text-center">
+      <div class="card kpi-card text-center">
         <div class="card-body">
           <h5>Programa Top</h5>
-          <p id="topPrograma" class="fs-5 fw-bold text-danger">-</p>
+          <p id="topPrograma" class="kpi-value text-danger">-</p>
         </div>
       </div>
     </div>
@@ -87,7 +90,6 @@
       <p class="mt-2"><span id="estadoTransmision" class="badge bg-success">En Vivo</span></p>
     </div>
   </div>
-
   <!-- Tabla de programas -->
   <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -116,6 +118,7 @@
       </div>
     </div>
   </div>
+
   <!-- Modal: Agregar Programa -->
   <div class="modal fade" id="modalAgregarPrograma" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -255,46 +258,55 @@
     cargarProgramas();
 
     // 📊 Gráficas de oyentes
-    fetch("/oyentes_radio")
-      .then(res => res.json())
-      .then(data => {
-        const ctxPie = document.getElementById('graficoOyentesPie').getContext('2d');
-        const ctxBar = document.getElementById('graficoOyentesBar').getContext('2d');
+    function cargarGraficos() {
+      fetch("/oyentes_radio")
+        .then(res => res.json())
+        .then(data => {
+          const ctxPie = document.getElementById('graficoOyentesPie').getContext('2d');
+          const ctxBar = document.getElementById('graficoOyentesBar').getContext('2d');
 
-        if (graficoPie) graficoPie.destroy();
-        if (graficoBar) graficoBar.destroy();
+          if (graficoPie) graficoPie.destroy();
+          if (graficoBar) graficoBar.destroy();
 
-        graficoPie = new Chart(ctxPie, {
-          type: 'pie',
-          data: {
-            labels: data.map(d => d.programa),
-            datasets: [{
-              label: 'Oyentes',
-              data: data.map(d => d.oyentes),
-              backgroundColor: [
-                'rgba(255, 99, 132, 0.7)',
-                'rgba(54, 162, 235, 0.7)',
-                'rgba(255, 206, 86, 0.7)',
-                'rgba(75, 192, 192, 0.7)',
-                'rgba(153, 102, 255, 0.7)'
-              ]
-            }]
-          }
+          graficoPie = new Chart(ctxPie, {
+            type: 'pie',
+            data: {
+              labels: data.map(d => d.programa),
+              datasets: [{
+                label: 'Oyentes',
+                data: data.map(d => d.oyentes),
+                backgroundColor: [
+                  'rgba(255, 99, 132, 0.7)',
+                  'rgba(54, 162, 235, 0.7)',
+                  'rgba(255, 206, 86, 0.7)',
+                  'rgba(75, 192, 192, 0.7)',
+                  'rgba(153, 102, 255, 0.7)'
+                ]
+              }]
+            },
+            options: {
+              plugins: { legend: { position: 'bottom' } }
+            }
+          });
+
+          graficoBar = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+              labels: data.map(d => d.programa),
+              datasets: [{
+                label: 'Oyentes',
+                data: data.map(d => d.oyentes),
+                backgroundColor: 'rgba(0, 64, 128, 0.7)'
+              }]
+            },
+            options: {
+              scales: { y: { beginAtZero: true } },
+              plugins: { legend: { display: false } }
+            }
+          });
         });
-
-        graficoBar = new Chart(ctxBar, {
-          type: 'bar',
-          data: {
-            labels: data.map(d => d.programa),
-            datasets: [{
-              label: 'Oyentes',
-              data: data.map(d => d.oyentes),
-              backgroundColor: 'rgba(0, 64, 128, 0.7)'
-            }]
-          },
-          options: { scales: { y: { beginAtZero: true } } }
-        });
-      });
+    }
+    cargarGraficos();
 
     // ➕ Crear programa
     $('#formAgregarPrograma').on('submit', function(e){
@@ -314,6 +326,7 @@
       }).then(() => {
         $('#modalAgregarPrograma').modal('hide');
         cargarProgramas();
+        cargarGraficos();
       });
     });
 
@@ -352,6 +365,7 @@
       }).then(() => {
         $('#modalEditarPrograma').modal('hide');
         cargarProgramas();
+        cargarGraficos();
       });
     });
 
@@ -360,7 +374,10 @@
       const id = $(this).data('id');
       if (confirm("¿Seguro que deseas eliminar este programa?")) {
         fetch(`/radiounge/${id}`, { method: "DELETE" })
-          .then(() => cargarProgramas());
+          .then(() => {
+            cargarProgramas();
+            cargarGraficos();
+          });
       }
     });
 
@@ -389,3 +406,4 @@
 </script>
 </body>
 </html>
+ 
