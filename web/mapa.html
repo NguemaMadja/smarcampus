@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
   <style>
-    body, html { height: 100%; margin: 0; }
-    #map { height: calc(100vh - 200px); width: 100%; }
+    body, html { height: 100%; margin: 0; transition: background-color 0.3s, color 0.3s; }
+    #map { height: calc(100vh - 250px); width: 100%; }
     .leaflet-routing-container #btnCerrarRuta {
       display: inline-block; margin-left: 10px; padding: 6px 12px;
       background-color: #004080; color: #fff; font-weight: bold;
@@ -24,6 +24,13 @@
       padding: 8px 12px; border-radius: 5px; cursor: pointer;
     }
     #btnMiUbicacion:hover { background: #0066cc; }
+    /* Autocompletado */
+    #autocompleteList { position: absolute; z-index: 2000; background: #fff; border: 1px solid #ccc; width: 100%; max-height: 150px; overflow-y: auto; }
+    #autocompleteList div { padding: 8px; cursor: pointer; }
+    #autocompleteList div:hover { background: #f0f0f0; }
+    /* Modo oscuro */
+    body.dark-mode { background-color: #121212; color: #e0e0e0; }
+    body.dark-mode .navbar, body.dark-mode footer { background-color: #000 !important; }
   </style>
 </head>
 <body>
@@ -53,13 +60,60 @@
         <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
         <li class="nav-item"><a class="nav-link active" href="mapa.html">Mapa</a></li>
       </ul>
+      <!-- Toggle modo oscuro -->
+      <button id="toggleDarkMode" class="btn btn-outline-light btn-sm">🌙 Modo Oscuro</button>
     </div>
   </div>
 </nav>
-
 <div class="container mt-4">
   <h2>Mapa Interactivo del Campus</h2>
-  <input type="text" id="searchBar" class="form-control mb-3" placeholder="Buscar edificio o lugar de interés...">
+  
+  <!-- Barra de búsqueda con botón -->
+  <div class="input-group mb-3 position-relative">
+    <input type="text" id="searchBar" class="form-control" placeholder="Buscar edificio o lugar de interés...">
+    <button id="btnBuscar" class="btn btn-primary">🔍 Buscar</button>
+    <div id="autocompleteList"></div>
+  </div>
+
+  <!-- Métricas simuladas -->
+  <div class="row mb-4">
+    <div class="col-md-4 col-sm-12 mb-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5>Lugar más visitado</h5>
+          <p id="lugarMasVisitado" class="fw-bold text-success">-</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 col-sm-12 mb-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5>Consultas anónimas</h5>
+          <p id="consultasAnonimas" class="fw-bold text-primary">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 col-sm-12 mb-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5>Ranking de lugares</h5>
+          <ul id="rankingLugares" class="list-unstyled mb-0">
+            <!-- Se llenará dinámicamente con 🥇🥈🥉 -->
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráfico de visitas en el tiempo -->
+  <div class="card mb-4">
+    <div class="card-header">📈 Visitas en el tiempo</div>
+    <div class="card-body">
+      <canvas id="graficoVisitas"></canvas>
+    </div>
+  </div>
+
+  <!-- Mapa -->
   <div id="map"></div>
   <button id="btnMiUbicacion">📍 Centrar en mi ubicación</button>
 </div>
@@ -71,11 +125,26 @@
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf/turf.min.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
   var map = L.map('map').setView([3.75, 8.78], 15);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // 🌙 Modo oscuro/claro
+  const toggleBtn = document.getElementById("toggleDarkMode");
+  if(localStorage.getItem("darkMode") === "true") {
+    document.body.classList.add("dark-mode");
+    toggleBtn.textContent = "☀️ Modo Claro";
+  }
+  toggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    const isDark = document.body.classList.contains("dark-mode");
+    localStorage.setItem("darkMode", isDark);
+    toggleBtn.textContent = isDark ? "☀️ Modo Claro" : "🌙 Modo Oscuro";
+  });
+
+  // Tiles claros/oscuros
+  let tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19, attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
@@ -85,6 +154,7 @@
   let userMarker = null;
   let routingControl = null;
   let historial = [];
+  let visitas = []; // para gráfico
 
   // Geolocalización inicial
   if (navigator.geolocation) {
@@ -106,7 +176,9 @@
   });
 
   // Cargar edificios con iconos personalizados
+  let edificiosData = [];
   fetch("/edificios").then(res => res.json()).then(data => {
+    edificiosData = data;
     data.forEach(ed => {
       if (ed.lat && ed.lng) {
         let icono = L.icon({
@@ -124,9 +196,7 @@
 
   // Buscar edificio y mostrar ruta
   async function buscarEdificio(nombre) {
-    let res = await fetch("/edificios");
-    let data = await res.json();
-    let edificio = data.find(e => e.nombre.toLowerCase() === nombre.toLowerCase());
+    let edificio = edificiosData.find(e => e.nombre.toLowerCase() === nombre.toLowerCase());
     if(edificio){
       map.setView([edificio.lat, edificio.lng], 18);
       L.marker([edificio.lat, edificio.lng]).addTo(map)
@@ -148,35 +218,77 @@
           routeWhileDragging: false,
           show: true
         }).addTo(map);
-
-        routingControl.on('routesfound', () => {
-          const container = document.querySelector('.leaflet-routing-container');
-          if(container && !document.getElementById('btnCerrarRuta')){
-            const header = document.createElement('div');
-            header.className = 'ruta-header';
-            header.innerHTML = `Distancia: ${distancia.toFixed(2)} km | Tiempo: ${tiempo} min 
-              <button id="btnCerrarRuta">Aceptar</button>`;
-            container.insertBefore(header, container.firstChild);
-            document.getElementById('btnCerrarRuta').onclick = () => container.style.display = 'none';
-          }
-        });
       }
 
       historial.push(edificio.nombre);
-
-      await fetch("/api/map/huella", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({usuario_id: 1, edificio_id: edificio.id})
-      });
+      visitas.push({fecha: new Date(), lugar: edificio.nombre});
+      actualizarMetricas();
     } else {
       mostrarToast("⚠️ Edificio no encontrado");
     }
   }
 
-  document.getElementById("searchBar").addEventListener("change", e => {
-    buscarEdificio(e.target.value);
+  // Botón buscar
+  document.getElementById("btnBuscar").addEventListener("click", () => {
+    buscarEdificio(document.getElementById("searchBar").value);
   });
+
+  // Autocompletado
+  document.getElementById("searchBar").addEventListener("input", e => {
+    const val = e.target.value.toLowerCase();
+    const list = document.getElementById("autocompleteList");
+    list.innerHTML = "";
+    if(val.length > 1){
+      edificiosData.filter(ed => ed.nombre.toLowerCase().includes(val)).forEach(ed => {
+        const div = document.createElement("div");
+        div.textContent = ed.nombre;
+        div.onclick = () => {
+          document.getElementById("searchBar").value = ed.nombre;
+          list.innerHTML = "";
+          buscarEdificio(ed.nombre);
+        };
+        list.appendChild(div);
+      });
+    }
+  });
+
+  // Métricas simuladas
+  function actualizarMetricas(){
+    // Lugar más visitado
+    let conteo = {};
+    historial.forEach(l => conteo[l] = (conteo[l]||0)+1);
+    let topLugar = Object.keys(conteo).sort((a,b)=>conteo[b]-conteo[a])[0];
+    document.getElementById("lugarMasVisitado").textContent = topLugar || "-";
+
+    // Consultas anónimas
+    document.getElementById("consultasAnonimas").textContent = historial.length;
+
+    // Ranking
+    let ranking = Object.keys(conteo).sort((a,b)=>conteo[b]-conteo[a]);
+    let ul = document.getElementById("rankingLugares");
+    ul.innerHTML = "";
+    ranking.forEach((lugar, idx) => {
+      let medalla = idx===0?"🥇":idx===1?"🥈":idx===2?"🥉":"";
+      ul.innerHTML += `<li>${medalla} ${lugar} (${conteo[lugar]})</li>`;
+    });
+
+    // Gráfico visitas
+    const ctx = document.getElementById('graficoVisitas').getContext('2d');
+    if(window.graficoVisitas) window.graficoVisitas.destroy();
+    window.graficoVisitas = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: visitas.map(v => v.fecha.toLocaleTimeString()),
+        datasets: [{
+          label: 'Visitas',
+          data: visitas.map((v,i)=>i+1),
+          borderColor: 'rgba(0,64,128,0.8)',
+          fill: false
+        }]
+      },
+      options: { animation: { duration: 1000, easing: 'easeOutBounce' } }
+    });
+  }
 
   // Notificación visual (toast)
   function mostrarToast(msg){
