@@ -48,12 +48,6 @@
   <p>La voz del campus, conectando estudiantes y comunidad</p>
 </div>
 <div class="container mt-4">
-  <!-- Navegación rápida -->
-  <div class="d-flex justify-content-between mb-4 flex-wrap">
-    <a href="admin.html" class="btn btn-outline-secondary btn-rounded mb-2">⬅️ Volver al Panel Principal</a>
-    <a href="transporteescolar.html" class="btn btn-primary btn-rounded mb-2">Ir al Módulo Transporte Escolar ➡️</a>
-  </div>
-
   <!-- KPIs -->
   <div class="row mb-4">
     <div class="col-md-4 col-sm-12 mb-3">
@@ -93,6 +87,7 @@
       <p class="mt-2"><span id="estadoTransmision" class="badge bg-success">En Vivo</span></p>
     </div>
   </div>
+
   <!-- Tabla de programas -->
   <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -121,7 +116,6 @@
       </div>
     </div>
   </div>
-
   <!-- Modal: Agregar Programa -->
   <div class="modal fade" id="modalAgregarPrograma" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -157,7 +151,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Locutor ID</label>
-              <input type="number" class="form-control" id="locutor_id">
+              <input type="number" class="form-control" id="locutorio_id">
             </div>
             <button type="submit" class="btn btn-success btn-rounded">Registrar</button>
           </form>
@@ -202,7 +196,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Locutor ID</label>
-              <input type="number" class="form-control" id="edit_locutor_id">
+              <input type="number" class="form-control" id="edit_locutorio_id">
             </div>
             <button type="submit" class="btn btn-warning btn-rounded">Guardar Cambios</button>
           </form>
@@ -239,7 +233,7 @@
               new Date(r.fecha_hora_inicio).toLocaleString(),
               new Date(r.fecha_hora_fin).toLocaleString(),
               r.es_en_vivo ? "Sí" : "No",
-              r.locutor_id || "-",
+              r.locutorio_id || "-",
               `<button class="btn btn-warning btn-sm btnEditar" data-id="${r.id}">✏️</button>
                <button class="btn btn-danger btn-sm btnEliminar" data-id="${r.id}">🗑️</button>`
             ]);
@@ -311,7 +305,7 @@
         fecha_hora_inicio: $('#fecha_hora_inicio').val(),
         fecha_hora_fin: $('#fecha_hora_fin').val(),
         es_en_vivo: $('#es_en_vivo').val() === "true",
-        locutor_id: $('#locutor_id').val()
+        locutorio_id: $('#locutorio_id').val()
       };
       fetch("/radiounge", {
         method: "POST",
@@ -335,7 +329,7 @@
           $('#edit_fecha_hora_inicio').val(r.fecha_hora_inicio.replace(" ", "T"));
           $('#edit_fecha_hora_fin').val(r.fecha_hora_fin.replace(" ", "T"));
           $('#edit_es_en_vivo').val(r.es_en_vivo ? "true" : "false");
-          $('#edit_locutor_id').val(r.locutor_id);
+          $('#edit_locutorio_id').val(r.locutorio_id);
           $('#modalEditarPrograma').modal('show');
         });
     });
@@ -349,7 +343,7 @@
         fecha_hora_inicio: $('#edit_fecha_hora_inicio').val(),
         fecha_hora_fin: $('#edit_fecha_hora_fin').val(),
         es_en_vivo: $('#edit_es_en_vivo').val() === "true",
-        locutor_id: $('#edit_locutor_id').val()
+        locutorio_id: $('#edit_locutorio_id').val()
       };
       fetch(`/radiounge/${id}`, {
         method: "PUT",
