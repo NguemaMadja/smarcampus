@@ -499,6 +499,7 @@ app.delete('/radiounge/:id', async (req, res) => {
 
 
 
+
 // Condiciones ambientales
 app.get('/sensores_estadisticas', async (req, res) => {
   try {
