@@ -979,6 +979,24 @@ app.post('/sensores/data', async (req, res) => {
 });
 
 
+// ---------------- HISTORIAL DE SENSORES ----------------
+app.get('/sensores/:id/historial', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT valor, fecha, hora
+       FROM lecturas
+       WHERE id_sensor = $1
+       ORDER BY fecha ASC, hora ASC`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error obteniendo historial:", err);
+    res.status(500).json({ error: "Error al obtener historial del sensor" });
+  }
+});
+
 
 
 // ---------------- QR Y ASISTENCIA ----------------
