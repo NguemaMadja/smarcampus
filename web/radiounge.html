@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-<!-- Navbar persistente -->
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
   <div class="container-fluid">
     <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
@@ -95,16 +95,23 @@
   </div>
   <!-- Tabla de programas -->
   <div class="card mb-4">
-    <div class="card-header">📻 Programas Emitidos</div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+      📻 Programas Emitidos
+      <button class="btn btn-success btn-sm btn-rounded" data-bs-toggle="modal" data-bs-target="#modalAgregarPrograma">➕ Nuevo Programa</button>
+    </div>
     <div class="card-body">
       <div class="table-responsive">
         <table id="tablaRadio" class="display table table-striped table-bordered" style="width:100%">
           <thead class="table-dark">
             <tr>
-              <th>ID Programa</th>
-              <th>Nombre</th>
-              <th>Duración</th>
-              <th>Oyentes</th>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>En Vivo</th>
+              <th>Locutor</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -115,53 +122,94 @@
     </div>
   </div>
 
-  <!-- Gráficas de oyentes -->
-  <div class="row mb-4">
-    <div class="col-md-6 col-sm-12 mb-3">
-      <div class="card">
-        <div class="card-header">Distribución de Oyentes (Pie)</div>
-        <div class="card-body">
-          <canvas id="graficoOyentesPie"></canvas>
+  <!-- Modal: Agregar Programa -->
+  <div class="modal fade" id="modalAgregarPrograma" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">➕ Registrar Programa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-      </div>
-    </div>
-    <div class="col-md-6 col-sm-12 mb-3">
-      <div class="card">
-        <div class="card-header">Comparación de Oyentes (Barras)</div>
-        <div class="card-body">
-          <canvas id="graficoOyentesBar"></canvas>
+        <div class="modal-body">
+          <form id="formAgregarPrograma" class="needs-validation" novalidate>
+            <div class="mb-3">
+              <label class="form-label">Título del Programa</label>
+              <input type="text" class="form-control" id="titulo_programa" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tipo</label>
+              <input type="text" class="form-control" id="tipo_id" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Fecha y Hora de Inicio</label>
+              <input type="datetime-local" class="form-control" id="fecha_hora_inicio" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Fecha y Hora de Fin</label>
+              <input type="datetime-local" class="form-control" id="fecha_hora_fin" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">¿Es en Vivo?</label>
+              <select class="form-select" id="es_en_vivo">
+                <option value="true">Sí</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Locutor ID</label>
+              <input type="number" class="form-control" id="locutor_id">
+            </div>
+            <button type="submit" class="btn btn-success btn-rounded">Registrar</button>
+          </form>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Formulario de participación -->
-  <div class="card mb-4">
-    <div class="card-header">💬 Participa en la Radio</div>
-    <div class="card-body">
-      <form id="formParticipacion" class="needs-validation" novalidate>
-        <div class="mb-3">
-          <label class="form-label">Tu Nombre</label>
-          <input type="text" class="form-control" id="nombreParticipante" required>
-          <div class="invalid-feedback">Por favor, introduce tu nombre.</div>
+  <!-- Modal: Editar Programa -->
+  <div class="modal fade" id="modalEditarPrograma" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">✏️ Editar Programa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Tu Mensaje</label>
-          <textarea class="form-control" id="mensajeParticipante" rows="3" required></textarea>
-          <div class="invalid-feedback">Por favor, escribe un mensaje.</div>
+        <div class="modal-body">
+          <form id="formEditarPrograma" class="needs-validation" novalidate>
+            <input type="hidden" id="edit_id">
+            <div class="mb-3">
+              <label class="form-label">Título del Programa</label>
+              <input type="text" class="form-control" id="edit_titulo_programa" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tipo</label>
+              <input type="text" class="form-control" id="edit_tipo_id" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Fecha y Hora de Inicio</label>
+              <input type="datetime-local" class="form-control" id="edit_fecha_hora_inicio" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Fecha y Hora de Fin</label>
+              <input type="datetime-local" class="form-control" id="edit_fecha_hora_fin" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">¿Es en Vivo?</label>
+              <select class="form-select" id="edit_es_en_vivo">
+                <option value="true">Sí</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Locutor ID</label>
+              <input type="number" class="form-control" id="edit_locutor_id">
+            </div>
+            <button type="submit" class="btn btn-warning btn-rounded">Guardar Cambios</button>
+          </form>
         </div>
-        <button type="submit" class="btn btn-success btn-rounded">Enviar Mensaje</button>
-      </form>
-      <div id="mensajesRecibidos" class="mt-3">
-        <!-- Aquí se mostrarán mensajes enviados -->
       </div>
     </div>
   </div>
-</div>
-<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
-  TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
-</footer>
-
 <!-- jQuery y DataTables -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -173,33 +221,46 @@
     const tablaRadio = $('#tablaRadio').DataTable();
     let graficoPie, graficoBar;
 
-    // Cargar tabla de programas y KPIs
-    fetch("/radiounge")
-      .then(res => res.json())
-      .then(data => {
-        tablaRadio.clear();
-        let total = 0;
-        let topPrograma = "";
-        let maxOyentes = 0;
+    // 📌 Cargar programas y KPIs
+    function cargarProgramas() {
+      fetch("/radiounge")
+        .then(res => res.json())
+        .then(data => {
+          tablaRadio.clear();
+          let total = 0;
+          let topPrograma = "";
+          let maxOyentes = 0;
 
-        data.forEach(r => {
-          tablaRadio.row.add([r.id_programa, r.nombre, r.duracion, r.oyentes]);
-          total += r.oyentes;
-          if (r.oyentes > maxOyentes) {
-            maxOyentes = r.oyentes;
-            topPrograma = r.nombre;
-          }
-        });
-        tablaRadio.draw();
+          data.forEach(r => {
+            tablaRadio.row.add([
+              r.id,
+              r.titulo_programa,
+              r.tipo_id,
+              new Date(r.fecha_hora_inicio).toLocaleString(),
+              new Date(r.fecha_hora_fin).toLocaleString(),
+              r.es_en_vivo ? "Sí" : "No",
+              r.locutor_id || "-",
+              `<button class="btn btn-warning btn-sm btnEditar" data-id="${r.id}">✏️</button>
+               <button class="btn btn-danger btn-sm btnEliminar" data-id="${r.id}">🗑️</button>`
+            ]);
+            total += r.oyentes || 0;
+            if ((r.oyentes || 0) > maxOyentes) {
+              maxOyentes = r.oyentes;
+              topPrograma = r.titulo_programa;
+            }
+          });
+          tablaRadio.draw();
 
-        // KPIs dinámicos
-        document.getElementById("totalOyentes").textContent = total;
-        document.getElementById("promedioOyentes").textContent = (total / data.length).toFixed(1);
-        document.getElementById("topPrograma").textContent = topPrograma;
-      })
-      .catch(err => console.error("Error cargando programas de radio:", err));
+          // KPIs dinámicos
+          document.getElementById("totalOyentes").textContent = total;
+          document.getElementById("promedioOyentes").textContent = (data.length ? (total / data.length).toFixed(1) : 0);
+          document.getElementById("topPrograma").textContent = topPrograma || "-";
+        })
+        .catch(err => console.error("Error cargando programas:", err));
+    }
+    cargarProgramas();
 
-    // Gráficas de oyentes
+    // 📊 Gráficas de oyentes
     fetch("/oyentes_radio")
       .then(res => res.json())
       .then(data => {
@@ -224,9 +285,6 @@
                 'rgba(153, 102, 255, 0.7)'
               ]
             }]
-          },
-          options: {
-            animation: { animateScale: true }
           }
         });
 
@@ -240,59 +298,99 @@
               backgroundColor: 'rgba(0, 64, 128, 0.7)'
             }]
           },
-          options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true } },
-            animation: { duration: 1500, easing: 'easeOutBounce' }
-          }
+          options: { scales: { y: { beginAtZero: true } } }
         });
-      })
-      .catch(err => console.error("Error cargando gráfica de oyentes:", err));
-
-    // Validación de formulario de participación
-    (function () {
-      'use strict';
-      const forms = document.querySelectorAll('.needs-validation');
-      Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-          if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-          }
-          form.classList.add('was-validated');
-        }, false);
       });
-    })();
 
-    // Manejo de mensajes enviados
+    // ➕ Crear programa
+    $('#formAgregarPrograma').on('submit', function(e){
+      e.preventDefault();
+      const nuevoPrograma = {
+        titulo_programa: $('#titulo_programa').val(),
+        tipo_id: $('#tipo_id').val(),
+        fecha_hora_inicio: $('#fecha_hora_inicio').val(),
+        fecha_hora_fin: $('#fecha_hora_fin').val(),
+        es_en_vivo: $('#es_en_vivo').val() === "true",
+        locutor_id: $('#locutor_id').val()
+      };
+      fetch("/radiounge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevoPrograma)
+      }).then(() => {
+        $('#modalAgregarPrograma').modal('hide');
+        cargarProgramas();
+      });
+    });
+
+    // ✏️ Editar programa
+    $('#tablaRadio').on('click', '.btnEditar', function(){
+      const id = $(this).data('id');
+      fetch(`/radiounge/${id}`)
+        .then(res => res.json())
+        .then(r => {
+          $('#edit_id').val(r.id);
+          $('#edit_titulo_programa').val(r.titulo_programa);
+          $('#edit_tipo_id').val(r.tipo_id);
+          $('#edit_fecha_hora_inicio').val(r.fecha_hora_inicio.replace(" ", "T"));
+          $('#edit_fecha_hora_fin').val(r.fecha_hora_fin.replace(" ", "T"));
+          $('#edit_es_en_vivo').val(r.es_en_vivo ? "true" : "false");
+          $('#edit_locutor_id').val(r.locutor_id);
+          $('#modalEditarPrograma').modal('show');
+        });
+    });
+
+    $('#formEditarPrograma').on('submit', function(e){
+      e.preventDefault();
+      const id = $('#edit_id').val();
+      const programaEditado = {
+        titulo_programa: $('#edit_titulo_programa').val(),
+        tipo_id: $('#edit_tipo_id').val(),
+        fecha_hora_inicio: $('#edit_fecha_hora_inicio').val(),
+        fecha_hora_fin: $('#edit_fecha_hora_fin').val(),
+        es_en_vivo: $('#edit_es_en_vivo').val() === "true",
+        locutor_id: $('#edit_locutor_id').val()
+      };
+      fetch(`/radiounge/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(programaEditado)
+      }).then(() => {
+        $('#modalEditarPrograma').modal('hide');
+        cargarProgramas();
+      });
+    });
+
+    // 🗑️ Eliminar programa
+    $('#tablaRadio').on('click', '.btnEliminar', function(){
+      const id = $(this).data('id');
+      if (confirm("¿Seguro que deseas eliminar este programa?")) {
+        fetch(`/radiounge/${id}`, { method: "DELETE" })
+          .then(() => cargarProgramas());
+      }
+    });
+
+    // 💬 Participación
     $('#formParticipacion').on('submit', function(e){
       e.preventDefault();
       if (!this.checkValidity()) return;
-
       const nombre = $('#nombreParticipante').val();
       const mensaje = $('#mensajeParticipante').val();
-
       const nuevoMensaje = `<div class="alert alert-info"><strong>${nombre}:</strong> ${mensaje}</div>`;
       $('#mensajesRecibidos').prepend(nuevoMensaje);
-
       $('#nombreParticipante').val("");
       $('#mensajeParticipante').val("");
       this.classList.remove('was-validated');
     });
 
-    // Estado de transmisión dinámico (simulado)
+    // 🎙️ Estado de transmisión dinámico
     function actualizarEstado(){
       const estado = Math.random() > 0.1 ? "En Vivo" : "Fuera de Transmisión";
       const badge = document.getElementById("estadoTransmision");
-      if (estado === "En Vivo") {
-        badge.textContent = "En Vivo";
-        badge.className = "badge bg-success";
-      } else {
-        badge.textContent = "Fuera de Transmisión";
-        badge.className = "badge bg-danger";
-      }
+      badge.textContent = estado;
+      badge.className = estado === "En Vivo" ? "badge bg-success" : "badge bg-danger";
     }
-    setInterval(actualizarEstado, 10000); // cada 10 segundos
+    setInterval(actualizarEstado, 10000);
   });
 </script>
 </body>
