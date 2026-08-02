@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Radio UNGE - SmartCampusGuide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Responsive -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <style>
@@ -10,9 +11,10 @@
     footer { margin-top: auto; }
     .banner { background: url('radio_banner.jpg') center/cover no-repeat; color: white; padding: 60px 20px; text-align: center; }
     .banner h1 { font-size: 2.5rem; font-weight: bold; }
-    .modal-header { background-color: rgba(0, 64, 128, 0.85); color: white; }
-    .card-header { background-color: rgba(0, 64, 128, 0.85); color: white; }
+    .modal-header, .card-header { background-color: rgba(0, 64, 128, 0.85); color: white; }
     .btn-rounded { border-radius: 20px; }
+    .card { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .alert-info { background-color: rgba(54,162,235,0.1); border-left: 4px solid rgba(54,162,235,0.7); }
   </style>
 </head>
 <body>
@@ -47,14 +49,14 @@
 </div>
 <div class="container mt-4">
   <!-- Navegación rápida -->
-  <div class="d-flex justify-content-between mb-4">
-    <a href="admin.html" class="btn btn-outline-secondary btn-rounded">⬅️ Volver al Panel Principal</a>
-    <a href="transporteescolar.html" class="btn btn-primary btn-rounded">Ir al Módulo Transporte Escolar ➡️</a>
+  <div class="d-flex justify-content-between mb-4 flex-wrap">
+    <a href="admin.html" class="btn btn-outline-secondary btn-rounded mb-2">⬅️ Volver al Panel Principal</a>
+    <a href="transporteescolar.html" class="btn btn-primary btn-rounded mb-2">Ir al Módulo Transporte Escolar ➡️</a>
   </div>
 
   <!-- KPIs -->
   <div class="row mb-4">
-    <div class="col-md-4">
+    <div class="col-md-4 col-sm-12 mb-3">
       <div class="card text-center">
         <div class="card-body">
           <h5>Total Oyentes</h5>
@@ -62,7 +64,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 col-sm-12 mb-3">
       <div class="card text-center">
         <div class="card-body">
           <h5>Promedio por Programa</h5>
@@ -70,7 +72,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 col-sm-12 mb-3">
       <div class="card text-center">
         <div class="card-body">
           <h5>Programa Top</h5>
@@ -84,7 +86,7 @@
   <div class="card mb-4">
     <div class="card-header">Transmisión en Vivo</div>
     <div class="card-body text-center">
-      <audio id="radioPlayer" controls>
+      <audio id="radioPlayer" controls class="w-100">
         <source src="http://tu-servidor-icecast:8000/radio" type="audio/mpeg">
         Tu navegador no soporta el reproductor de audio.
       </audio>
@@ -95,25 +97,27 @@
   <div class="card mb-4">
     <div class="card-header">📻 Programas Emitidos</div>
     <div class="card-body">
-      <table id="tablaRadio" class="display table table-striped table-bordered" style="width:100%">
-        <thead class="table-dark">
-          <tr>
-            <th>ID Programa</th>
-            <th>Nombre</th>
-            <th>Duración</th>
-            <th>Oyentes</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Se llenará dinámicamente -->
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table id="tablaRadio" class="display table table-striped table-bordered" style="width:100%">
+          <thead class="table-dark">
+            <tr>
+              <th>ID Programa</th>
+              <th>Nombre</th>
+              <th>Duración</th>
+              <th>Oyentes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Se llenará dinámicamente -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <!-- Gráficas de oyentes -->
   <div class="row mb-4">
-    <div class="col-md-6">
+    <div class="col-md-6 col-sm-12 mb-3">
       <div class="card">
         <div class="card-header">Distribución de Oyentes (Pie)</div>
         <div class="card-body">
@@ -121,7 +125,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-6 col-sm-12 mb-3">
       <div class="card">
         <div class="card-header">Comparación de Oyentes (Barras)</div>
         <div class="card-body">
@@ -135,14 +139,16 @@
   <div class="card mb-4">
     <div class="card-header">💬 Participa en la Radio</div>
     <div class="card-body">
-      <form id="formParticipacion">
+      <form id="formParticipacion" class="needs-validation" novalidate>
         <div class="mb-3">
           <label class="form-label">Tu Nombre</label>
           <input type="text" class="form-control" id="nombreParticipante" required>
+          <div class="invalid-feedback">Por favor, introduce tu nombre.</div>
         </div>
         <div class="mb-3">
           <label class="form-label">Tu Mensaje</label>
           <textarea class="form-control" id="mensajeParticipante" rows="3" required></textarea>
+          <div class="invalid-feedback">Por favor, escribe un mensaje.</div>
         </div>
         <button type="submit" class="btn btn-success btn-rounded">Enviar Mensaje</button>
       </form>
@@ -167,7 +173,7 @@
     const tablaRadio = $('#tablaRadio').DataTable();
     let graficoPie, graficoBar;
 
-    // Cargar tabla de programas
+    // Cargar tabla de programas y KPIs
     fetch("/radiounge")
       .then(res => res.json())
       .then(data => {
@@ -186,14 +192,14 @@
         });
         tablaRadio.draw();
 
-        // KPIs
+        // KPIs dinámicos
         document.getElementById("totalOyentes").textContent = total;
         document.getElementById("promedioOyentes").textContent = (total / data.length).toFixed(1);
         document.getElementById("topPrograma").textContent = topPrograma;
       })
       .catch(err => console.error("Error cargando programas de radio:", err));
 
-    // Cargar gráficas de oyentes
+    // Gráficas de oyentes
     fetch("/oyentes_radio")
       .then(res => res.json())
       .then(data => {
@@ -218,6 +224,9 @@
                 'rgba(153, 102, 255, 0.7)'
               ]
             }]
+          },
+          options: {
+            animation: { animateScale: true }
           }
         });
 
@@ -232,15 +241,34 @@
             }]
           },
           options: {
-            scales: { y: { beginAtZero: true } }
+            responsive: true,
+            scales: { y: { beginAtZero: true } },
+            animation: { duration: 1500, easing: 'easeOutBounce' }
           }
         });
       })
       .catch(err => console.error("Error cargando gráfica de oyentes:", err));
 
-    // Formulario de participación
+    // Validación de formulario de participación
+    (function () {
+      'use strict';
+      const forms = document.querySelectorAll('.needs-validation');
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    })();
+
+    // Manejo de mensajes enviados
     $('#formParticipacion').on('submit', function(e){
       e.preventDefault();
+      if (!this.checkValidity()) return;
+
       const nombre = $('#nombreParticipante').val();
       const mensaje = $('#mensajeParticipante').val();
 
@@ -249,9 +277,10 @@
 
       $('#nombreParticipante').val("");
       $('#mensajeParticipante').val("");
+      this.classList.remove('was-validated');
     });
 
-    // Estado de transmisión (simulado)
+    // Estado de transmisión dinámico (simulado)
     function actualizarEstado(){
       const estado = Math.random() > 0.1 ? "En Vivo" : "Fuera de Transmisión";
       const badge = document.getElementById("estadoTransmision");
