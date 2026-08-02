@@ -434,21 +434,6 @@ app.get('/oyentes_radio', async (req, res) => {
 });
 
 
-// Oyentes de Radio UNGE
-app.get('/oyentes_radio', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT r.titulo_programa AS programa, COUNT(e.usuario_id) AS oyentes
-      FROM estadisticas_escucha e
-      JOIN radiounge r ON e.id = e.id_programa
-      GROUP BY r.titulo_programa
-      ORDER BY oyentes DESC
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // 📻 CRUD de Programas de Radio UNGE
 app.get('/radiounge', async (req, res) => {
