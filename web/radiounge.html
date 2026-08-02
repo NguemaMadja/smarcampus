@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>Radio UNGE - SmartCampusGuide</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Responsive -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <style>
-    body { min-height: 100vh; display: flex; flex-direction: column; background-color: #f8f9fa; }
+    body { min-height: 100vh; display: flex; flex-direction: column; background-color: #f8f9fa; transition: background-color 0.3s, color 0.3s; }
     footer { margin-top: auto; }
     .banner { background: linear-gradient(rgba(0,64,128,0.7), rgba(0,64,128,0.7)), url('radio_banner.jpg') center/cover no-repeat; color: white; padding: 60px 20px; text-align: center; }
     .banner h1 { font-size: 2.8rem; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
@@ -17,6 +17,10 @@
     .alert-info { background-color: rgba(54,162,235,0.1); border-left: 4px solid rgba(54,162,235,0.7); }
     .kpi-card h5 { font-weight: bold; color: #555; }
     .kpi-value { font-size: 2rem; font-weight: bold; }
+    /* Modo oscuro */
+    body.dark-mode { background-color: #121212; color: #e0e0e0; }
+    body.dark-mode .card { background-color: #1e1e1e; color: #e0e0e0; }
+    body.dark-mode .navbar, body.dark-mode footer { background-color: #000 !important; }
   </style>
 </head>
 <body>
@@ -40,6 +44,8 @@
         <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
         <li class="nav-item"><a class="nav-link" href="mapa.html">Mapa</a></li>
       </ul>
+      <!-- Toggle modo oscuro -->
+      <button id="toggleDarkMode" class="btn btn-outline-light btn-sm">🌙 Modo Oscuro</button>
     </div>
   </div>
 </nav>
@@ -112,7 +118,7 @@
             </tr>
           </thead>
           <tbody>
-            <!-- Se llenará dinámicamente -->
+            <!-- Se llenará dinámicamente con ranking y medallas -->
           </tbody>
         </table>
       </div>
@@ -207,6 +213,7 @@
       </div>
     </div>
   </div>
+
   <!-- Gráficas de oyentes -->
   <div class="row mb-4">
     <div class="col-md-6 col-sm-12 mb-3">
@@ -226,7 +233,6 @@
       </div>
     </div>
   </div>
-
   <!-- Formulario de participación -->
   <div class="card mb-4">
     <div class="card-header">💬 Participa en la Radio</div>
@@ -249,6 +255,25 @@
       </div>
     </div>
   </div>
+
+  <!-- Chat en vivo básico -->
+  <div class="card mb-4">
+    <div class="card-header">💬 Chat en Vivo</div>
+    <div class="card-body">
+      <form id="formChat" class="needs-validation" novalidate>
+        <div class="mb-3">
+          <input type="text" class="form-control" id="chatNombre" placeholder="Tu nombre" required>
+        </div>
+        <div class="mb-3">
+          <input type="text" class="form-control" id="chatMensaje" placeholder="Escribe tu mensaje..." required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-rounded">Enviar</button>
+      </form>
+      <div id="chatMensajes" class="mt-3" style="max-height:200px; overflow-y:auto;">
+        <!-- Mensajes aparecerán aquí -->
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Footer -->
@@ -266,20 +291,39 @@
     const tablaRadio = $('#tablaRadio').DataTable();
     let graficoPie, graficoBar;
 
-    // 📌 Cargar programas y KPIs
+    // 🌙 Modo oscuro/claro con localStorage
+    const toggleBtn = document.getElementById("toggleDarkMode");
+    if(localStorage.getItem("darkMode") === "true") {
+      document.body.classList.add("dark-mode");
+      toggleBtn.textContent = "☀️ Modo Claro";
+    }
+    toggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      const isDark = document.body.classList.contains("dark-mode");
+      localStorage.setItem("darkMode", isDark);
+      toggleBtn.textContent = isDark ? "☀️ Modo Claro" : "🌙 Modo Oscuro";
+    });
+
+    // 📌 Cargar programas y KPIs con ranking dinámico y medallas
     function cargarProgramas() {
       fetch("/radiounge")
         .then(res => res.json())
         .then(data => {
           tablaRadio.clear();
           let total = 0;
-          let topPrograma = "";
-          let maxOyentes = 0;
 
-          data.forEach(r => {
+          // Ordenar por oyentes (ranking dinámico)
+          data.sort((a,b) => (b.oyentes||0) - (a.oyentes||0));
+
+          data.forEach((r, index) => {
+            let medalla = "";
+            if(index === 0) medalla = "🥇";
+            else if(index === 1) medalla = "🥈";
+            else if(index === 2) medalla = "🥉";
+
             tablaRadio.row.add([
               r.id,
-              r.titulo_programa,
+              medalla + " " + r.titulo_programa,
               r.tipo_id,
               new Date(r.fecha_hora_inicio).toLocaleString(),
               new Date(r.fecha_hora_fin).toLocaleString(),
@@ -289,23 +333,18 @@
                <button class="btn btn-danger btn-sm btnEliminar" data-id="${r.id}">🗑️</button>`
             ]);
             total += r.oyentes || 0;
-            if ((r.oyentes || 0) > maxOyentes) {
-              maxOyentes = r.oyentes;
-              topPrograma = r.titulo_programa;
-            }
           });
           tablaRadio.draw();
 
           // KPIs dinámicos
           document.getElementById("totalOyentes").textContent = total;
           document.getElementById("promedioOyentes").textContent = (data.length ? (total / data.length).toFixed(1) : 0);
-          document.getElementById("topPrograma").textContent = topPrograma || "-";
-        })
-        .catch(err => console.error("Error cargando programas:", err));
+          document.getElementById("topPrograma").textContent = data[0] ? data[0].titulo_programa : "-";
+        });
     }
     cargarProgramas();
 
-    // 📊 Gráficas de oyentes
+    // 📊 Gráficas con animaciones suaves
     function cargarGraficos() {
       fetch("/oyentes_radio")
         .then(res => res.json())
@@ -333,6 +372,7 @@
               }]
             },
             options: {
+              animation: { duration: 1500, easing: 'easeOutBounce' },
               plugins: { legend: { position: 'bottom' } }
             }
           });
@@ -348,6 +388,7 @@
               }]
             },
             options: {
+              animation: { duration: 1500, easing: 'easeOutElastic' },
               scales: { y: { beginAtZero: true } },
               plugins: { legend: { display: false } }
             }
@@ -355,7 +396,6 @@
         });
     }
     cargarGraficos();
-
     // ➕ Crear programa
     $('#formAgregarPrograma').on('submit', function(e){
       e.preventDefault();
@@ -440,6 +480,17 @@
       $('#nombreParticipante').val("");
       $('#mensajeParticipante').val("");
       this.classList.remove('was-validated');
+    });
+
+    // 💬 Chat en vivo básico
+    $('#formChat').on('submit', function(e){
+      e.preventDefault();
+      const nombre = $('#chatNombre').val();
+      const mensaje = $('#chatMensaje').val();
+      const nuevoMsg = `<div><strong>${nombre}:</strong> ${mensaje}</div>`;
+      $('#chatMensajes').append(nuevoMsg);
+      $('#chatNombre').val("");
+      $('#chatMensaje').val("");
     });
 
     // 🎙️ Estado de transmisión dinámico
