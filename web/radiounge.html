@@ -207,6 +207,54 @@
       </div>
     </div>
   </div>
+  <!-- Gráficas de oyentes -->
+  <div class="row mb-4">
+    <div class="col-md-6 col-sm-12 mb-3">
+      <div class="card">
+        <div class="card-header">📊 Distribución de Oyentes (Pie)</div>
+        <div class="card-body">
+          <canvas id="graficoOyentesPie"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-sm-12 mb-3">
+      <div class="card">
+        <div class="card-header">📈 Comparación de Oyentes (Barras)</div>
+        <div class="card-body">
+          <canvas id="graficoOyentesBar"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulario de participación -->
+  <div class="card mb-4">
+    <div class="card-header">💬 Participa en la Radio</div>
+    <div class="card-body">
+      <form id="formParticipacion" class="needs-validation" novalidate>
+        <div class="mb-3">
+          <label class="form-label">Tu Nombre</label>
+          <input type="text" class="form-control" id="nombreParticipante" required>
+          <div class="invalid-feedback">Por favor, introduce tu nombre.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Tu Mensaje</label>
+          <textarea class="form-control" id="mensajeParticipante" rows="3" required></textarea>
+          <div class="invalid-feedback">Por favor, escribe un mensaje.</div>
+        </div>
+        <button type="submit" class="btn btn-success btn-rounded">Enviar Mensaje</button>
+      </form>
+      <div id="mensajesRecibidos" class="mt-3">
+        <!-- Aquí se mostrarán mensajes enviados -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
+  TODOS LOS DERECHOS RESERVADOS - UNGE - @ IoT A NUESTRO ALCANCE - 2026
+</footer>
 <!-- jQuery y DataTables -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -406,4 +454,3 @@
 </script>
 </body>
 </html>
- 
