@@ -1207,6 +1207,81 @@ app.get('/metricaswifi', async (req, res) => {
 });
 
 
+// ==================== MÓDULO HUELLA ====================
+
+// Endpoint: métricas para el dashboard Huella
+app.get('/api/huella/metricas', async (req, res) => {
+  try {
+    const totalAcciones = await pool.query('SELECT COUNT(*) FROM huella_usuarios');
+    const usuariosActivos = await pool.query('SELECT COUNT(DISTINCT id_usuario) FROM huella_usuarios');
+    const moduloTop = await pool.query(`
+      SELECT modulo, COUNT(*) AS total 
+      FROM huella_usuarios 
+      GROUP BY modulo 
+      ORDER BY total DESC LIMIT 1
+    `);
+    const tiempoRadio = await pool.query(`
+      SELECT COALESCE(SUM(duracion_segundos),0) AS total 
+      FROM huella_usuarios WHERE modulo='Radio'
+    `);
+    const accionesPorModulo = await pool.query(`
+      SELECT modulo, COUNT(*) AS total 
+      FROM huella_usuarios 
+      GROUP BY modulo
+    `);
+    const usuariosMasActivos = await pool.query(`
+      SELECT id_usuario, COUNT(*) AS total 
+      FROM huella_usuarios 
+      GROUP BY id_usuario 
+      ORDER BY total DESC LIMIT 5
+    `);
+
+    res.json({
+      totalAcciones: parseInt(totalAcciones.rows[0].count),
+      usuariosActivos: parseInt(usuariosActivos.rows[0].count),
+      moduloTop: moduloTop.rows[0]?.modulo || '-',
+      tiempoRadio: parseInt(tiempoRadio.rows[0].total),
+      accionesPorModulo: Object.fromEntries(accionesPorModulo.rows.map(r => [r.modulo, parseInt(r.total)])),
+      usuariosMasActivos: Object.fromEntries(usuariosMasActivos.rows.map(r => [`Usuario ${r.id_usuario}`, parseInt(r.total)]))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint: registrar una nueva huella
+app.post('/api/huella', async (req, res) => {
+  try {
+    const { id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos } = req.body;
+    const query = `
+      INSERT INTO huella_usuarios 
+      (id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos, fecha_hora)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
+      RETURNING *;
+    `;
+    const values = [id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos];
+    const result = await pool.query(query, values);
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint: historial de un usuario
+app.get('/api/huella/:id_usuario', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM huella_usuarios WHERE id_usuario=$1 ORDER BY fecha_hora DESC',
+      [req.params.id_usuario]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 
 // ---------------- INICIO SERVIDOR ----------------
 const PORT = process.env.PORT || 3000;
