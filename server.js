@@ -1296,6 +1296,7 @@ app.get('/api/huella/:id_usuario', async (req, res) => {
 
 
 
+
 // ---------------- INICIO SERVIDOR ----------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
