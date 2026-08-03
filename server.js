@@ -462,27 +462,33 @@ app.get('/radiounge/:id', async (req, res) => {
 
 app.post('/radiounge', async (req, res) => {
   try {
+    console.log("📥 Datos recibidos en POST:", req.body); // 👈 Log de depuración
     const { titulo_programa, tipo_id, fecha_hora_inicio, fecha_hora_fin, es_en_vivo, locutorio_id } = req.body;
+
     await pool.query(
       "INSERT INTO radiounge (titulo_programa, tipo_id, fecha_hora_inicio, fecha_hora_fin, es_en_vivo, locutorio_id) VALUES ($1,$2,$3,$4,$5,$6)",
       [titulo_programa, tipo_id, fecha_hora_inicio, fecha_hora_fin, es_en_vivo, locutorio_id]
     );
     res.sendStatus(201);
   } catch (err) {
+    console.error("❌ Error al insertar:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 app.put('/radiounge/:id', async (req, res) => {
   try {
+    console.log("📥 Datos recibidos en PUT:", req.body); // 👈 Log de depuración
     const { id } = req.params;
     const { titulo_programa, tipo_id, fecha_hora_inicio, fecha_hora_fin, es_en_vivo, locutorio_id } = req.body;
+
     await pool.query(
       "UPDATE radiounge SET titulo_programa=$1, tipo_id=$2, fecha_hora_inicio=$3, fecha_hora_fin=$4, es_en_vivo=$5, locutorio_id=$6 WHERE id=$7",
       [titulo_programa, tipo_id, fecha_hora_inicio, fecha_hora_fin, es_en_vivo, locutorio_id, id]
     );
     res.sendStatus(200);
   } catch (err) {
+    console.error("❌ Error al actualizar:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -493,6 +499,7 @@ app.delete('/radiounge/:id', async (req, res) => {
     await pool.query("DELETE FROM radiounge WHERE id=$1", [id]);
     res.sendStatus(200);
   } catch (err) {
+    console.error("❌ Error al eliminar:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
