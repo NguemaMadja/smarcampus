@@ -13,10 +13,11 @@
 </head>
 <body>
 
-<div class="d-flex justify-content-between mb-4">
-  <a href="admin.html" class="btn btn-outline-secondary">⬅️ Volver al Panel Principal</a>
-  <a href="radiounge.html" class="btn btn-primary">Ir al Módulo Radio UNGE ➡️</a>
-</div>
+
+
+
+
+  
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
@@ -78,9 +79,7 @@
             <option value="co2">CO₂</option>
           </select>
         </div>
-        <div class="col-md-12">
-          <button type="button" id="btnAplicarFiltros" class="btn btn-primary">Aplicar filtros</button>
-        </div>
+        
       </form>
     </div>
   </div>
@@ -133,6 +132,23 @@
       <div class="card">
         <div class="card-header">QoS de la Red WiFi</div>
         <div class="card-body"><canvas id="graficoQoS"></canvas></div>
+
+
+<div class="row mt-3">
+  <div class="col-md-4">
+    <button type="button" id="btnAplicarFiltros" class="btn btn-primary w-100">Aplicar filtros</button>
+  </div>
+  <div class="col-md-4">
+    <button class="btn btn-outline-secondary w-100" onclick="window.history.back()">⬅️ Atrás</button>
+  </div>
+  <div class="col-md-4">
+    <button class="btn btn-outline-secondary w-100" onclick="window.history.forward()">➡️ Adelante</button>
+  </div>
+</div>
+
+        
+        
+        
       </div>
     </div>
 
