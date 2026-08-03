@@ -28,6 +28,28 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://smartcampus_e3qk_user:VcilJQhBclQrE8dlUTEnOqQA3rUL1L1K@dpg-d9hstto4n6ts73bg0em0-a.oregon-postgres.render.com:5432/smartcampus_e3qk",
   ssl: { rejectUnauthorized: false }
 });
+
+// ---------------- FUNCIÓN AUXILIAR PARA REGISTRO ----------------
+async function registrarAccion({ id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos }) {
+  try {
+    await pool.query(
+      `INSERT INTO logsactividad 
+       (id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos, fecha) 
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())`,
+      [id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos]
+    );
+
+    await pool.query(
+      `INSERT INTO huella_usuarios 
+       (id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos, fecha_hora) 
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())`,
+      [id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos]
+    );
+  } catch (err) {
+    console.error("Error registrando acción:", err);
+  }
+}
+
 // ---------------- LOGIN ----------------
 app.post('/login', async (req, res) => {
   const { correo, password } = req.body;
@@ -38,6 +60,18 @@ app.post('/login', async (req, res) => {
     const usuario = result.rows[0];
     const valido = bcrypt.compareSync(password, usuario.password_hash);
     if (!valido) return res.status(401).json({ error: "Contraseña incorrecta" });
+
+    // 👇 Registrar acción en actividad y huella
+    await registrarAccion({
+      id_usuario: usuario.id_usuario,
+      accion: 'LOGIN',
+      modulo: 'Autenticación',
+      detalle: `Usuario ${usuario.nombre} inició sesión`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
 
     res.json({ mensaje: "Login correcto", usuario });
   } catch (err) {
@@ -60,6 +94,19 @@ app.get('/usuarios/:id', async (req, res) => {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM usuarios WHERE id_usuario=$1', [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario: id,
+      accion: 'CONSULTAR',
+      modulo: 'Usuarios',
+      detalle: `Consulta de usuario ${id}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -74,6 +121,19 @@ app.post("/usuarios", async (req, res) => {
       "INSERT INTO usuarios (nombre, correo, rol, password_hash) VALUES ($1, $2, $3, $4) RETURNING *",
       [nombre, correo, rol, passwordHash]
     );
+
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario: result.rows[0].id_usuario,
+      accion: 'CREAR',
+      modulo: 'Usuarios',
+      detalle: `Usuario ${nombre} creado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -98,6 +158,19 @@ app.put("/usuarios/:id", async (req, res) => {
       );
     }
     if (result.rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario: id,
+      accion: 'EDITAR',
+      modulo: 'Usuarios',
+      detalle: `Usuario ${nombre} actualizado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -109,104 +182,22 @@ app.delete('/usuarios/:id', async (req, res) => {
     const { id } = req.params;
     const result = await pool.query('DELETE FROM usuarios WHERE id_usuario=$1 RETURNING *', [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario: id,
+      accion: 'ELIMINAR',
+      modulo: 'Usuarios',
+      detalle: `Usuario ${id} eliminado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ message: 'Usuario eliminado' });
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-});
-// ---------------- PROFESORES CRUD ----------------
-
-// Obtener todos los profesores con sus departamentos, carreras y asignaturas
-app.get('/profesores', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT p.id_profesor AS id,
-             u.nombre,
-             u.correo,
-             COALESCE(STRING_AGG(DISTINCT d.nombre, ', '), '') AS departamentos,
-             COALESCE(STRING_AGG(DISTINCT c.nombre, ', '), '') AS carreras,
-             COALESCE(STRING_AGG(DISTINCT a.nombre, ', '), '') AS asignaturas,
-             ARRAY_REMOVE(ARRAY_AGG(DISTINCT d.id_departamento), NULL) AS departamentos_ids,
-             ARRAY_REMOVE(ARRAY_AGG(DISTINCT c.id_carrera), NULL) AS carreras_ids,
-             ARRAY_REMOVE(ARRAY_AGG(DISTINCT a.id_asignatura), NULL) AS asignaturas_ids
-      FROM profesores p
-      JOIN usuarios u ON p.id_usuario = u.id_usuario
-      LEFT JOIN profesor_departamento pd ON p.id_profesor = pd.id_profesor
-      LEFT JOIN departamentos d ON pd.id_departamento = d.id_departamento
-      LEFT JOIN profesor_carrera pc ON p.id_profesor = pc.id_profesor
-      LEFT JOIN carreras c ON pc.id_carrera = c.id_carrera
-      LEFT JOIN profesor_asignatura pa ON p.id_profesor = pa.id_profesor
-      LEFT JOIN asignaturas a ON pa.id_asignatura = a.id_asignatura
-      GROUP BY p.id_profesor, u.nombre, u.correo
-      ORDER BY p.id_profesor;
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Obtener un profesor por ID
-app.get('/profesores/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query(`
-      SELECT p.id_profesor AS id,
-             u.nombre,
-             u.correo,
-             COALESCE(STRING_AGG(DISTINCT d.nombre, ', '), '') AS departamentos,
-             COALESCE(STRING_AGG(DISTINCT c.nombre, ', '), '') AS carreras,
-             COALESCE(STRING_AGG(DISTINCT a.nombre, ', '), '') AS asignaturas,
-             ARRAY_REMOVE(ARRAY_AGG(DISTINCT d.id_departamento), NULL) AS departamentos_ids,
-             ARRAY_REMOVE(ARRAY_AGG(DISTINCT c.id_carrera), NULL) AS carreras_ids,
-             ARRAY_REMOVE(ARRAY_AGG(DISTINCT a.id_asignatura), NULL) AS asignaturas_ids
-      FROM profesores p
-      JOIN usuarios u ON p.id_usuario = u.id_usuario
-      LEFT JOIN profesor_departamento pd ON p.id_profesor = pd.id_profesor
-      LEFT JOIN departamentos d ON pd.id_departamento = d.id_departamento
-      LEFT JOIN profesor_carrera pc ON p.id_profesor = pc.id_profesor
-      LEFT JOIN carreras c ON pc.id_carrera = c.id_carrera
-      LEFT JOIN profesor_asignatura pa ON p.id_profesor = pa.id_profesor
-      LEFT JOIN asignaturas a ON pa.id_asignatura = a.id_asignatura
-      WHERE p.id_profesor=$1
-      GROUP BY p.id_profesor, u.nombre, u.correo
-    `, [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Crear profesor
-app.post('/profesores', async (req, res) => {
-  try {
-    const { id_usuario, departamentos_ids, carreras_ids, asignaturas_ids } = req.body;
-    const result = await pool.query(
-      'INSERT INTO profesores (id_usuario) VALUES ($1) RETURNING id_profesor',
-      [id_usuario]
-    );
-    const profesorId = result.rows[0].id_profesor;
-
-    if (departamentos_ids?.length) {
-      for (const depId of departamentos_ids) {
-        await pool.query('INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)', [profesorId, depId]);
-      }
-    }
-    if (carreras_ids?.length) {
-      for (const carId of carreras_ids) {
-        await pool.query('INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)', [profesorId, carId]);
-      }
-    }
-    if (asignaturas_ids?.length) {
-      for (const asigId of asignaturas_ids) {
-        await pool.query('INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)', [profesorId, asigId]);
-      }
-    }
-
-    res.json({ mensaje: 'Profesor creado correctamente', id: profesorId });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
   }
 });
 
@@ -238,6 +229,18 @@ app.put('/profesores/:id', async (req, res) => {
       }
     }
 
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario,
+      accion: 'EDITAR',
+      modulo: 'Profesores',
+      detalle: `Profesor ${id} actualizado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: 'Profesor actualizado correctamente', id });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -253,11 +256,25 @@ app.delete('/profesores/:id', async (req, res) => {
     await pool.query('DELETE FROM profesor_asignatura WHERE id_profesor=$1', [id]);
     const result = await pool.query('DELETE FROM profesores WHERE id_profesor=$1 RETURNING id_profesor', [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
+
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'ELIMINAR',
+      modulo: 'Profesores',
+      detalle: `Profesor ${id} eliminado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: 'Profesor eliminado correctamente', id: result.rows[0].id_profesor });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 // ---------------- ESTUDIANTES CRUD ----------------
 
 // Obtener todos los estudiantes
@@ -273,6 +290,19 @@ app.get('/estudiantes', async (req, res) => {
       JOIN usuarios u ON e.id_usuario = u.id_usuario
       ORDER BY e.id_estudiante
     `);
+
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Estudiantes',
+      detalle: 'Consulta de todos los estudiantes',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ data: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -294,6 +324,19 @@ app.get('/estudiantes/:id', async (req, res) => {
       WHERE e.id_estudiante=$1
     `, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Estudiante no encontrado' });
+
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario: result.rows[0].id_usuario,
+      accion: 'CONSULTAR',
+      modulo: 'Estudiantes',
+      detalle: `Consulta de estudiante ${id}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ data: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -310,6 +353,19 @@ app.post('/estudiantes', async (req, res) => {
        RETURNING id_estudiante AS id, id_usuario, matricula`,
       [id_usuario, matricula]
     );
+
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario,
+      accion: 'CREAR',
+      modulo: 'Estudiantes',
+      detalle: `Estudiante ${matricula} creado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ data: result.rows[0] });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -329,6 +385,19 @@ app.put('/estudiantes/:id', async (req, res) => {
       [id_usuario, matricula, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Estudiante no encontrado' });
+
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario,
+      accion: 'EDITAR',
+      modulo: 'Estudiantes',
+      detalle: `Estudiante ${id} actualizado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ data: result.rows[0] });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -346,56 +415,20 @@ app.delete('/estudiantes/:id', async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Estudiante no encontrado' });
+
+    // 👇 Registrar acción
+    await registrarAccion({
+      id_usuario: result.rows[0].id_usuario,
+      accion: 'ELIMINAR',
+      modulo: 'Estudiantes',
+      detalle: `Estudiante ${id} eliminado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: 'Estudiante eliminado correctamente', data: result.rows[0] });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-// ---------------- ESTADÍSTICAS ----------------
-
-// Usuarios por rol
-app.get('/usuarios_estadisticas', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT rol, COUNT(*) AS total
-      FROM usuarios
-      GROUP BY rol
-      ORDER BY rol
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Visitas de la aplicación
-app.get('/visitas_app', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT DATE(fecha) AS fecha, COUNT(*) AS total
-      FROM visitasapp
-      GROUP BY DATE(fecha)
-      ORDER BY DATE(fecha)
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-// Asistencia de estudiantes/profesores
-app.get('/asistencia_estadisticas', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT a.id_asignatura, COUNT(*) AS asistencias
-      FROM asistencia a
-      GROUP BY a.id_asignatura
-      ORDER BY asistencias DESC
-    `);
-    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -410,15 +443,23 @@ app.get('/mapa_estadisticas', async (req, res) => {
       GROUP BY accion
       ORDER BY total DESC
     `);
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Mapa',
+      detalle: 'Consulta de estadísticas de navegación en el mapa',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
-
-// ✅ Permitir lectura de JSON en las peticiones
-app.use(express.json());
 
 // Oyentes de Radio UNGE
 app.get('/oyentes_radio', async (req, res) => {
@@ -430,6 +471,18 @@ app.get('/oyentes_radio', async (req, res) => {
       GROUP BY r.titulo_programa
       ORDER BY oyentes DESC
     `);
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Radio UNGE',
+      detalle: 'Consulta de oyentes de Radio UNGE',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -440,13 +493,25 @@ app.get('/oyentes_radio', async (req, res) => {
 app.get('/radiounge', async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM radiounge ORDER BY id ASC");
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Radio UNGE',
+      detalle: 'Consulta de todos los programas de Radio UNGE',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ✅ Obtener un programa por ID (necesario para edición)
+// Obtener un programa por ID
 app.get('/radiounge/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -454,137 +519,48 @@ app.get('/radiounge/:id', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Programa no encontrado" });
     }
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Radio UNGE',
+      detalle: `Consulta de programa ${id}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// Crear programa
 app.post('/radiounge', async (req, res) => {
   try {
-    console.log("📥 Datos recibidos en POST:", req.body); // 👈 Log de depuración
     const { titulo_programa, tipo_id, fecha_hora_inicio, fecha_hora_fin, es_en_vivo, locutorio_id } = req.body;
 
     await pool.query(
       "INSERT INTO radiounge (titulo_programa, tipo_id, fecha_hora_inicio, fecha_hora_fin, es_en_vivo, locutorio_id) VALUES ($1,$2,$3,$4,$5,$6)",
       [titulo_programa, tipo_id, fecha_hora_inicio, fecha_hora_fin, es_en_vivo, locutorio_id]
     );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CREAR',
+      modulo: 'Radio UNGE',
+      detalle: `Programa ${titulo_programa} creado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.sendStatus(201);
   } catch (err) {
-    console.error("❌ Error al insertar:", err.message);
     res.status(500).json({ error: err.message });
-  }
-});
-
-app.put('/radiounge/:id', async (req, res) => {
-  try {
-    console.log("📥 Datos recibidos en PUT:", req.body); // 👈 Log de depuración
-    const { id } = req.params;
-    const { titulo_programa, tipo_id, fecha_hora_inicio, fecha_hora_fin, es_en_vivo, locutorio_id } = req.body;
-
-    await pool.query(
-      "UPDATE radiounge SET titulo_programa=$1, tipo_id=$2, fecha_hora_inicio=$3, fecha_hora_fin=$4, es_en_vivo=$5, locutorio_id=$6 WHERE id=$7",
-      [titulo_programa, tipo_id, fecha_hora_inicio, fecha_hora_fin, es_en_vivo, locutorio_id, id]
-    );
-    res.sendStatus(200);
-  } catch (err) {
-    console.error("❌ Error al actualizar:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete('/radiounge/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await pool.query("DELETE FROM radiounge WHERE id=$1", [id]);
-    res.sendStatus(200);
-  } catch (err) {
-    console.error("❌ Error al eliminar:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-
-// Condiciones ambientales
-app.get('/sensores_estadisticas', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT DATE(fecha) AS fecha,
-             AVG(valor) FILTER (WHERE id_sensor IN (
-               SELECT id_sensor FROM sensores WHERE tipo='temperatura'
-             )) AS temperatura,
-             AVG(valor) FILTER (WHERE id_sensor IN (
-               SELECT id_sensor FROM sensores WHERE tipo='humedad'
-             )) AS humedad,
-             AVG(valor) FILTER (WHERE id_sensor IN (
-               SELECT id_sensor FROM sensores WHERE tipo='co2'
-             )) AS co2
-      FROM medicionesambientales
-      GROUP BY DATE(fecha)
-      ORDER BY DATE(fecha)
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// QoS de la red WiFi
-app.get('/qos_wifi', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT DATE(fecha) AS fecha,
-             AVG(latencia) AS latencia,
-             AVG(jitter) AS jitter,
-             AVG(ancho_banda) AS velocidad,
-             AVG(nivel_senal) AS rssi,
-             AVG(perdida_paquetes) AS perdida
-      FROM metricaswifi
-      GROUP BY DATE(fecha)
-      ORDER BY DATE(fecha)
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-
-// ---------------- DEPARTAMENTOS CRUD ----------------
-app.get('/departamentos', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM departamentos ORDER BY id_departamento');
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/departamentos/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query('SELECT * FROM departamentos WHERE id_departamento=$1', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Departamento no encontrado' });
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/departamentos', async (req, res) => {
-  try {
-    const { nombre } = req.body;
-    const result = await pool.query(
-      'INSERT INTO departamentos (nombre) VALUES ($1) RETURNING *',
-      [nombre]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
   }
 });
 
@@ -597,6 +573,18 @@ app.put('/departamentos/:id', async (req, res) => {
       [nombre, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Departamento no encontrado' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'EDITAR',
+      modulo: 'Departamentos',
+      detalle: `Departamento ${id} actualizado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -611,6 +599,18 @@ app.delete('/departamentos/:id', async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Departamento no encontrado' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'ELIMINAR',
+      modulo: 'Departamentos',
+      detalle: `Departamento ${id} eliminado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: 'Departamento eliminado correctamente' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -621,6 +621,18 @@ app.delete('/departamentos/:id', async (req, res) => {
 app.get('/carreras', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM carreras ORDER BY id_carrera');
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Carreras',
+      detalle: 'Consulta de todas las carreras',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -632,6 +644,18 @@ app.get('/carreras/:id', async (req, res) => {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM carreras WHERE id_carrera=$1', [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Carrera no encontrada' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Carreras',
+      detalle: `Consulta de carrera ${id}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -645,6 +669,18 @@ app.post('/carreras', async (req, res) => {
       'INSERT INTO carreras (nombre) VALUES ($1) RETURNING *',
       [nombre]
     );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CREAR',
+      modulo: 'Carreras',
+      detalle: `Carrera ${nombre} creada`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -660,6 +696,18 @@ app.put('/carreras/:id', async (req, res) => {
       [nombre, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Carrera no encontrada' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'EDITAR',
+      modulo: 'Carreras',
+      detalle: `Carrera ${id} actualizada`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -674,12 +722,23 @@ app.delete('/carreras/:id', async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Carrera no encontrada' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'ELIMINAR',
+      modulo: 'Carreras',
+      detalle: `Carrera ${id} eliminada`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: 'Carrera eliminada correctamente' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ---------------- EDIFICIOS CRUD ----------------
 app.get('/edificios', async (req, res) => {
@@ -687,6 +746,18 @@ app.get('/edificios', async (req, res) => {
     const result = await pool.query(
       'SELECT id_edificio AS id, nombre, ubicacion, lat, lng FROM edificios ORDER BY id_edificio'
     );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Edificios',
+      detalle: 'Consulta de todos los edificios',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -701,6 +772,18 @@ app.get('/edificios/:id', async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Edificio no encontrado' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Edificios',
+      detalle: `Consulta de edificio ${id}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -714,6 +797,18 @@ app.post('/edificios', async (req, res) => {
       'INSERT INTO edificios (nombre, ubicacion, lat, lng) VALUES ($1, $2, $3, $4) RETURNING id_edificio AS id, nombre, ubicacion, lat, lng',
       [nombre, ubicacion, lat, lng]
     );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CREAR',
+      modulo: 'Edificios',
+      detalle: `Edificio ${nombre} creado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -729,6 +824,18 @@ app.put('/edificios/:id', async (req, res) => {
       [nombre, ubicacion, lat, lng, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Edificio no encontrado' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'EDITAR',
+      modulo: 'Edificios',
+      detalle: `Edificio ${id} actualizado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -743,13 +850,23 @@ app.delete('/edificios/:id', async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Edificio no encontrado' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'ELIMINAR',
+      modulo: 'Edificios',
+      detalle: `Edificio ${id} eliminado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: 'Edificio eliminado correctamente' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 // ---------------- MAPA: BÚSQUEDA Y HUELLA ----------------
 
@@ -762,6 +879,18 @@ app.get('/api/map/search', async (req, res) => {
       [nombre]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: "Edificio no encontrado" });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Mapa',
+      detalle: `Búsqueda de edificio ${nombre}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -776,6 +905,18 @@ app.post('/api/map/huella', async (req, res) => {
       "INSERT INTO huella_usuarios (usuario_id, edificio_id, fecha_busqueda) VALUES ($1, $2, NOW()) RETURNING *",
       [usuario_id, edificio_id]
     );
+
+    await registrarAccion({
+      id_usuario: usuario_id,
+      accion: 'CREAR',
+      modulo: 'Mapa',
+      detalle: `Huella registrada en edificio ${edificio_id}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: "Huella registrada", data: result.rows[0] });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -791,34 +932,21 @@ app.post('/api/map/arrived', async (req, res) => {
       [usuario_id, edificio_id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: "Huella no encontrada" });
+
+    await registrarAccion({
+      id_usuario: usuario_id,
+      accion: 'EDITAR',
+      modulo: 'Mapa',
+      detalle: `Usuario ${usuario_id} llegó al edificio ${edificio_id}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: "Bienvenido al edificio!", data: result.rows[0] });
   } catch (err) {
     res.status(400).json({ error: err.message });
-  }
-});
-
-
-
-
-
-// ---------------- ASIGNATURAS CRUD ----------------
-app.get('/asignaturas', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM asignaturas ORDER BY id_asignatura');
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/asignaturas/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query('SELECT * FROM asignaturas WHERE id_asignatura=$1', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Asignatura no encontrada' });
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
 });
 
@@ -829,6 +957,18 @@ app.post('/asignaturas', async (req, res) => {
       'INSERT INTO asignaturas (nombre) VALUES ($1) RETURNING *',
       [nombre]
     );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CREAR',
+      modulo: 'Asignaturas',
+      detalle: `Asignatura ${nombre} creada`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -844,6 +984,18 @@ app.put('/asignaturas/:id', async (req, res) => {
       [nombre, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Asignatura no encontrada' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'EDITAR',
+      modulo: 'Asignaturas',
+      detalle: `Asignatura ${id} actualizada`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -858,17 +1010,40 @@ app.delete('/asignaturas/:id', async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Asignatura no encontrada' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'ELIMINAR',
+      modulo: 'Asignaturas',
+      detalle: `Asignatura ${id} eliminada`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: 'Asignatura eliminada correctamente' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-
 // ---------------- TIPOS DE SENSORES CRUD ----------------
 app.get('/tipos_sensores', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM tipos_sensores ORDER BY id_tipo');
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Tipos de Sensores',
+      detalle: 'Consulta de todos los tipos de sensores',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -882,6 +1057,18 @@ app.post('/tipos_sensores', async (req, res) => {
       'INSERT INTO tipos_sensores (nombre) VALUES ($1) RETURNING *',
       [nombre]
     );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CREAR',
+      modulo: 'Tipos de Sensores',
+      detalle: `Tipo de sensor ${nombre} creado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -896,12 +1083,23 @@ app.delete('/tipos_sensores/:id', async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Tipo no encontrado' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'ELIMINAR',
+      modulo: 'Tipos de Sensores',
+      detalle: `Tipo de sensor ${id} eliminado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: 'Tipo eliminado correctamente' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ---------------- AULAS CRUD ----------------
 
@@ -909,6 +1107,18 @@ app.delete('/tipos_sensores/:id', async (req, res) => {
 app.get('/aulas', async (req, res) => {
   try {
     const result = await pool.query('SELECT id_aula, nombre FROM aulas ORDER BY id_aula');
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Aulas',
+      detalle: 'Consulta de todas las aulas',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -923,6 +1133,18 @@ app.post('/aulas', async (req, res) => {
       'INSERT INTO aulas (nombre) VALUES ($1) RETURNING *',
       [nombre]
     );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CREAR',
+      modulo: 'Aulas',
+      detalle: `Aula ${nombre} creada`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -939,6 +1161,18 @@ app.put('/aulas/:id', async (req, res) => {
       [nombre, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Aula no encontrada' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'EDITAR',
+      modulo: 'Aulas',
+      detalle: `Aula ${id} actualizada`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -951,15 +1185,23 @@ app.delete('/aulas/:id', async (req, res) => {
     const { id } = req.params;
     const result = await pool.query('DELETE FROM aulas WHERE id_aula=$1 RETURNING *', [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Aula no encontrada' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'ELIMINAR',
+      modulo: 'Aulas',
+      detalle: `Aula ${id} eliminada`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ message: 'Aula eliminada correctamente' });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
-
-
-
-
 
 // ---------------- SENSORES CRUD ----------------
 app.get('/sensores', async (req, res) => {
@@ -982,12 +1224,23 @@ app.get('/sensores', async (req, res) => {
       ) l ON true
       ORDER BY s.id_sensor
     `);
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Sensores',
+      detalle: 'Consulta de todos los sensores',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 app.post('/sensores', async (req, res) => {
   try {
@@ -996,12 +1249,23 @@ app.post('/sensores', async (req, res) => {
       'INSERT INTO sensores (id_aula, id_tipo, ubicacion) VALUES ($1, $2, $3) RETURNING *',
       [id_aula, id_tipo, ubicacion]
     );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CREAR',
+      modulo: 'Sensores',
+      detalle: `Sensor creado en aula ${id_aula}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
-
 
 app.put('/sensores/:id', async (req, res) => {
   try {
@@ -1012,12 +1276,23 @@ app.put('/sensores/:id', async (req, res) => {
       [id_aula, id_tipo, ubicacion, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Sensor no encontrado' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'EDITAR',
+      modulo: 'Sensores',
+      detalle: `Sensor ${id} actualizado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
-
 
 app.delete('/sensores/:id', async (req, res) => {
   try {
@@ -1027,12 +1302,23 @@ app.delete('/sensores/:id', async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Sensor no encontrado' });
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'ELIMINAR',
+      modulo: 'Sensores',
+      detalle: `Sensor ${id} eliminado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: 'Sensor eliminado correctamente' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ---------------- LECTURAS DE SENSORES ----------------
 app.post('/sensores/data', async (req, res) => {
@@ -1045,12 +1331,23 @@ app.post('/sensores/data', async (req, res) => {
       'INSERT INTO lecturas (id_sensor, valor, fecha, hora) VALUES ($1, $2, $3, $4) RETURNING *',
       [id_sensor, valor, fecha, hora]
     );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CREAR',
+      modulo: 'Sensores',
+      detalle: `Lectura registrada para sensor ${id_sensor}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ mensaje: 'Lectura registrada', data: result.rows[0] });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
-
 
 // ---------------- HISTORIAL DE SENSORES ----------------
 app.get('/sensores/:id/historial', async (req, res) => {
@@ -1063,14 +1360,24 @@ app.get('/sensores/:id/historial', async (req, res) => {
        ORDER BY fecha ASC, hora ASC`,
       [id]
     );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Sensores',
+      detalle: `Consulta historial del sensor ${id}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     console.error("Error obteniendo historial:", err);
     res.status(500).json({ error: "Error al obtener historial del sensor" });
   }
 });
-
-
 
 // ---------------- QR Y ASISTENCIA ----------------
 
@@ -1089,6 +1396,17 @@ app.post('/aulas/:id/generar_qr', async (req, res) => {
     [id, codigoQR, fechaInicio, fechaFin]
   );
 
+  await registrarAccion({
+    id_usuario: null,
+    accion: 'CREAR',
+    modulo: 'Aulas',
+    detalle: `QR generado para aula ${id}`,
+    dispositivo: 'Web',
+    ip: req.ip,
+    resultado: 'OK',
+    duracion_segundos: 0
+  });
+
   const qrImage = await QRCode.toDataURL(codigoQR);
   res.json({ aula: id, codigo_qr: codigoQR, qr_image: qrImage, registro: result.rows[0] });
 });
@@ -1106,6 +1424,17 @@ app.get('/aulas/:id/qr', async (req, res) => {
   );
 
   if (!result.rows.length) return res.status(404).json({ error: 'QR no encontrado o vencido' });
+
+  await registrarAccion({
+    id_usuario: null,
+    accion: 'CONSULTAR',
+    modulo: 'Aulas',
+    detalle: `Consulta QR vigente del aula ${id}`,
+    dispositivo: 'Web',
+    ip: req.ip,
+    resultado: 'OK',
+    duracion_segundos: 0
+  });
 
   const codigoQR = result.rows[0].codigo_qr;
   const qrImage = await QRCode.toDataURL(codigoQR);
@@ -1139,6 +1468,17 @@ app.post('/asistencia_profesores', async (req, res) => {
       [id_profesor, id_qr, estado]
     );
 
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CREAR',
+      modulo: 'Asistencia Profesores',
+      detalle: `Asistencia registrada para profesor ${id_profesor} en aula ${id_aula}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({ message: 'Asistencia registrada correctamente' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1169,6 +1509,7 @@ cron.schedule('0 8 * * MON', async () => {
   }
 });
 
+// ---------------- MÉTRICAS WIFI ----------------
 
 // Métricas WiFi - listado con filtros opcionales
 app.get('/metricaswifi', async (req, res) => {
@@ -1199,14 +1540,24 @@ app.get('/metricaswifi', async (req, res) => {
     query += ` ORDER BY fecha ASC`;
 
     const result = await pool.query(query, params);
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'WiFi',
+      detalle: 'Consulta de métricas WiFi',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     console.error("Error en /metricaswifi:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 // ==================== MÓDULO HUELLA ====================
 
@@ -1252,6 +1603,17 @@ app.get('/api/huella/metricas', async (req, res) => {
       ORDER BY total DESC LIMIT 5
     `);
 
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Huella',
+      detalle: 'Consulta de métricas de huella',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json({
       totalAcciones: parseInt(totalAcciones.rows[0].count),
       usuariosActivos: parseInt(usuariosActivos.rows[0].count),
@@ -1279,6 +1641,18 @@ app.post('/api/huella', async (req, res) => {
     `;
     const values = [id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos];
     const result = await pool.query(query, values);
+
+    await registrarAccion({
+      id_usuario,
+      accion,
+      modulo,
+      detalle,
+      dispositivo,
+      ip,
+      resultado,
+      duracion_segundos
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -1293,16 +1667,24 @@ app.get('/api/huella/:id_usuario', async (req, res) => {
       'SELECT * FROM huella_usuarios WHERE id_usuario=$1 ORDER BY fecha_hora DESC',
       [req.params.id_usuario]
     );
+
+    await registrarAccion({
+      id_usuario: req.params.id_usuario,
+      accion: 'CONSULTAR',
+      modulo: 'Huella',
+      detalle: `Consulta historial de huella del usuario ${req.params.id_usuario}`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener historial de huella' });
   }
 });
-
-
-
-
 
 // =======================
 // ENDPOINTS ACTIVIDAD
@@ -1336,6 +1718,18 @@ app.get('/api/logsactividad', async (req, res) => {
 
   try {
     const result = await pool.query(query, params);
+
+    await registrarAccion({
+      id_usuario: usuario || null,
+      accion: 'CONSULTAR',
+      modulo: 'Actividad',
+      detalle: 'Consulta de registros de actividad',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -1343,7 +1737,7 @@ app.get('/api/logsactividad', async (req, res) => {
   }
 });
 
-// Insertar nueva actividad (cuando quieras registrar acciones)
+// Insertar nueva actividad
 app.post('/api/logsactividad', async (req, res) => {
   const { id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos } = req.body;
 
@@ -1354,18 +1748,24 @@ app.post('/api/logsactividad', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING *`,
       [id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos]
     );
+
+    await registrarAccion({
+      id_usuario,
+      accion,
+      modulo,
+      detalle,
+      dispositivo,
+      ip,
+      resultado,
+      duracion_segundos
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al registrar actividad' });
   }
 });
-
-
-
-
-
-
 
 // ---------------- INICIO SERVIDOR ----------------
 const PORT = process.env.PORT || 3000;
