@@ -55,13 +55,28 @@
   <!-- KPIs -->
   <div class="row mb-4">
     <div class="col-md-4 col-sm-12 mb-3">
-      <div class="card kpi-card text-center"><div class="card-body"><h5>Total Oyentes</h5><p id="totalOyentes" class="kpi-value text-success">0</p></div></div>
+      <div class="card kpi-card text-center">
+        <div class="card-body">
+          <h5>Total Oyentes</h5>
+          <p id="totalOyentes" class="kpi-value text-success">0</p>
+        </div>
+      </div>
     </div>
     <div class="col-md-4 col-sm-12 mb-3">
-      <div class="card kpi-card text-center"><div class="card-body"><h5>Promedio por Programa</h5><p id="promedioOyentes" class="kpi-value text-primary">0</p></div></div>
+      <div class="card kpi-card text-center">
+        <div class="card-body">
+          <h5>Promedio por Programa</h5>
+          <p id="promedioOyentes" class="kpi-value text-primary">0</p>
+        </div>
+      </div>
     </div>
     <div class="col-md-4 col-sm-12 mb-3">
-      <div class="card kpi-card text-center"><div class="card-body"><h5>Programa Top</h5><p id="topPrograma" class="kpi-value text-danger">-</p></div></div>
+      <div class="card kpi-card text-center">
+        <div class="card-body">
+          <h5>Programa Top</h5>
+          <p id="topPrograma" class="kpi-value text-danger">-</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -88,7 +103,14 @@
         <table id="tablaRadio" class="display table table-striped table-bordered" style="width:100%">
           <thead class="table-dark">
             <tr>
-              <th>ID</th><th>Título</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>En Vivo</th><th>Locutor</th><th>Acciones</th>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>En Vivo</th>
+              <th>Locutor</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -97,11 +119,52 @@
     </div>
   </div>
 
-  <!-- Modal Agregar -->
-  <!-- ... (igual que antes, formulario de agregar) -->
+  <!-- Modal: Agregar Programa -->
+  <div class="modal fade" id="modalAgregarPrograma" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">➕ Registrar Programa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formAgregarPrograma" class="needs-validation" novalidate>
+          <div class="mb-3"><label class="form-label">Título</label><input type="text" id="titulo_programa" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Tipo</label><input type="text" id="tipo_id" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Inicio</label><input type="datetime-local" id="fecha_hora_inicio" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Fin</label><input type="datetime-local" id="fecha_hora_fin" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">¿Es en Vivo?</label>
+            <select id="es_en_vivo" class="form-select"><option value="true">Sí</option><option value="false">No</option></select>
+          </div>
+          <div class="mb-3"><label class="form-label">Locutor ID</label><input type="number" id="locutorio_id" class="form-control"></div>
+          <button type="submit" class="btn btn-success btn-rounded">Registrar</button>
+        </form>
+      </div>
+    </div></div>
+  </div>
 
-  <!-- Modal Editar -->
-  <!-- ... (igual que antes, formulario de editar) -->
+  <!-- Modal: Editar Programa -->
+  <div class="modal fade" id="modalEditarPrograma" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">✏️ Editar Programa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formEditarPrograma" class="needs-validation" novalidate>
+          <input type="hidden" id="edit_id">
+          <div class="mb-3"><label class="form-label">Título</label><input type="text" id="edit_titulo_programa" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Tipo</label><input type="text" id="edit_tipo_id" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Inicio</label><input type="datetime-local" id="edit_fecha_hora_inicio" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Fin</label><input type="datetime-local" id="edit_fecha_hora_fin" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">¿Es en Vivo?</label>
+            <select id="edit_es_en_vivo" class="form-select"><option value="true">Sí</option><option value="false">No</option></select>
+          </div>
+          <div class="mb-3"><label class="form-label">Locutor ID</label><input type="number" id="edit_locutorio_id" class="form-control"></div>
+          <button type="submit" class="btn btn-warning btn-rounded">Guardar Cambios</button>
+        </form>
+      </div>
+    </div></div>
+  </div>
 
   <!-- Gráficas -->
   <div class="row mb-4">
@@ -112,6 +175,7 @@
       <div class="card"><div class="card-header">📈 Comparación de Oyentes (Barras)</div><div class="card-body"><canvas id="graficoOyentesBar"></canvas></div></div>
     </div>
   </div>
+</div>
 <!-- Librerías -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
