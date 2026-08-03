@@ -1214,21 +1214,32 @@ app.get('/api/huella/metricas', async (req, res) => {
   try {
     const totalAcciones = await pool.query('SELECT COUNT(*) FROM huella_usuarios');
     const usuariosActivos = await pool.query('SELECT COUNT(DISTINCT id_usuario) FROM huella_usuarios');
+
+    // Usuarios conectados en los últimos 5 minutos
+    const usuariosConectados = await pool.query(`
+      SELECT COUNT(DISTINCT id_usuario) 
+      FROM huella_usuarios 
+      WHERE fecha_hora > NOW() - INTERVAL '5 minutes'
+    `);
+
     const moduloTop = await pool.query(`
       SELECT modulo, COUNT(*) AS total 
       FROM huella_usuarios 
       GROUP BY modulo 
       ORDER BY total DESC LIMIT 1
     `);
+
     const tiempoRadio = await pool.query(`
       SELECT COALESCE(SUM(duracion_segundos),0) AS total 
       FROM huella_usuarios WHERE modulo='Radio'
     `);
+
     const accionesPorModulo = await pool.query(`
       SELECT modulo, COUNT(*) AS total 
       FROM huella_usuarios 
       GROUP BY modulo
     `);
+
     const usuariosMasActivos = await pool.query(`
       SELECT id_usuario, COUNT(*) AS total 
       FROM huella_usuarios 
@@ -1239,6 +1250,7 @@ app.get('/api/huella/metricas', async (req, res) => {
     res.json({
       totalAcciones: parseInt(totalAcciones.rows[0].count),
       usuariosActivos: parseInt(usuariosActivos.rows[0].count),
+      usuariosConectados: parseInt(usuariosConectados.rows[0].count), // 👈 nuevo campo
       moduloTop: moduloTop.rows[0]?.modulo || '-',
       tiempoRadio: parseInt(tiempoRadio.rows[0].total),
       accionesPorModulo: Object.fromEntries(accionesPorModulo.rows.map(r => [r.modulo, parseInt(r.total)])),
@@ -1279,6 +1291,7 @@ app.get('/api/huella/:id_usuario', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
