@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Actividad de Usuarios - SmartCampusGuide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Estilos propios -->
+  <style>
+    body { background-color: #f8f9fa; }
+    .navbar-brand { font-weight: bold; }
+    .table thead { background-color: #004080; color: white; }
+    .btn-nav { margin: 0 5px; }
+  </style>
+</head>
+<body>
+  <!-- Cabecera -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="admin.html">SmartCampusGuide Admin</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
+          <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+          <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
+          <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+          <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
+          <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+          <li class="nav-item"><a class="nav-link" href="asistencia_profesores.html">Asistencia Profesores</a></li>
+          <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
+          <li class="nav-item"><a class="nav-link" href="estadisticas.html">Estadísticas</a></li>
+          <li class="nav-item"><a class="nav-link" href="radiounge.html">Radio UNGE</a></li>
+          <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
+          <li class="nav-item"><a class="nav-link" href="mapa.html">Mapa</a></li>
+          <li class="nav-item"><a class="nav-link active" href="actividad.html">Actividad</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="container p-4">
+    <h1 class="text-center mb-4">📜 Actividad de Usuarios</h1>
+
+    <!-- Filtros -->
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <input type="number" id="usuarioId" class="form-control" placeholder="ID Usuario">
+      </div>
+      <div class="col-md-3">
+        <input type="text" id="modulo" class="form-control" placeholder="Módulo">
+      </div>
+      <div class="col-md-3">
+        <input type="date" id="fechaInicio" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <input type="date" id="fechaFin" class="form-control">
+      </div>
+    </div>
+    <div class="mb-4">
+      <button class="btn btn-primary" onclick="cargarActividad()">Filtrar</button>
+      <button class="btn btn-secondary btn-nav" onclick="window.history.back()">⬅️ Atrás</button>
+      <button class="btn btn-secondary btn-nav" onclick="window.history.forward()">➡️ Adelante</button>
+    </div>
+    <!-- Tabla de resultados -->
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Acción</th>
+          <th>Módulo</th>
+          <th>Detalle</th>
+          <th>Dispositivo</th>
+          <th>IP</th>
+          <th>Resultado</th>
+          <th>Duración (seg)</th>
+          <th>Fecha/Hora</th>
+        </tr>
+      </thead>
+      <tbody id="tablaActividad"></tbody>
+    </table>
+
+    <!-- Gráfico de actividad -->
+    <div class="mt-5">
+      <canvas id="graficoActividad" height="100"></canvas>
+    </div>
+  </div>
+  <!-- Footer -->
+  <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
+    TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    async function cargarActividad() {
+      const id = document.getElementById("usuarioId").value;
+      const modulo = document.getElementById("modulo").value;
+      const fechaInicio = document.getElementById("fechaInicio").value;
+      const fechaFin = document.getElementById("fechaFin").value;
+
+      try {
+        const res = await fetch(`https://smarcampus.onrender.com/api/logsactividad?usuario=${id}&modulo=${modulo}&inicio=${fechaInicio}&fin=${fechaFin}`);
+        const data = await res.json();
+
+        const tbody = document.getElementById("tablaActividad");
+        tbody.innerHTML = "";
+
+        let accionesPorModulo = {};
+
+        data.forEach(reg => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${reg.id_usuario}</td>
+              <td>${reg.accion}</td>
+              <td>${reg.modulo || '-'}</td>
+              <td>${reg.detalle || '-'}</td>
+              <td>${reg.dispositivo || '-'}</td>
+              <td>${reg.ip || '-'}</td>
+              <td>${reg.resultado || '-'}</td>
+              <td>${reg.duracion_segundos || '-'}</td>
+              <td>${new Date(reg.fecha).toLocaleString()}</td>
+            </tr>
+          `;
+          accionesPorModulo[reg.modulo] = (accionesPorModulo[reg.modulo] || 0) + 1;
+        });
+
+        // Gráfico de acciones por módulo
+        const ctx = document.getElementById('graficoActividad').getContext('2d');
+        if(window.graficoActividad) window.graficoActividad.destroy();
+        window.graficoActividad = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(accionesPorModulo),
+            datasets: [{
+              label: 'Acciones por módulo',
+              data: Object.values(accionesPorModulo),
+              backgroundColor: 'rgba(0,64,128,0.7)'
+            }]
+          }
+        });
+      } catch (err) {
+        console.error("Error cargando actividad:", err);
+      }
+    }
+  </script>
+</body>
+</html>
