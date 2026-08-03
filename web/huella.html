@@ -132,6 +132,9 @@
   </footer>
   <!-- Script -->
   <script>
+    let accionesChart = null;
+    let usuariosChart = null;
+
     async function cargarMetricas() {
       try {
         const res = await fetch('https://smarcampus.onrender.com/api/huella/metricas');
@@ -143,8 +146,10 @@
         document.getElementById("moduloTop").textContent = data.moduloTop;
         document.getElementById("tiempoRadio").textContent = Math.round(data.tiempoRadio/60) + " min";
 
+        // Acciones por módulo
         if (Object.keys(data.accionesPorModulo).length > 0) {
-          new Chart(document.getElementById("accionesModulo"), {
+          if (accionesChart) accionesChart.destroy(); // destruir gráfico previo
+          accionesChart = new Chart(document.getElementById("accionesModulo"), {
             type: 'bar',
             data: {
               labels: Object.keys(data.accionesPorModulo),
@@ -157,8 +162,10 @@
           });
         }
 
+        // Usuarios más activos
         if (Object.keys(data.usuariosMasActivos).length > 0) {
-          new Chart(document.getElementById("usuariosActivosChart"), {
+          if (usuariosChart) usuariosChart.destroy(); // destruir gráfico previo
+          usuariosChart = new Chart(document.getElementById("usuariosActivosChart"), {
             type: 'pie',
             data: {
               labels: Object.keys(data.usuariosMasActivos),
