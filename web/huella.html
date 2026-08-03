@@ -59,6 +59,9 @@
       <button class="btn btn-outline-secondary" onclick="history.forward()">Adelante ➡</button>
     </div>
 
+    <!-- Mensaje de error -->
+    <div id="dashboardError" class="text-danger text-center mb-3"></div>
+
     <!-- Métricas -->
     <div class="row text-center mb-4">
       <div class="col-md-2">
@@ -131,42 +134,49 @@
   <script>
     async function cargarMetricas() {
       try {
-        const res = await fetch('/api/huella/metricas');
+        const res = await fetch('https://smarcampus.onrender.com/api/huella/metricas');
         const data = await res.json();
 
         document.getElementById("totalAcciones").textContent = data.totalAcciones;
         document.getElementById("usuariosActivos").textContent = data.usuariosActivos;
-        document.getElementById("usuariosConectados").textContent = data.usuariosConectados; // 👈 nuevo
+        document.getElementById("usuariosConectados").textContent = data.usuariosConectados;
         document.getElementById("moduloTop").textContent = data.moduloTop;
         document.getElementById("tiempoRadio").textContent = Math.round(data.tiempoRadio/60) + " min";
 
-        new Chart(document.getElementById("accionesModulo"), {
-          type: 'bar',
-          data: {
-            labels: Object.keys(data.accionesPorModulo),
-            datasets: [{
-              label: 'Acciones',
-              data: Object.values(data.accionesPorModulo),
-              backgroundColor: ['#007bff','#28a745','#ffc107','#dc3545']
-            }]
-          }
-        });
+        if (Object.keys(data.accionesPorModulo).length > 0) {
+          new Chart(document.getElementById("accionesModulo"), {
+            type: 'bar',
+            data: {
+              labels: Object.keys(data.accionesPorModulo),
+              datasets: [{
+                label: 'Acciones',
+                data: Object.values(data.accionesPorModulo),
+                backgroundColor: ['#007bff','#28a745','#ffc107','#dc3545']
+              }]
+            }
+          });
+        }
 
-        new Chart(document.getElementById("usuariosActivosChart"), {
-          type: 'pie',
-          data: {
-            labels: Object.keys(data.usuariosMasActivos),
-            datasets: [{
-              data: Object.values(data.usuariosMasActivos),
-              backgroundColor: ['#17a2b8','#6f42c1','#fd7e14','#20c997','#e83e8c']
-            }]
-          }
-        });
+        if (Object.keys(data.usuariosMasActivos).length > 0) {
+          new Chart(document.getElementById("usuariosActivosChart"), {
+            type: 'pie',
+            data: {
+              labels: Object.keys(data.usuariosMasActivos),
+              datasets: [{
+                data: Object.values(data.usuariosMasActivos),
+                backgroundColor: ['#17a2b8','#6f42c1','#fd7e14','#20c997','#e83e8c']
+              }]
+            }
+          });
+        }
       } catch (err) {
         console.error("Error cargando métricas:", err);
+        document.getElementById("dashboardError").textContent = "⚠ No se pudieron cargar las métricas.";
       }
     }
+
     cargarMetricas();
+    setInterval(cargarMetricas, 60000); // refrescar cada minuto
   </script>
 
   <!-- Bootstrap JS -->
