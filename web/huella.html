@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Módulo Huella - Dashboard</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+
+  <!-- Cabecera con enlaces -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">SmartCampusGuide</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarHuella">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarHuella">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link active" href="#">Huella</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Usuarios</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Profesores</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Estudiantes</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Aulas</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Edificios</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Alertas</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Sensores</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Métricas WiFi</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Estadísticas</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Radio UNGE</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Transporte Escolar</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Mapa</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenido principal -->
+  <div class="container-fluid p-4">
+    <h1 class="text-center mb-4">📊 Dashboard Huella de Usuarios</h1>
+
+    <!-- Botones navegación -->
+    <div class="d-flex justify-content-between mb-3">
+      <button class="btn btn-outline-secondary" onclick="history.back()">⬅ Atrás</button>
+      <button class="btn btn-outline-secondary" onclick="history.forward()">Adelante ➡</button>
+    </div>
+
+    <!-- Aquí vendrán las métricas y gráficos -->
+    <div id="dashboardContent"></div>
+  </div>
+
+  <!-- Pie de página -->
+  <footer class="bg-dark text-white text-center p-3 mt-4">
+    <p class="mb-0">© 2026 SmartCampusGuide - Universidad Nacional de Guinea Ecuatorial</p>
+  </footer>
+<div class="row text-center mb-4">
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>Total Acciones</h5>
+        <p id="totalAcciones" class="fs-4 fw-bold">0</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>Usuarios Activos</h5>
+        <p id="usuariosActivos" class="fs-4 fw-bold">0</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>Módulo Más Usado</h5>
+        <p id="moduloTop" class="fs-4 fw-bold">-</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>Tiempo en Radio</h5>
+        <p id="tiempoRadio" class="fs-4 fw-bold">0 min</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Acciones por Módulo</h5>
+        <canvas id="accionesModulo"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Usuarios Más Activos</h5>
+        <canvas id="usuariosActivosChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+async function cargarMetricas() {
+  try {
+    // Endpoint del backend que devuelve métricas desde la tabla huella_usuarios
+    const res = await fetch('/api/huella/metricas');
+    const data = await res.json();
+
+    // Actualizar métricas principales
+    document.getElementById("totalAcciones").textContent = data.totalAcciones;
+    document.getElementById("usuariosActivos").textContent = data.usuariosActivos;
+    document.getElementById("moduloTop").textContent = data.moduloTop;
+    document.getElementById("tiempoRadio").textContent = Math.round(data.tiempoRadio/60) + " min";
+
+    // Gráfico Acciones por Módulo
+    new Chart(document.getElementById("accionesModulo"), {
+      type: 'bar',
+      data: {
+        labels: Object.keys(data.accionesPorModulo),
+        datasets: [{
+          label: 'Acciones',
+          data: Object.values(data.accionesPorModulo),
+          backgroundColor: ['#007bff','#28a745','#ffc107','#dc3545']
+        }]
+      }
+    });
+
+    // Gráfico Usuarios más activos
+    new Chart(document.getElementById("usuariosActivosChart"), {
+      type: 'pie',
+      data: {
+        labels: Object.keys(data.usuariosMasActivos),
+        datasets: [{
+          data: Object.values(data.usuariosMasActivos),
+          backgroundColor: ['#17a2b8','#6f42c1','#fd7e14','#20c997','#e83e8c']
+        }]
+      }
+    });
+  } catch (err) {
+    console.error("Error cargando métricas:", err);
+  }
+}
+
+// Ejecutar al cargar la página
+cargarMetricas();
+</script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
