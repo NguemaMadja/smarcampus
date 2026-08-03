@@ -31,7 +31,16 @@
     </button>
     <div class="collapse navbar-collapse" id="menuPrincipal">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+        <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
+        <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+        <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
+        <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+        <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
+        <li class="nav-item"><a class="nav-link" href="estadisticas.html">Estadísticas</a></li>
         <li class="nav-item"><a class="nav-link active" href="radiounge.html">Radio UNGE</a></li>
+        <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
+        <li class="nav-item"><a class="nav-link" href="mapa.html">Mapa</a></li>
       </ul>
       <button id="toggleDarkMode" class="btn btn-outline-light btn-sm">🌙 Modo Oscuro</button>
     </div>
@@ -45,9 +54,42 @@
 <div class="container mt-4">
   <!-- KPIs -->
   <div class="row mb-4">
-    <div class="col-md-4"><div class="card kpi-card text-center"><div class="card-body"><h5>Total Oyentes</h5><p id="totalOyentes" class="kpi-value text-success">0</p></div></div></div>
-    <div class="col-md-4"><div class="card kpi-card text-center"><div class="card-body"><h5>Promedio por Programa</h5><p id="promedioOyentes" class="kpi-value text-primary">0</p></div></div></div>
-    <div class="col-md-4"><div class="card kpi-card text-center"><div class="card-body"><h5>Programa Top</h5><p id="topPrograma" class="kpi-value text-danger">-</p></div></div></div>
+    <div class="col-md-4 col-sm-12 mb-3">
+      <div class="card kpi-card text-center">
+        <div class="card-body">
+          <h5>Total Oyentes</h5>
+          <p id="totalOyentes" class="kpi-value text-success">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 col-sm-12 mb-3">
+      <div class="card kpi-card text-center">
+        <div class="card-body">
+          <h5>Promedio por Programa</h5>
+          <p id="promedioOyentes" class="kpi-value text-primary">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 col-sm-12 mb-3">
+      <div class="card kpi-card text-center">
+        <div class="card-body">
+          <h5>Programa Top</h5>
+          <p id="topPrograma" class="kpi-value text-danger">-</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reproductor en vivo -->
+  <div class="card mb-4">
+    <div class="card-header">Transmisión en Vivo</div>
+    <div class="card-body text-center">
+      <audio id="radioPlayer" controls class="w-100">
+        <source src="http://tu-servidor-icecast:8000/radio" type="audio/mpeg">
+        Tu navegador no soporta el reproductor de audio.
+      </audio>
+      <p class="mt-2"><span id="estadoTransmision" class="badge bg-success">En Vivo</span></p>
+    </div>
   </div>
 
   <!-- Tabla de programas -->
@@ -59,44 +101,61 @@
     <div class="card-body">
       <div class="table-responsive">
         <table id="tablaRadio" class="display table table-striped table-bordered" style="width:100%">
-          <thead class="table-dark"><tr><th>ID</th><th>Título</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>En Vivo</th><th>Locutor</th><th>Acciones</th></tr></thead>
-          <tbody></tbody>
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>En Vivo</th>
+              <th>Locutor</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Se llenará dinámicamente -->
+          </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- Modal Agregar -->
+  <!-- Modal: Agregar Programa -->
   <div class="modal fade" id="modalAgregarPrograma" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg"><div class="modal-content">
       <div class="modal-header"><h5 class="modal-title">➕ Registrar Programa</h5></div>
       <div class="modal-body">
         <form id="formAgregarPrograma" class="needs-validation" novalidate>
-          <input type="text" id="titulo_programa" class="form-control mb-2" placeholder="Título" required>
-          <input type="text" id="tipo_id" class="form-control mb-2" placeholder="Tipo" required>
-          <input type="datetime-local" id="fecha_hora_inicio" class="form-control mb-2" required>
-          <input type="datetime-local" id="fecha_hora_fin" class="form-control mb-2" required>
-          <select id="es_en_vivo" class="form-select mb-2"><option value="true">Sí</option><option value="false">No</option></select>
-          <input type="number" id="locutorio_id" class="form-control mb-2" placeholder="Locutor ID">
+          <div class="mb-3"><label class="form-label">Título</label><input type="text" id="titulo_programa" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Tipo</label><input type="text" id="tipo_id" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Inicio</label><input type="datetime-local" id="fecha_hora_inicio" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Fin</label><input type="datetime-local" id="fecha_hora_fin" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">¿Es en Vivo?</label>
+            <select id="es_en_vivo" class="form-select"><option value="true">Sí</option><option value="false">No</option></select>
+          </div>
+          <div class="mb-3"><label class="form-label">Locutor ID</label><input type="number" id="locutorio_id" class="form-control"></div>
           <button type="submit" class="btn btn-success btn-rounded">Registrar</button>
         </form>
       </div>
     </div></div>
   </div>
 
-  <!-- Modal Editar -->
+  <!-- Modal: Editar Programa -->
   <div class="modal fade" id="modalEditarPrograma" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg"><div class="modal-content">
       <div class="modal-header"><h5 class="modal-title">✏️ Editar Programa</h5></div>
       <div class="modal-body">
         <form id="formEditarPrograma" class="needs-validation" novalidate>
           <input type="hidden" id="edit_id">
-          <input type="text" id="edit_titulo_programa" class="form-control mb-2" required>
-          <input type="text" id="edit_tipo_id" class="form-control mb-2" required>
-          <input type="datetime-local" id="edit_fecha_hora_inicio" class="form-control mb-2" required>
-          <input type="datetime-local" id="edit_fecha_hora_fin" class="form-control mb-2" required>
-          <select id="edit_es_en_vivo" class="form-select mb-2"><option value="true">Sí</option><option value="false">No</option></select>
-          <input type="number" id="edit_locutorio_id" class="form-control mb-2" placeholder="Locutor ID">
+          <div class="mb-3"><label class="form-label">Título</label><input type="text" id="edit_titulo_programa" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Tipo</label><input type="text" id="edit_tipo_id" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Inicio</label><input type="datetime-local" id="edit_fecha_hora_inicio" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Fin</label><input type="datetime-local" id="edit_fecha_hora_fin" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">¿Es en Vivo?</label>
+            <select id="edit_es_en_vivo" class="form-select"><option value="true">Sí</option><option value="false">No</option></select>
+          </div>
+          <div class="mb-3"><label class="form-label">Locutor ID</label><input type="number" id="edit_locutorio_id" class="form-control"></div>
           <button type="submit" class="btn btn-warning btn-rounded">Guardar Cambios</button>
         </form>
       </div>
@@ -126,75 +185,96 @@ $(document).ready(function() {
     toggleBtn.textContent = isDark ? "☀️ Modo Claro" : "🌙 Modo Oscuro";
   });
 
-  // 📌 Cargar programas
+  // 📌 Cargar programas y KPIs con ranking dinámico y medallas
   function cargarProgramas() {
-    fetch("/radiounge").then(res => res.json()).then(data => {
-      tablaRadio.clear();
-      let total = 0;
-      data.forEach((r, index) => {
-        tablaRadio.row.add([
-          r.id,
-          r.titulo_programa,
-          r.tipo_id,
-          new Date(r.fecha_hora_inicio).toLocaleString(),
-          new Date(r.fecha_hora_fin).toLocaleString(),
-          r.es_en_vivo ? "Sí" : "No",
-          r.locutorio_id || "-",
-          `<button class="btn btn-warning btn-sm btnEditar" data-id="${r.id}">✏️</button>
-           <button class="btn btn-danger btn-sm btnEliminar" data-id="${r.id}">🗑️</button>`
-        ]);
-        total += r.oyentes || 0;
-      });
-      tablaRadio.draw();
+    fetch("/radiounge")
+      .then(res => res.json())
+      .then(data => {
+        tablaRadio.clear();
+        let total = 0;
 
-      document.getElementById("totalOyentes").textContent = total;
-      document.getElementById("promedioOyentes").textContent = (data.length ? (total / data.length).toFixed(1) : 0);
-      document.getElementById("topPrograma").textContent = data[0] ? data[0].titulo_programa : "-";
-    });
+        // Ordenar por oyentes (ranking dinámico)
+        data.sort((a,b) => (b.oyentes||0) - (a.oyentes||0));
+
+        data.forEach((r, index) => {
+          let medalla = "";
+          if(index === 0) medalla = "🥇";
+          else if(index === 1) medalla = "🥈";
+          else if(index === 2) medalla = "🥉";
+
+          tablaRadio.row.add([
+            r.id,
+            medalla + " " + r.titulo_programa,
+            r.tipo_id,
+            new Date(r.fecha_hora_inicio).toLocaleString(),
+            new Date(r.fecha_hora_fin).toLocaleString(),
+            r.es_en_vivo ? "Sí" : "No",
+            r.locutorio_id || "-",
+            `<button class="btn btn-warning btn-sm btnEditar" data-id="${r.id}">✏️</button>
+             <button class="btn btn-danger btn-sm btnEliminar" data-id="${r.id}">🗑️</button>`
+          ]);
+          total += r.oyentes || 0;
+        });
+        tablaRadio.draw();
+
+        // KPIs dinámicos
+        document.getElementById("totalOyentes").textContent = total;
+        document.getElementById("promedioOyentes").textContent = (data.length ? (total / data.length).toFixed(1) : 0);
+        document.getElementById("topPrograma").textContent = data[0] ? data[0].titulo_programa : "-";
+      });
   }
   cargarProgramas();
 
-  // 📊 Gráficas
+  // 📊 Gráficas con animaciones suaves
   function cargarGraficos() {
-    fetch("/oyentes_radio").then(res => res.json()).then(data => {
-      const ctxPie = document.getElementById('graficoOyentesPie').getContext('2d');
-      const ctxBar = document.getElementById('graficoOyentesBar').getContext('2d');
+    fetch("/oyentes_radio")
+      .then(res => res.json())
+      .then(data => {
+        const ctxPie = document.getElementById('graficoOyentesPie').getContext('2d');
+        const ctxBar = document.getElementById('graficoOyentesBar').getContext('2d');
 
-      if (graficoPie) graficoPie.destroy();
-      if (graficoBar) graficoBar.destroy();
+        if (graficoPie) graficoPie.destroy();
+        if (graficoBar) graficoBar.destroy();
 
-      graficoPie = new Chart(ctxPie, {
-        type: 'pie',
-        data: {
-          labels: data.map(d => d.programa),
-          datasets: [{
-            label: 'Oyentes',
-            data: data.map(d => d.oyentes),
-            backgroundColor: [
-              'rgba(255, 99, 132, 0.7)',
-              'rgba(54, 162, 235, 0.7)',
-              'rgba(255, 206, 86, 0.7)',
-              'rgba(75, 192, 192, 0.7)',
-              'rgba(153, 102, 255, 0.7)'
-            ]
-          }]
-        },
-        options: { plugins: { legend: { position: 'bottom' } } }
+        graficoPie = new Chart(ctxPie, {
+          type: 'pie',
+          data: {
+            labels: data.map(d => d.programa),
+            datasets: [{
+              label: 'Oyentes',
+              data: data.map(d => d.oyentes),
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)'
+              ]
+            }]
+          },
+          options: {
+            animation: { duration: 1500, easing: 'easeOutBounce' },
+            plugins: { legend: { position: 'bottom' } }
+          }
+        });
+
+        graficoBar = new Chart(ctxBar, {
+          type: 'bar',
+          data: {
+            labels: data.map(d => d.programa),
+            datasets: [{
+              label: 'Oyentes',
+              data: data.map(d => d.oyentes),
+              backgroundColor: 'rgba(0, 64, 128, 0.7)'
+            }]
+          },
+          options: {
+            animation: { duration: 1500, easing: 'easeOutElastic' },
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+          }
+        });
       });
-
-      graficoBar = new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-          labels: data.map(d => d.programa),
-          datasets: [{
-            label: 'Oyentes',
-            data: data.map(d => d.oyentes),
-            backgroundColor: 'rgba(0, 64, 128, 0.7)'
-          }]
-        },
-        options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-      });
-    });
   }
   cargarGraficos();
 
@@ -227,16 +307,18 @@ $(document).ready(function() {
   // ✏️ Editar programa
   $('#tablaRadio').on('click', '.btnEditar', function(){
     const id = $(this).data('id');
-    fetch(`/radiounge/${id}`).then(res => res.json()).then(r => {
-      $('#edit_id').val(r.id);
-      $('#edit_titulo_programa').val(r.titulo_programa);
-      $('#edit_tipo_id').val(r.tipo_id);
-      $('#edit_fecha_hora_inicio').val(r.fecha_hora_inicio.replace(" ","T").slice(0,16));
-      $('#edit_fecha_hora_fin').val(r.fecha_hora_fin.replace(" ","T").slice(0,16));
-      $('#edit_es_en_vivo').val(r.es_en_vivo ? "true" : "false");
-      $('#edit_locutorio_id').val(r.locutorio_id);
-      $('#modalEditarPrograma').modal('show');
-    });
+    fetch(`/radiounge/${id}`)
+      .then(res => res.json())
+      .then(r => {
+        $('#edit_id').val(r.id);
+        $('#edit_titulo_programa').val(r.titulo_programa);
+        $('#edit_tipo_id').val(r.tipo_id);
+        $('#edit_fecha_hora_inicio').val(r.fecha_hora_inicio.replace(" ","T").slice(0,16));
+        $('#edit_fecha_hora_fin').val(r.fecha_hora_fin.replace(" ","T").slice(0,16));
+        $('#edit_es_en_vivo').val(r.es_en_vivo ? "true" : "false");
+        $('#edit_locutorio_id').val(r.locutorio_id);
+        $('#modalEditarPrograma').modal('show');
+      });
   });
 
   $('#formEditarPrograma').on('submit', function(e){
@@ -313,6 +395,44 @@ $(document).ready(function() {
   setInterval(actualizarEstado, 10000);
 });
 </script>
+
+<!-- Sección de participación -->
+<div class="card mb-4">
+  <div class="card-header">💬 Participa en la Radio</div>
+  <div class="card-body">
+    <form id="formParticipacion" class="needs-validation" novalidate>
+      <div class="mb-3">
+        <label class="form-label">Tu Nombre</label>
+        <input type="text" class="form-control" id="nombreParticipante" required>
+        <div class="invalid-feedback">Por favor, introduce tu nombre.</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Tu Mensaje</label>
+        <textarea class="form-control" id="mensajeParticipante" rows="3" required></textarea>
+        <div class="invalid-feedback">Por favor, escribe un mensaje.</div>
+      </div>
+      <button type="submit" class="btn btn-success btn-rounded">Enviar Mensaje</button>
+    </form>
+    <div id="mensajesRecibidos" class="mt-3"></div>
+  </div>
+</div>
+
+<!-- Chat en vivo -->
+<div class="card mb-4">
+  <div class="card-header">💬 Chat en Vivo</div>
+  <div class="card-body">
+    <form id="formChat" class="needs-validation" novalidate>
+      <div class="mb-3">
+        <input type="text" class="form-control" id="chatNombre" placeholder="Tu nombre" required>
+      </div>
+      <div class="mb-3">
+        <input type="text" class="form-control" id="chatMensaje" placeholder="Escribe tu mensaje..." required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-rounded">Enviar</button>
+    </form>
+    <div id="chatMensajes" class="mt-3" style="max-height:200px; overflow-y:auto;"></div>
+  </div>
+</div>
 
 <!-- Footer -->
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
