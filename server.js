@@ -1207,6 +1207,7 @@ app.get('/metricaswifi', async (req, res) => {
 });
 
 
+
 // ==================== MÓDULO HUELLA ====================
 
 // Endpoint: métricas para el dashboard Huella
@@ -1222,6 +1223,7 @@ app.get('/api/huella/metricas', async (req, res) => {
       WHERE fecha_hora > NOW() - INTERVAL '5 minutes'
     `);
 
+    // Módulo más usado
     const moduloTop = await pool.query(`
       SELECT modulo, COUNT(*) AS total 
       FROM huella_usuarios 
@@ -1229,17 +1231,20 @@ app.get('/api/huella/metricas', async (req, res) => {
       ORDER BY total DESC LIMIT 1
     `);
 
+    // Tiempo acumulado en Radio
     const tiempoRadio = await pool.query(`
       SELECT COALESCE(SUM(duracion_segundos),0) AS total 
-      FROM huella_usuarios WHERE modulo='Radio'
+      FROM huella_usuarios WHERE modulo ILIKE 'Radio%'
     `);
 
+    // Acciones por módulo
     const accionesPorModulo = await pool.query(`
       SELECT modulo, COUNT(*) AS total 
       FROM huella_usuarios 
       GROUP BY modulo
     `);
 
+    // Top 5 usuarios más activos
     const usuariosMasActivos = await pool.query(`
       SELECT id_usuario, COUNT(*) AS total 
       FROM huella_usuarios 
@@ -1250,14 +1255,15 @@ app.get('/api/huella/metricas', async (req, res) => {
     res.json({
       totalAcciones: parseInt(totalAcciones.rows[0].count),
       usuariosActivos: parseInt(usuariosActivos.rows[0].count),
-      usuariosConectados: parseInt(usuariosConectados.rows[0].count), // 👈 nuevo campo
+      usuariosConectados: parseInt(usuariosConectados.rows[0].count),
       moduloTop: moduloTop.rows[0]?.modulo || '-',
       tiempoRadio: parseInt(tiempoRadio.rows[0].total),
       accionesPorModulo: Object.fromEntries(accionesPorModulo.rows.map(r => [r.modulo, parseInt(r.total)])),
       usuariosMasActivos: Object.fromEntries(usuariosMasActivos.rows.map(r => [`Usuario ${r.id_usuario}`, parseInt(r.total)]))
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener métricas de huella' });
   }
 });
 
@@ -1275,7 +1281,8 @@ app.post('/api/huella', async (req, res) => {
     const result = await pool.query(query, values);
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Error al registrar huella' });
   }
 });
 
@@ -1288,9 +1295,12 @@ app.get('/api/huella/:id_usuario', async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener historial de huella' });
   }
 });
+
+
 
 
 
