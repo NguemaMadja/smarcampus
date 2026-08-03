@@ -1294,6 +1294,67 @@ app.get('/api/huella/:id_usuario', async (req, res) => {
 
 
 
+// =======================
+// ENDPOINTS ACTIVIDAD
+// =======================
+
+// Obtener registros de actividad con filtros
+app.get('/api/logsactividad', async (req, res) => {
+  const { usuario, modulo, inicio, fin } = req.query;
+
+  let query = `SELECT * FROM logsactividad WHERE 1=1`;
+  let params = [];
+
+  if (usuario) {
+    params.push(usuario);
+    query += ` AND id_usuario = $${params.length}`;
+  }
+  if (modulo) {
+    params.push(modulo);
+    query += ` AND modulo ILIKE $${params.length}`;
+  }
+  if (inicio) {
+    params.push(inicio);
+    query += ` AND fecha >= $${params.length}`;
+  }
+  if (fin) {
+    params.push(fin);
+    query += ` AND fecha <= $${params.length}`;
+  }
+
+  query += ` ORDER BY fecha DESC`;
+
+  try {
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener actividad' });
+  }
+});
+
+// Insertar nueva actividad (cuando quieras registrar acciones)
+app.post('/api/logsactividad', async (req, res) => {
+  const { id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos } = req.body;
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO logsactividad 
+       (id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos, fecha) 
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING *`,
+      [id_usuario, accion, modulo, detalle, dispositivo, ip, resultado, duracion_segundos]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al registrar actividad' });
+  }
+});
+
+
+
+
+
 
 
 // ---------------- INICIO SERVIDOR ----------------
