@@ -32,7 +32,6 @@
     <div class="collapse navbar-collapse" id="menuPrincipal">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item"><a class="nav-link active" href="radiounge.html">Radio UNGE</a></li>
-        <!-- resto del menú -->
       </ul>
       <button id="toggleDarkMode" class="btn btn-outline-light btn-sm">🌙 Modo Oscuro</button>
     </div>
@@ -43,24 +42,33 @@
   <h1>🎙️ Radio UNGE</h1>
   <p>La voz del campus, conectando estudiantes y comunidad</p>
 </div>
-
 <div class="container mt-4">
   <!-- KPIs -->
-  <!-- Tabla de programas -->
-  <!-- Modal Agregar -->
-  <!-- Modal Editar -->
-  <!-- Gráficas -->
-  <!-- Participación -->
-  <!-- Chat -->
-</div>
+  <div class="row mb-4">
+    <div class="col-md-4"><div class="card kpi-card text-center"><div class="card-body"><h5>Total Oyentes</h5><p id="totalOyentes" class="kpi-value text-success">0</p></div></div></div>
+    <div class="col-md-4"><div class="card kpi-card text-center"><div class="card-body"><h5>Promedio por Programa</h5><p id="promedioOyentes" class="kpi-value text-primary">0</p></div></div></div>
+    <div class="col-md-4"><div class="card kpi-card text-center"><div class="card-body"><h5>Programa Top</h5><p id="topPrograma" class="kpi-value text-danger">-</p></div></div></div>
+  </div>
 
-<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
-  TODOS LOS DERECHOS RESERVADOS - UNGE - @ IoT A NUESTRO ALCANCE - 2026
-</footer>
-<!-- Modal: Agregar Programa -->
-<div class="modal fade" id="modalAgregarPrograma" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
+  <!-- Tabla de programas -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      📻 Programas Emitidos
+      <button class="btn btn-success btn-sm btn-rounded" data-bs-toggle="modal" data-bs-target="#modalAgregarPrograma">➕ Nuevo Programa</button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table id="tablaRadio" class="display table table-striped table-bordered" style="width:100%">
+          <thead class="table-dark"><tr><th>ID</th><th>Título</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>En Vivo</th><th>Locutor</th><th>Acciones</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Agregar -->
+  <div class="modal fade" id="modalAgregarPrograma" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
       <div class="modal-header"><h5 class="modal-title">➕ Registrar Programa</h5></div>
       <div class="modal-body">
         <form id="formAgregarPrograma" class="needs-validation" novalidate>
@@ -68,21 +76,17 @@
           <input type="text" id="tipo_id" class="form-control mb-2" placeholder="Tipo" required>
           <input type="datetime-local" id="fecha_hora_inicio" class="form-control mb-2" required>
           <input type="datetime-local" id="fecha_hora_fin" class="form-control mb-2" required>
-          <select id="es_en_vivo" class="form-select mb-2">
-            <option value="true">Sí</option><option value="false">No</option>
-          </select>
+          <select id="es_en_vivo" class="form-select mb-2"><option value="true">Sí</option><option value="false">No</option></select>
           <input type="number" id="locutorio_id" class="form-control mb-2" placeholder="Locutor ID">
           <button type="submit" class="btn btn-success btn-rounded">Registrar</button>
         </form>
       </div>
-    </div>
+    </div></div>
   </div>
-</div>
 
-<!-- Modal: Editar Programa -->
-<div class="modal fade" id="modalEditarPrograma" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
+  <!-- Modal Editar -->
+  <div class="modal fade" id="modalEditarPrograma" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
       <div class="modal-header"><h5 class="modal-title">✏️ Editar Programa</h5></div>
       <div class="modal-body">
         <form id="formEditarPrograma" class="needs-validation" novalidate>
@@ -91,16 +95,14 @@
           <input type="text" id="edit_tipo_id" class="form-control mb-2" required>
           <input type="datetime-local" id="edit_fecha_hora_inicio" class="form-control mb-2" required>
           <input type="datetime-local" id="edit_fecha_hora_fin" class="form-control mb-2" required>
-          <select id="edit_es_en_vivo" class="form-select mb-2">
-            <option value="true">Sí</option><option value="false">No</option>
-          </select>
+          <select id="edit_es_en_vivo" class="form-select mb-2"><option value="true">Sí</option><option value="false">No</option></select>
           <input type="number" id="edit_locutorio_id" class="form-control mb-2" placeholder="Locutor ID">
           <button type="submit" class="btn btn-warning btn-rounded">Guardar Cambios</button>
         </form>
       </div>
-    </div>
+    </div></div>
   </div>
-</div>
+<!-- Librerías -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -311,5 +313,11 @@ $(document).ready(function() {
   setInterval(actualizarEstado, 10000);
 });
 </script>
+
+<!-- Footer -->
+<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
+  TODOS LOS DERECHOS RESERVADOS - UNGE - @ IoT A NUESTRO ALCANCE - 2026
+</footer>
+
 </body>
 </html>
