@@ -5,6 +5,7 @@
   <title>Profesores - SmartCampusPLXIV</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 
@@ -50,8 +51,102 @@
     </thead>
     <tbody></tbody>
   </table>
-</div>
+  <!-- 🔹 Submódulo de Asistencia -->
+  <hr class="my-5">
+  <h3>Asistencia de Profesores</h3>
 
+  <!-- Filtros -->
+  <form class="row g-3 mb-4">
+    <div class="col-md-3">
+      <label class="form-label">Departamento</label>
+      <select class="form-select" id="filtroDepartamento">
+        <option selected>Todos</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Carrera</label>
+      <select class="form-select" id="filtroCarrera">
+        <option selected>Todas</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Fecha</label>
+      <input type="date" class="form-control" id="filtroFecha">
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+      <button type="button" class="btn btn-primary w-100" id="btnFiltrar">
+        <i class="fas fa-filter"></i> Filtrar
+      </button>
+    </div>
+  </form>
+
+  <!-- Métricas rápidas -->
+  <div class="row text-center mb-4">
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <h5>Asistencias Hoy</h5>
+          <p class="fs-4" id="metricAsistencias">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-danger text-white">
+        <div class="card-body">
+          <h5>Faltas</h5>
+          <p class="fs-4" id="metricFaltas">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-dark">
+        <div class="card-body">
+          <h5>Tardanzas</h5>
+          <p class="fs-4" id="metricTardanzas">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-info text-dark">
+        <div class="card-body">
+          <h5>Total Profesores</h5>
+          <p class="fs-4" id="metricTotal">0</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de asistencia -->
+  <table id="tablaAsistencia" class="table table-hover table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Profesor</th>
+        <th>Departamento</th>
+        <th>Carrera</th>
+        <th>Asignatura</th>
+        <th>Aula</th>
+        <th>Fecha</th>
+        <th>Hora de entrada</th>
+        <th>Validación</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Navegación -->
+  <div class="d-flex justify-content-between mb-4">
+    <button class="btn btn-outline-primary"><i class="fas fa-arrow-left"></i> Anterior</button>
+    <button class="btn btn-outline-primary">Siguiente <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <!-- Gráfica -->
+  <div class="card mb-4">
+    <div class="card-header">Gráfica de Asistencias</div>
+    <div class="card-body">
+      <canvas id="graficaAsistencia"></canvas>
+    </div>
+  </div>
+</div>
 <!-- Modal -->
 <div class="modal fade" id="modalProfesor" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
@@ -97,6 +192,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
   let tabla;
@@ -155,8 +251,7 @@
       .catch(err => console.error("Error cargando carreras:", err));
   }
 
-
-    // Cargar asignaturas en el select
+  // Cargar asignaturas en el select
   function cargarAsignaturas(callback) {
     fetch("https://smarcampus.onrender.com/asignaturas")
       .then(res => res.json())
@@ -174,7 +269,7 @@
       .catch(err => console.error("Error cargando asignaturas:", err));
   }
 
- // Inicializar DataTable
+  // Inicializar DataTable de profesores
   function cargarProfesores() {
     if (tabla) {
       tabla.ajax.reload();
@@ -216,7 +311,6 @@
     cargarCarreras();
     cargarAsignaturas();
   });
-
   // Guardar profesor
   document.getElementById("formProfesor").addEventListener("submit", function(e) {
     e.preventDefault();
@@ -313,7 +407,84 @@
         .catch(err => console.error("Error eliminando profesor:", err));
     }
   });
+
+  // 🔹 Submódulo de asistencia: inicialización
+  function cargarAsistencia() {
+    $('#tablaAsistencia').DataTable({
+      ajax: {
+        url: "https://smarcampus.onrender.com/asistencia",
+        dataSrc: ""
+      },
+      destroy: true,
+      columns: [
+        { data: 'profesor' },
+        { data: 'departamento' },
+        { data: 'carrera' },
+        { data: 'asignatura' },
+        { data: 'aula' },
+        { data: 'fecha' },
+        { data: 'hora_entrada' },
+        {
+          data: 'validacion',
+          render: function (val) {
+            return val 
+              ? '<span class="badge bg-success">✔️ Sí</span>' 
+              : '<span class="badge bg-danger">❌ No</span>';
+          }
+        }
+      ]
+    });
+  }
+
+  function cargarMetricas() {
+    fetch("https://smarcampus.onrender.com/asistencia/metricas")
+      .then(res => res.json())
+      .then(m => {
+        document.getElementById("metricAsistencias").textContent = m.asistencias_hoy;
+        document.getElementById("metricFaltas").textContent = m.faltas;
+        document.getElementById("metricTardanzas").textContent = m.tardanzas;
+        document.getElementById("metricTotal").textContent = m.total_profesores;
+      })
+      .catch(err => console.error("Error cargando métricas:", err));
+  }
+
+  function cargarGrafica() {
+    fetch("https://smarcampus.onrender.com/asistencia/grafica")
+      .then(res => res.json())
+      .then(datos => {
+        const ctx = document.getElementById('graficaAsistencia');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: datos.labels,
+            datasets: [{
+              label: 'Asistencias',
+              data: datos.values,
+              backgroundColor: 'rgba(54, 162, 235, 0.7)'
+            }]
+          }
+        });
+      })
+      .catch(err => console.error("Error cargando gráfica:", err));
+  }
+
+  // Inicializar asistencia
+  cargarAsistencia();
+  cargarMetricas();
+  cargarGrafica();
+
+  // Botón de filtros
+  document.getElementById("btnFiltrar").addEventListener("click", () => {
+    cargarAsistencia();
+    cargarMetricas();
+    cargarGrafica();
+  });
 </script>
+
+<!-- Pie de página -->
+<footer class="bg-dark text-white text-center py-3 mt-4">
+  TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
+</footer>
 
 </body>
 </html>
