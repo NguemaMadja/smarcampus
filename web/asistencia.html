@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Campus Guide - Asistencia</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Cabecera -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">Smart Campus Guide</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+              data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" 
+              aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+          <li class="nav-item"><a class="nav-link" href="profesores.html">Profesores</a></li>
+          <li class="nav-item"><a class="nav-link" href="estudiantes.html">Estudiantes</a></li>
+          <li class="nav-item"><a class="nav-link" href="aulas.html">Aulas</a></li>
+          <li class="nav-item"><a class="nav-link" href="edificios.html">Edificios</a></li>
+          <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+          <li class="nav-item"><a class="nav-link" href="sensores.html">Sensores</a></li>
+          <li class="nav-item"><a class="nav-link" href="metricaswifi.html">Métricas WiFi</a></li>
+          <li class="nav-item"><a class="nav-link" href="estadisticas.html">Estadísticas</a></li>
+          <li class="nav-item"><a class="nav-link" href="radiounge.html">Radio UNGE</a></li>
+          <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
+          <li class="nav-item"><a class="nav-link" href="mapa.html">Mapa</a></li>    
+        </ul>
+      </div>
+    </div>
+  </nav>
+<div class="container mt-4">
+  <h2 class="mb-4">Asistencia de Profesores</h2>
+
+  <!-- Filtros -->
+  <form class="row g-3 mb-4">
+    <div class="col-md-3">
+      <label class="form-label">Departamento</label>
+      <select class="form-select">
+        <option selected>Todos</option>
+        <option>Ingeniería</option>
+        <option>Medicina</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Carrera</label>
+      <select class="form-select">
+        <option selected>Todas</option>
+        <option>Sistemas</option>
+        <option>Civil</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Fecha</label>
+      <input type="date" class="form-control">
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+      <button type="submit" class="btn btn-primary w-100">
+        <i class="fas fa-filter"></i> Filtrar
+      </button>
+    </div>
+  </form>
+
+  <!-- Métricas rápidas -->
+  <div class="row text-center mb-4">
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <h5>Asistencias Hoy</h5>
+          <p class="fs-4">120</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-danger text-white">
+        <div class="card-body">
+          <h5>Faltas</h5>
+          <p class="fs-4">15</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-dark">
+        <div class="card-body">
+          <h5>Tardanzas</h5>
+          <p class="fs-4">8</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-info text-dark">
+        <div class="card-body">
+          <h5>Total Profesores</h5>
+          <p class="fs-4">200</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Tabla -->
+  <table class="table table-hover table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Profesor</th>
+        <th>Departamento</th>
+        <th>Carrera</th>
+        <th>Asignatura</th>
+        <th>Aula</th>
+        <th>Fecha</th>
+        <th>Hora de entrada</th>
+        <th>Validación</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Juan Pérez</td>
+        <td>Ingeniería</td>
+        <td>Sistemas</td>
+        <td>Programación I</td>
+        <td>Aula 101</td>
+        <td>2026-08-04</td>
+        <td>13:07</td>
+        <td><span class="badge bg-success">✔️ Sí</span></td>
+      </tr>
+      <tr>
+        <td>María Gómez</td>
+        <td>Medicina</td>
+        <td>General</td>
+        <td>Anatomía</td>
+        <td>Aula 202</td>
+        <td>2026-08-04</td>
+        <td>13:15</td>
+        <td><span class="badge bg-danger">❌ No</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <!-- Botones de navegación -->
+  <div class="d-flex justify-content-between mb-4">
+    <button class="btn btn-outline-primary">
+      <i class="fas fa-arrow-left"></i> Anterior
+    </button>
+    <button class="btn btn-outline-primary">
+      Siguiente <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+
+  <!-- Gráficas -->
+  <div class="card mb-4">
+    <div class="card-header">Gráfica de Asistencias</div>
+    <div class="card-body">
+      <canvas id="graficaAsistencia"></canvas>
+    </div>
+  </div>
+</div>
+  <!-- Pie de página -->
+  <footer class="bg-dark text-white text-center py-3 mt-4">
+    TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Ejemplo de gráfica con Chart.js
+    const ctx = document.getElementById('graficaAsistencia');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Lunes','Martes','Miércoles','Jueves','Viernes'],
+        datasets: [{
+          label: 'Asistencias',
+          data: [100, 120, 90, 110, 130],
+          backgroundColor: 'rgba(54, 162, 235, 0.7)'
+        }]
+      }
+    });
+  </script>
+</body>
+</html>
