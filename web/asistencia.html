@@ -121,16 +121,6 @@
     </thead>
   </table>
 
-  <!-- Botones de navegación -->
-  <div class="d-flex justify-content-between mb-4">
-    <button class="btn btn-outline-primary">
-      <i class="fas fa-arrow-left"></i> Anterior
-    </button>
-    <button class="btn btn-outline-primary">
-      Siguiente <i class="fas fa-arrow-right"></i>
-    </button>
-  </div>
-
   <!-- Gráficas -->
   <div class="card mb-4">
     <div class="card-header">Gráfica de Asistencias</div>
@@ -155,7 +145,10 @@
     // Inicialización de DataTables
     $(document).ready(function() {
       $('#tablaAsistencia').DataTable({
-        ajax: '/asistencia_profesores',
+        ajax: {
+          url: '/asistencia_profesores',
+          dataSrc: 'data' // asegura que use la clave correcta
+        },
         columns: [
           { data: 'profesor' },
           { data: 'departamento' },
