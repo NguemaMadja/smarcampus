@@ -1767,6 +1767,99 @@ app.post('/api/logsactividad', async (req, res) => {
   }
 });
 
+
+
+// =========================
+// ENDPOINTS DE ASISTENCIA
+// =========================
+
+// 1. Generar QR para un aula
+app.post('/qr/generar', async (req, res) => {
+  try {
+    const { id_aula, id_asignatura, semana } = req.body;
+    const codigo = require('uuid').v4();
+    const validoHasta = new Date();
+    validoHasta.setDate(validoHasta.getDate() + 7); // válido por 1 semana
+
+    const result = await pool.query(`
+      INSERT INTO qr_aulas (id_aula, id_asignatura, semana, codigo_qr, valido_hasta)
+      VALUES ($1, $2, $3, $4, $5) RETURNING *
+    `, [id_aula, id_asignatura, semana, codigo, validoHasta]);
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error generando QR" });
+  }
+});
+
+// 2. Validar QR escaneado
+app.post('/qr/validar', async (req, res) => {
+  try {
+    const { codigo_qr } = req.body;
+    const result = await pool.query(`
+      SELECT * FROM qr_aulas
+      WHERE codigo_qr = $1 AND valido_hasta >= CURRENT_TIMESTAMP
+    `, [codigo_qr]);
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: "QR inválido o caducado" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error validando QR" });
+  }
+});
+
+// 3. Registrar asistencia
+app.post('/asistencia', async (req, res) => {
+  try {
+    const { id_profesor, id_departamento, id_carrera, id_asignatura, id_aula, codigo_qr } = req.body;
+
+    // Validar QR primero
+    const qr = await pool.query(`
+      SELECT id_qr FROM qr_aulas
+      WHERE codigo_qr = $1 AND valido_hasta >= CURRENT_TIMESTAMP
+    `, [codigo_qr]);
+
+    if (qr.rows.length === 0) {
+      return res.status(400).json({ error: "QR inválido o caducado" });
+    }
+
+    const id_qr = qr.rows[0].id_qr;
+
+    const result = await pool.query(`
+      INSERT INTO asistencia (
+        id_profesor, id_departamento, id_carrera, id_asignatura, id_aula,
+        fecha, hora_entrada, validacion, codigo_qr, id_qr
+      ) VALUES (
+        $1, $2, $3, $4, $5,
+        CURRENT_DATE, CURRENT_TIMESTAMP, TRUE, $6, $7
+      ) RETURNING *
+    `, [id_profesor, id_departamento, id_carrera, id_asignatura, id_aula, codigo_qr, id_qr]);
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error registrando asistencia" });
+  }
+});
+
+// 4. Listar asistencias
+app.get('/asistencia', async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT * FROM asistencia ORDER BY fecha DESC`);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo asistencias" });
+  }
+});
+
+
+
 // ---------------- INICIO SERVIDOR ----------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
