@@ -34,6 +34,7 @@
 </nav>
 
 <div class="container mt-4">
+  <!-- 🔹 Módulo principal: Profesores -->
   <h2>Gestión de Profesores</h2>
   <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalProfesor">➕ Nuevo Profesor</button>
 
@@ -49,12 +50,11 @@
         <th>Acciones</th>
       </tr>
     </thead>
-    <tbody></tbody>
   </table>
-  <!-- 🔹 Submódulo de Asistencia -->
+
+  <!-- 🔹 Submódulo: Asistencia de Profesores -->
   <hr class="my-5">
   <h3>Asistencia de Profesores</h3>
-
   <!-- Filtros -->
   <form class="row g-3 mb-4">
     <div class="col-md-3">
@@ -118,28 +118,20 @@
 
   <!-- Tabla de asistencia -->
   <table id="tablaAsistencia" class="table table-hover table-bordered">
-  <thead class="table-dark">
-    <tr>
-      <th>Profesor</th>
-      <th>Departamento</th>
-      <th>Carrera</th>
-      <th>Asignatura</th>
-      <th>Aula</th>
-      <th>Fecha</th>
-      <th>Hora de entrada</th>
-      <th>Validación</th>
-      <th>Código QR</th> <!-- Nueva columna -->
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-
-  <!-- Navegación -->
-  <div class="d-flex justify-content-between mb-4">
-    <button class="btn btn-outline-primary"><i class="fas fa-arrow-left"></i> Anterior</button>
-    <button class="btn btn-outline-primary">Siguiente <i class="fas fa-arrow-right"></i></button>
-  </div>
+    <thead class="table-dark">
+      <tr>
+        <th>Profesor</th>
+        <th>Departamento</th>
+        <th>Carrera</th>
+        <th>Asignatura</th>
+        <th>Aula</th>
+        <th>Fecha</th>
+        <th>Hora de entrada</th>
+        <th>Validación</th>
+        <th>Código QR</th>
+      </tr>
+    </thead>
+  </table>
 
   <!-- Gráfica -->
   <div class="card mb-4">
@@ -149,7 +141,8 @@
     </div>
   </div>
 </div>
-<!-- Modal -->
+
+<!-- Modal de Profesores -->
 <div class="modal fade" id="modalProfesor" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -160,22 +153,18 @@
         </div>
         <div class="modal-body">
           <input type="hidden" id="profesorId">
-
           <div class="mb-3">
             <label for="profesorUsuario" class="form-label">Usuario</label>
             <select id="profesorUsuario" class="form-select" required></select>
           </div>
-
           <div class="mb-3">
             <label for="profesorDepartamento" class="form-label">Departamentos</label>
             <select id="profesorDepartamento" class="form-select" multiple required></select>
           </div>
-
           <div class="mb-3">
             <label for="profesorCarrera" class="form-label">Carreras</label>
             <select id="profesorCarrera" class="form-select" multiple required></select>
           </div>
-
           <div class="mb-3">
             <label for="profesorAsignaturas" class="form-label">Asignaturas</label>
             <select id="profesorAsignaturas" class="form-select" multiple required></select>
@@ -189,257 +178,6 @@
     </div>
   </div>
 </div>
-
-<!-- Scripts -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-  let tabla;
-
-  // Cargar usuarios en el select
-  function cargarUsuarios(callback) {
-    fetch("https://smarcampus.onrender.com/usuarios")
-      .then(res => res.json())
-      .then(usuarios => {
-        const select = document.getElementById("profesorUsuario");
-        select.innerHTML = "";
-        usuarios.forEach(u => {
-          const option = document.createElement("option");
-          option.value = u.id_usuario;
-          option.textContent = `${u.nombre} (${u.correo})`;
-          select.appendChild(option);
-        });
-        if (callback) callback();
-      })
-      .catch(err => console.error("Error cargando usuarios:", err));
-  }
-
-  // Cargar departamentos en el select
-  function cargarDepartamentos(callback) {
-    fetch("https://smarcampus.onrender.com/departamentos")
-      .then(res => res.json())
-      .then(deps => {
-        const select = document.getElementById("profesorDepartamento");
-        select.innerHTML = "";
-        deps.forEach(d => {
-          const option = document.createElement("option");
-          option.value = d.id_departamento;
-          option.textContent = d.nombre;
-          select.appendChild(option);
-        });
-        if (callback) callback();
-      })
-      .catch(err => console.error("Error cargando departamentos:", err));
-  }
-
-  // Cargar carreras en el select
-  function cargarCarreras(callback) {
-    fetch("https://smarcampus.onrender.com/carreras")
-      .then(res => res.json())
-      .then(cars => {
-        const select = document.getElementById("profesorCarrera");
-        select.innerHTML = "";
-        cars.forEach(c => {
-          const option = document.createElement("option");
-          option.value = c.id_carrera;
-          option.textContent = c.nombre;
-          select.appendChild(option);
-        });
-        if (callback) callback();
-      })
-      .catch(err => console.error("Error cargando carreras:", err));
-  }
-
-  // Cargar asignaturas en el select
-  function cargarAsignaturas(callback) {
-    fetch("https://smarcampus.onrender.com/asignaturas")
-      .then(res => res.json())
-      .then(asigs => {
-        const select = document.getElementById("profesorAsignaturas");
-        select.innerHTML = "";
-        asigs.forEach(a => {
-          const option = document.createElement("option");
-          option.value = a.id_asignatura;
-          option.textContent = a.nombre;
-          select.appendChild(option);
-        });
-        if (callback) callback();
-      })
-      .catch(err => console.error("Error cargando asignaturas:", err));
-  }
-
-  // Inicializar DataTable de profesores
-  function cargarProfesores() {
-    if (tabla) {
-      tabla.ajax.reload();
-    } else {
-      tabla = $('#tablaProfesores').DataTable({
-        ajax: {
-          url: "https://smarcampus.onrender.com/profesores",
-          dataSrc: ""
-        },
-        columns: [
-          { data: 'id' },
-          { data: 'nombre' },
-          { data: 'correo' },
-          { data: 'departamentos' },
-          { data: 'carreras' },
-          { data: 'asignaturas' },
-          {
-            data: null,
-            render: function (row) {
-              return `
-                <button class="btn btn-sm btn-primary btnEditar" data-id="${row.id}">✏️ Editar</button>
-                <button class="btn btn-sm btn-danger btnEliminar" data-id="${row.id}">🗑️ Eliminar</button>
-              `;
-            }
-          }
-        ]
-      });
-    }
-  }
-
-  cargarProfesores();
-
-  // Abrir modal para nuevo profesor
-  document.querySelector('[data-bs-target="#modalProfesor"]').addEventListener("click", () => {
-    document.getElementById("formProfesor").reset();
-    document.getElementById("profesorId").value = "";
-    cargarUsuarios();
-    cargarDepartamentos();
-    cargarCarreras();
-    cargarAsignaturas();
-  });
-  // Guardar profesor
-  document.getElementById("formProfesor").addEventListener("submit", function(e) {
-    e.preventDefault();
-    const id = document.getElementById("profesorId").value;
-
-    // Construir arrays de IDs seleccionados en los selects múltiples
-    const departamentos_ids = Array.from(document.querySelectorAll('#profesorDepartamento option:checked'))
-                                   .map(opt => parseInt(opt.value));
-    const carreras_ids = Array.from(document.querySelectorAll('#profesorCarrera option:checked'))
-                               .map(opt => parseInt(opt.value));
-    const asignaturas_ids = Array.from(document.querySelectorAll('#profesorAsignaturas option:checked'))
-                                  .map(opt => parseInt(opt.value));
-
-    const profesor = {
-      id_usuario: document.getElementById("profesorUsuario").value,
-      departamentos_ids,
-      carreras_ids,
-      asignaturas_ids
-    };
-
-    const url = id 
-      ? `https://smarcampus.onrender.com/profesores/${id}` 
-      : "https://smarcampus.onrender.com/profesores";
-    const method = id ? "PUT" : "POST";
-
-    fetch(url, {
-      method: method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(profesor)
-    })
-    .then(res => {
-      if (!res.ok) throw new Error("Error guardando profesor");
-      return res.json();
-    })
-    .then(() => {
-      cargarProfesores();
-      document.getElementById("formProfesor").reset();
-      document.getElementById("profesorId").value = "";
-      bootstrap.Modal.getInstance(document.getElementById("modalProfesor")).hide();
-    })
-    .catch(err => console.error("Error:", err));
-  });
-
-  // Editar profesor
-  $(document).on("click", ".btnEditar", function() {
-    const id = $(this).data("id");
-    fetch(`https://smarcampus.onrender.com/profesores/${id}`)
-      .then(res => res.json())
-      .then(p => {
-        document.getElementById("profesorId").value = p.id;
-
-        // Cargar usuarios
-        cargarUsuarios();
-
-        // Cargar departamentos y marcar seleccionados
-        cargarDepartamentos(() => {
-          document.querySelectorAll('#profesorDepartamento option').forEach(opt => {
-            opt.selected = p.departamentos_ids?.includes(parseInt(opt.value)) || false;
-          });
-        });
-
-        // Cargar carreras y marcar seleccionadas
-        cargarCarreras(() => {
-          document.querySelectorAll('#profesorCarrera option').forEach(opt => {
-            opt.selected = p.carreras_ids?.includes(parseInt(opt.value)) || false;
-          });
-        });
-
-        // Cargar asignaturas y marcar seleccionadas
-        cargarAsignaturas(() => {
-          document.querySelectorAll('#profesorAsignaturas option').forEach(opt => {
-            opt.selected = p.asignaturas_ids?.includes(parseInt(opt.value)) || false;
-          });
-        });
-
-        // Mostrar modal
-        new bootstrap.Modal(document.getElementById("modalProfesor")).show();
-      })
-      .catch(err => console.error("Error cargando profesor:", err));
-  });
-
-  // Eliminar profesor
-  $(document).on("click", ".btnEliminar", function() {
-    const id = $(this).data("id");
-    if (confirm("¿Seguro que quieres eliminar este profesor?")) {
-      fetch(`https://smarcampus.onrender.com/profesores/${id}`, { method: "DELETE" })
-        .then(res => {
-          if (!res.ok) throw new Error("Error eliminando profesor");
-          return res.json();
-        })
-        .then(() => {
-          cargarProfesores();
-        })
-        .catch(err => console.error("Error eliminando profesor:", err));
-    }
-  });
-
-  // 🔹 Submódulo de asistencia: inicialización
-function cargarAsistencia() {
-  $('#tablaAsistencia').DataTable({
-    ajax: {
-      url: "https://smarcampus.onrender.com/asistencia",
-      dataSrc: ""
-    },
-    destroy: true,
-    columns: [
-      { data: 'profesor' },
-      { data: 'departamento' },
-      { data: 'carrera' },
-      { data: 'asignatura' },
-      { data: 'aula' },
-      { data: 'fecha' },
-      { data: 'hora_entrada' },
-      {
-        data: 'validacion',
-        render: function (val) {
-          return val 
-            ? '<span class="badge bg-success">✔️ Sí</span>' 
-            : '<span class="badge bg-danger">❌ No</span>';
-        }
-      },
-      { data: 'codigo_qr' } // Nueva columna reflejada
-    ]
-  });
-}
-
-
   function cargarMetricas() {
     fetch("https://smarcampus.onrender.com/asistencia/metricas")
       .then(res => res.json())
@@ -471,7 +209,6 @@ function cargarAsistencia() {
       })
       .catch(err => console.error("Error cargando gráfica:", err));
   }
-
   // Inicializar asistencia
   cargarAsistencia();
   cargarMetricas();
@@ -484,7 +221,6 @@ function cargarAsistencia() {
     cargarGrafica();
   });
 </script>
-
 <!-- Pie de página -->
 <footer class="bg-dark text-white text-center py-3 mt-4">
   TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
