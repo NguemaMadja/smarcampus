@@ -118,20 +118,22 @@
 
   <!-- Tabla de asistencia -->
   <table id="tablaAsistencia" class="table table-hover table-bordered">
-    <thead class="table-dark">
-      <tr>
-        <th>Profesor</th>
-        <th>Departamento</th>
-        <th>Carrera</th>
-        <th>Asignatura</th>
-        <th>Aula</th>
-        <th>Fecha</th>
-        <th>Hora de entrada</th>
-        <th>Validación</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <thead class="table-dark">
+    <tr>
+      <th>Profesor</th>
+      <th>Departamento</th>
+      <th>Carrera</th>
+      <th>Asignatura</th>
+      <th>Aula</th>
+      <th>Fecha</th>
+      <th>Hora de entrada</th>
+      <th>Validación</th>
+      <th>Código QR</th> <!-- Nueva columna -->
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
 
   <!-- Navegación -->
   <div class="d-flex justify-content-between mb-4">
@@ -409,32 +411,34 @@
   });
 
   // 🔹 Submódulo de asistencia: inicialización
-  function cargarAsistencia() {
-    $('#tablaAsistencia').DataTable({
-      ajax: {
-        url: "https://smarcampus.onrender.com/asistencia",
-        dataSrc: ""
-      },
-      destroy: true,
-      columns: [
-        { data: 'profesor' },
-        { data: 'departamento' },
-        { data: 'carrera' },
-        { data: 'asignatura' },
-        { data: 'aula' },
-        { data: 'fecha' },
-        { data: 'hora_entrada' },
-        {
-          data: 'validacion',
-          render: function (val) {
-            return val 
-              ? '<span class="badge bg-success">✔️ Sí</span>' 
-              : '<span class="badge bg-danger">❌ No</span>';
-          }
+function cargarAsistencia() {
+  $('#tablaAsistencia').DataTable({
+    ajax: {
+      url: "https://smarcampus.onrender.com/asistencia",
+      dataSrc: ""
+    },
+    destroy: true,
+    columns: [
+      { data: 'profesor' },
+      { data: 'departamento' },
+      { data: 'carrera' },
+      { data: 'asignatura' },
+      { data: 'aula' },
+      { data: 'fecha' },
+      { data: 'hora_entrada' },
+      {
+        data: 'validacion',
+        render: function (val) {
+          return val 
+            ? '<span class="badge bg-success">✔️ Sí</span>' 
+            : '<span class="badge bg-danger">❌ No</span>';
         }
-      ]
-    });
-  }
+      },
+      { data: 'codigo_qr' } // Nueva columna reflejada
+    ]
+  });
+}
+
 
   function cargarMetricas() {
     fetch("https://smarcampus.onrender.com/asistencia/metricas")
