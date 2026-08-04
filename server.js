@@ -707,7 +707,6 @@ app.get('/departamentos', async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Error obteniendo departamentos" });
   }
 });
@@ -792,6 +791,7 @@ app.delete('/departamentos/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 // ---------------- CARRERAS CRUD ----------------
@@ -1149,7 +1149,6 @@ app.get('/asignaturas', async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Error obteniendo asignaturas" });
   }
 });
@@ -1234,6 +1233,7 @@ app.delete('/asignaturas/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 // ---------------- TIPOS DE SENSORES CRUD ----------------
