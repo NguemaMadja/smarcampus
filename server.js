@@ -205,14 +205,26 @@ app.delete('/usuarios/:id', async (req, res) => {
 // ENDPOINTS CRUD PROFESORES
 // =========================
 
-// Listar todos los profesores
+// Listar todos los profesores con datos completos
 app.get('/profesores', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT p.id_profesor, p.id_usuario, u.nombre AS nombre_usuario
+      SELECT p.id_profesor AS id,
+             u.nombre AS nombre,
+             u.correo,
+             COALESCE(string_agg(DISTINCT d.nombre, ', '), '') AS departamentos,
+             COALESCE(string_agg(DISTINCT c.nombre, ', '), '') AS carreras,
+             COALESCE(string_agg(DISTINCT a.nombre, ', '), '') AS asignaturas
       FROM profesores p
       LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
-      ORDER BY p.id_profesor ASC
+      LEFT JOIN profesor_departamento pd ON p.id_profesor = pd.id_profesor
+      LEFT JOIN departamentos d ON pd.id_departamento = d.id_departamento
+      LEFT JOIN profesor_carrera pc ON p.id_profesor = pc.id_profesor
+      LEFT JOIN carreras c ON pc.id_carrera = c.id_carrera
+      LEFT JOIN profesor_asignatura pa ON p.id_profesor = pa.id_profesor
+      LEFT JOIN asignaturas a ON pa.id_asignatura = a.id_asignatura
+      GROUP BY p.id_profesor, u.nombre, u.correo
+      ORDER BY p.id_profesor ASC;
     `);
 
     await registrarAccion({
@@ -228,8 +240,41 @@ app.get('/profesores', async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Error obteniendo profesores" });
+  }
+});
+
+// Obtener profesor por ID con arrays de relaciones
+app.get('/profesores/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const profesor = await pool.query(`
+      SELECT p.id_profesor AS id,
+             u.nombre AS nombre,
+             u.correo,
+             p.id_usuario
+      FROM profesores p
+      LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
+      WHERE p.id_profesor = $1
+    `, [id]);
+
+    if (profesor.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
+
+    const departamentos = await pool.query('SELECT id_departamento FROM profesor_departamento WHERE id_profesor=$1', [id]);
+    const carreras = await pool.query('SELECT id_carrera FROM profesor_carrera WHERE id_profesor=$1', [id]);
+    const asignaturas = await pool.query('SELECT id_asignatura FROM profesor_asignatura WHERE id_profesor=$1', [id]);
+
+    const data = {
+      ...profesor.rows[0],
+      departamentos_ids: departamentos.rows.map(r => r.id_departamento),
+      carreras_ids: carreras.rows.map(r => r.id_carrera),
+      asignaturas_ids: asignaturas.rows.map(r => r.id_asignatura)
+    };
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -347,6 +392,7 @@ app.delete('/profesores/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
