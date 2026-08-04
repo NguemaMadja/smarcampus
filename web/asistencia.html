@@ -5,6 +5,8 @@
   <title>Smart Campus Guide - Asistencia</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 </head>
 <body>
   <!-- Cabecera -->
@@ -34,6 +36,7 @@
       </div>
     </div>
   </nav>
+
 <div class="container mt-4">
   <h2 class="mb-4">Asistencia de Profesores</h2>
 
@@ -101,8 +104,9 @@
       </div>
     </div>
   </div>
-  <!-- Tabla -->
-  <table class="table table-hover table-bordered">
+
+  <!-- Tabla dinámica con DataTables -->
+  <table id="tablaAsistencia" class="table table-hover table-bordered">
     <thead class="table-dark">
       <tr>
         <th>Profesor</th>
@@ -115,29 +119,8 @@
         <th>Validación</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>Juan Pérez</td>
-        <td>Ingeniería</td>
-        <td>Sistemas</td>
-        <td>Programación I</td>
-        <td>Aula 101</td>
-        <td>2026-08-04</td>
-        <td>13:07</td>
-        <td><span class="badge bg-success">✔️ Sí</span></td>
-      </tr>
-      <tr>
-        <td>María Gómez</td>
-        <td>Medicina</td>
-        <td>General</td>
-        <td>Anatomía</td>
-        <td>Aula 202</td>
-        <td>2026-08-04</td>
-        <td>13:15</td>
-        <td><span class="badge bg-danger">❌ No</span></td>
-      </tr>
-    </tbody>
   </table>
+
   <!-- Botones de navegación -->
   <div class="d-flex justify-content-between mb-4">
     <button class="btn btn-outline-primary">
@@ -156,15 +139,42 @@
     </div>
   </div>
 </div>
+
   <!-- Pie de página -->
   <footer class="bg-dark text-white text-center py-3 mt-4">
     TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
   </footer>
 
   <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
   <script>
+    // Inicialización de DataTables
+    $(document).ready(function() {
+      $('#tablaAsistencia').DataTable({
+        ajax: '/asistencia_profesores',
+        columns: [
+          { data: 'profesor' },
+          { data: 'departamento' },
+          { data: 'carrera' },
+          { data: 'asignatura' },
+          { data: 'aula' },
+          { data: 'fecha' },
+          { data: 'hora_entrada' },
+          { data: 'validacion',
+            render: function(data) {
+              return data 
+                ? '<span class="badge bg-success">✔️ Sí</span>' 
+                : '<span class="badge bg-danger">❌ No</span>';
+            }
+          }
+        ]
+      });
+    });
+
     // Ejemplo de gráfica con Chart.js
     const ctx = document.getElementById('graficaAsistencia');
     new Chart(ctx, {
