@@ -1657,10 +1657,15 @@ app.post('/asistencia_profesores', async (req, res) => {
 
   try {
     const hoy = new Date();
+
+    // Buscar QR vigente para el aula
     const result = await pool.query(
-      `SELECT id_qr, codigo_qr FROM aula_qr
-       WHERE id_aula=$1 AND $2 BETWEEN fecha_inicio AND fecha_fin
-       ORDER BY fecha_inicio DESC LIMIT 1`,
+      `SELECT id_qr, codigo_qr 
+       FROM qr_aulas
+       WHERE id_aula = $1 
+         AND $2 BETWEEN fecha_generacion AND valido_hasta
+       ORDER BY fecha_generacion DESC 
+       LIMIT 1`,
       [id_aula, hoy]
     );
 
@@ -1670,10 +1675,25 @@ app.post('/asistencia_profesores', async (req, res) => {
 
     const id_qr = result.rows[0].id_qr;
 
+    // Insertar asistencia
     await pool.query(
-      `INSERT INTO asistencias_profesores (id_profesor, id_qr, estado)
-       VALUES ($1, $2, $3)`,
-      [id_profesor, id_qr, estado]
+      `INSERT INTO asistencia (
+         id_profesor, id_departamento, id_carrera, id_asignatura, id_aula,
+         fecha, hora_entrada, validacion, codigo_qr, id_qr
+       )
+       VALUES (
+         $1, 
+         (SELECT id_departamento FROM profesores WHERE id_profesor=$1),
+         (SELECT id_carrera FROM profesores WHERE id_profesor=$1),
+         (SELECT id_asignatura FROM qr_aulas WHERE id_qr=$2),
+         $3,
+         CURRENT_DATE,
+         CURRENT_TIMESTAMP,
+         $4,
+         $5,
+         $2
+       )`,
+      [id_profesor, id_qr, id_aula, estado, codigo_qr]
     );
 
     await registrarAccion({
@@ -1692,6 +1712,39 @@ app.post('/asistencia_profesores', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ---------------- LISTAR ASISTENCIA PROFESORES ----------------
+
+app.get('/asistencia_profesores', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        a.id_asistencia,
+        u.nombre AS profesor,
+        d.nombre AS departamento,
+        c.nombre AS carrera,
+        asig.nombre AS asignatura,
+        au.nombre AS aula,
+        a.fecha,
+        a.hora_entrada,
+        a.validacion,
+        a.codigo_qr
+      FROM asistencia a
+      LEFT JOIN profesores p ON a.id_profesor = p.id_profesor
+      LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
+      LEFT JOIN departamentos d ON a.id_departamento = d.id_departamento
+      LEFT JOIN carreras c ON a.id_carrera = c.id_carrera
+      LEFT JOIN asignaturas asig ON a.id_asignatura = asig.id_asignatura
+      LEFT JOIN aulas au ON a.id_aula = au.id_aula
+      ORDER BY a.id_asistencia ASC;
+    `);
+
+    res.json({ data: result.rows }); // 👈 DataTables espera {data: [...]}
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // ---------------- CRON JOB SEMANAL ----------------
 // Generar un nuevo QR semanal para cada aula
