@@ -201,6 +201,81 @@ app.delete('/usuarios/:id', async (req, res) => {
   }
 });
 
+// =========================
+// ENDPOINTS CRUD PROFESORES
+// =========================
+
+// Listar todos los profesores
+app.get('/profesores', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT p.id_profesor, p.id_usuario, u.nombre AS nombre_usuario
+      FROM profesores p
+      LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
+      ORDER BY p.id_profesor ASC
+    `);
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Profesores',
+      detalle: 'Listado de profesores consultado',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo profesores" });
+  }
+});
+
+// Crear profesor
+app.post('/profesores', async (req, res) => {
+  try {
+    const { id_usuario, departamentos_ids, carreras_ids, asignaturas_ids } = req.body;
+    const result = await pool.query(
+      'INSERT INTO profesores (id_usuario) VALUES ($1) RETURNING id_profesor',
+      [id_usuario]
+    );
+    const id_profesor = result.rows[0].id_profesor;
+
+    if (departamentos_ids?.length) {
+      for (const depId of departamentos_ids) {
+        await pool.query('INSERT INTO profesor_departamento (id_profesor, id_departamento) VALUES ($1, $2)', [id_profesor, depId]);
+      }
+    }
+    if (carreras_ids?.length) {
+      for (const carId of carreras_ids) {
+        await pool.query('INSERT INTO profesor_carrera (id_profesor, id_carrera) VALUES ($1, $2)', [id_profesor, carId]);
+      }
+    }
+    if (asignaturas_ids?.length) {
+      for (const asigId of asignaturas_ids) {
+        await pool.query('INSERT INTO profesor_asignatura (id_profesor, id_asignatura) VALUES ($1, $2)', [id_profesor, asigId]);
+      }
+    }
+
+    await registrarAccion({
+      id_usuario,
+      accion: 'CREAR',
+      modulo: 'Profesores',
+      detalle: `Profesor ${id_profesor} creado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
+    res.json({ mensaje: 'Profesor creado correctamente', id_profesor });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Actualizar profesor
 app.put('/profesores/:id', async (req, res) => {
   try {
@@ -229,7 +304,6 @@ app.put('/profesores/:id', async (req, res) => {
       }
     }
 
-    // 👇 Registrar acción
     await registrarAccion({
       id_usuario,
       accion: 'EDITAR',
@@ -257,7 +331,6 @@ app.delete('/profesores/:id', async (req, res) => {
     const result = await pool.query('DELETE FROM profesores WHERE id_profesor=$1 RETURNING id_profesor', [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Profesor no encontrado' });
 
-    // 👇 Registrar acción
     await registrarAccion({
       id_usuario: null,
       accion: 'ELIMINAR',
@@ -274,6 +347,8 @@ app.delete('/profesores/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 // ---------------- ESTUDIANTES CRUD ----------------
 
@@ -564,6 +639,60 @@ app.post('/radiounge', async (req, res) => {
   }
 });
 
+// =========================
+// ENDPOINTS CRUD DEPARTAMENTOS
+// =========================
+
+// Listar departamentos
+app.get('/departamentos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id_departamento, nombre FROM departamentos ORDER BY id_departamento ASC');
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Departamentos',
+      detalle: 'Listado de departamentos consultado',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo departamentos" });
+  }
+});
+
+// Crear departamento
+app.post('/departamentos', async (req, res) => {
+  try {
+    const { nombre } = req.body;
+    const result = await pool.query(
+      'INSERT INTO departamentos (nombre) VALUES ($1) RETURNING *',
+      [nombre]
+    );
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CREAR',
+      modulo: 'Departamentos',
+      detalle: `Departamento ${result.rows[0].id_departamento} creado`,
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Actualizar departamento
 app.put('/departamentos/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -591,6 +720,7 @@ app.put('/departamentos/:id', async (req, res) => {
   }
 });
 
+// Eliminar departamento
 app.delete('/departamentos/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -616,6 +746,7 @@ app.delete('/departamentos/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ---------------- CARRERAS CRUD ----------------
 app.get('/carreras', async (req, res) => {
@@ -950,6 +1081,34 @@ app.post('/api/map/arrived', async (req, res) => {
   }
 });
 
+// =========================
+// ENDPOINTS CRUD ASIGNATURAS
+// =========================
+
+// Listar asignaturas
+app.get('/asignaturas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id_asignatura, nombre FROM asignaturas ORDER BY id_asignatura ASC');
+
+    await registrarAccion({
+      id_usuario: null,
+      accion: 'CONSULTAR',
+      modulo: 'Asignaturas',
+      detalle: 'Listado de asignaturas consultado',
+      dispositivo: 'Web',
+      ip: req.ip,
+      resultado: 'OK',
+      duracion_segundos: 0
+    });
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo asignaturas" });
+  }
+});
+
+// Crear asignatura
 app.post('/asignaturas', async (req, res) => {
   try {
     const { nombre } = req.body;
@@ -962,7 +1121,7 @@ app.post('/asignaturas', async (req, res) => {
       id_usuario: null,
       accion: 'CREAR',
       modulo: 'Asignaturas',
-      detalle: `Asignatura ${nombre} creada`,
+      detalle: `Asignatura ${result.rows[0].id_asignatura} creada`,
       dispositivo: 'Web',
       ip: req.ip,
       resultado: 'OK',
@@ -975,6 +1134,7 @@ app.post('/asignaturas', async (req, res) => {
   }
 });
 
+// Actualizar asignatura
 app.put('/asignaturas/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -1002,6 +1162,7 @@ app.put('/asignaturas/:id', async (req, res) => {
   }
 });
 
+// Eliminar asignatura
 app.delete('/asignaturas/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -1027,6 +1188,7 @@ app.delete('/asignaturas/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ---------------- TIPOS DE SENSORES CRUD ----------------
 app.get('/tipos_sensores', async (req, res) => {
