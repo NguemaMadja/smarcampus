@@ -1652,7 +1652,7 @@ app.get('/aulas/:id/qr', async (req, res) => {
 // ---------------- ASISTENCIA PROFESORES ----------------
 
 // Registrar asistencia profesor usando QR vigente
-app.post('/asistencia_profesores', async (req, res) => {
+app.post('/asistencia', async (req, res) => {
   const { id_profesor, id_aula, estado, codigo_qr } = req.body;
 
   try {
@@ -1712,6 +1712,62 @@ app.post('/asistencia_profesores', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+// ---------------- LISTAR ASISTENCIA ----------------
+app.get('/asistencia', async (req, res) => {
+  try {
+    const { departamento, carrera, fecha } = req.query;
+
+    // Filtros dinámicos
+    let filtros = [];
+    let valores = [];
+    let i = 1;
+
+    if (departamento) {
+      filtros.push(`a.id_departamento = $${i++}`);
+      valores.push(departamento);
+    }
+    if (carrera) {
+      filtros.push(`a.id_carrera = $${i++}`);
+      valores.push(carrera);
+    }
+    if (fecha) {
+      filtros.push(`a.fecha = $${i++}`);
+      valores.push(fecha);
+    }
+
+    const where = filtros.length ? `WHERE ${filtros.join(" AND ")}` : "";
+
+    const result = await pool.query(
+      `SELECT a.id_asistencia,
+              p.nombre AS profesor,
+              d.nombre AS departamento,
+              c.nombre AS carrera,
+              asig.nombre AS asignatura,
+              au.nombre AS aula,
+              a.fecha,
+              a.hora_entrada,
+              a.validacion,
+              a.codigo_qr
+       FROM asistencia a
+       JOIN profesores p ON a.id_profesor = p.id_profesor
+       JOIN departamentos d ON a.id_departamento = d.id_departamento
+       JOIN carreras c ON a.id_carrera = c.id_carrera
+       JOIN asignaturas asig ON a.id_asignatura = asig.id_asignatura
+       JOIN aulas au ON a.id_aula = au.id_aula
+       ${where}
+       ORDER BY a.fecha DESC, a.hora_entrada DESC`,
+      valores
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error listando asistencias:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // ---------------- LISTAR ASISTENCIA PROFESORES ----------------
 
