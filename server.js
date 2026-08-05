@@ -1649,7 +1649,7 @@ app.get('/aulas/:id/qr', async (req, res) => {
   res.json({ aula: id, codigo_qr: codigoQR, qr_image: qrImage });
 });
 
-// ---------------- ASISTENCIA PROFESORES ----------------
+// ---------------- ASISTENCIA ----------------
 
 // Registrar asistencia profesor usando QR vigente
 app.post('/asistencia', async (req, res) => {
@@ -1683,8 +1683,8 @@ app.post('/asistencia', async (req, res) => {
        )
        VALUES (
          $1, 
-         (SELECT id_departamento FROM profesores WHERE id_profesor=$1),
-         (SELECT id_carrera FROM profesores WHERE id_profesor=$1),
+         (SELECT id_departamento FROM asistencia WHERE id_profesor=$1 LIMIT 1),
+         (SELECT id_carrera FROM asistencia WHERE id_profesor=$1 LIMIT 1),
          (SELECT id_asignatura FROM qr_aulas WHERE id_qr=$2),
          $3,
          CURRENT_DATE,
@@ -1712,6 +1712,62 @@ app.post('/asistencia', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+// ---------------- LISTAR ASISTENCIA ----------------
+app.get('/asistencia', async (req, res) => {
+  try {
+    const { departamento, carrera, fecha } = req.query;
+
+    let filtros = [];
+    let valores = [];
+    let i = 1;
+
+    if (departamento) {
+      filtros.push(`a.id_departamento = $${i++}`);
+      valores.push(departamento);
+    }
+    if (carrera) {
+      filtros.push(`a.id_carrera = $${i++}`);
+      valores.push(carrera);
+    }
+    if (fecha) {
+      filtros.push(`a.fecha = $${i++}`);
+      valores.push(fecha);
+    }
+
+    const where = filtros.length ? `WHERE ${filtros.join(" AND ")}` : "";
+
+    const result = await pool.query(
+      `SELECT a.id_asistencia,
+              u.nombre AS profesor,
+              d.nombre AS departamento,
+              c.nombre AS carrera,
+              asig.nombre AS asignatura,
+              au.nombre AS aula,
+              a.fecha,
+              a.hora_entrada,
+              a.validacion,
+              a.codigo_qr
+       FROM asistencia a
+       JOIN profesores p ON a.id_profesor = p.id_profesor
+       JOIN usuarios u ON p.id_usuario = u.id_usuario
+       JOIN departamentos d ON a.id_departamento = d.id_departamento
+       JOIN carreras c ON a.id_carrera = c.id_carrera
+       JOIN asignaturas asig ON a.id_asignatura = asig.id_asignatura
+       JOIN aulas au ON a.id_aula = au.id_aula
+       ${where}
+       ORDER BY a.fecha DESC, a.hora_entrada DESC`,
+      valores
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error listando asistencias:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 // ---------------- LISTAR ASISTENCIA ----------------
