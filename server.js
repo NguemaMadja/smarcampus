@@ -1714,6 +1714,59 @@ app.post('/asistencia', async (req, res) => {
 });
 
 
+
+// ---------------- MÉTRICAS DE ASISTENCIA ----------------
+app.get('/asistencia/metricas', async (req, res) => {
+  try {
+    const hoy = new Date().toISOString().split('T')[0];
+
+    const asistenciasHoy = await pool.query(
+      `SELECT COUNT(*) FROM asistencia WHERE fecha = $1 AND validacion = true`,
+      [hoy]
+    );
+
+    const noValidadasHoy = await pool.query(
+      `SELECT COUNT(*) FROM asistencia WHERE fecha = $1 AND validacion = false`,
+      [hoy]
+    );
+
+    const totalProfesores = await pool.query(`SELECT COUNT(*) FROM profesores`);
+
+    res.json({
+      asistencias_hoy: parseInt(asistenciasHoy.rows[0].count),
+      no_validadas: parseInt(noValidadasHoy.rows[0].count),
+      total_profesores: parseInt(totalProfesores.rows[0].count)
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ---------------- GRÁFICA DE ASISTENCIA ----------------
+app.get('/asistencia/grafica', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT fecha, COUNT(*) AS total
+       FROM asistencia
+       WHERE validacion = true
+       GROUP BY fecha
+       ORDER BY fecha ASC
+       LIMIT 7`
+    );
+
+    res.json({
+      labels: result.rows.map(r => r.fecha),
+      values: result.rows.map(r => parseInt(r.total))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+
 // ---------------- LISTAR ASISTENCIA ----------------
 app.get('/asistencia', async (req, res) => {
   try {
