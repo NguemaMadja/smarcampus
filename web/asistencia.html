@@ -2,11 +2,15 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- 🔹 Responsivo -->
   <title>Smart Campus Guide - Asistencia</title>
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <!-- DataTables CSS -->
+  <!-- DataTables -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
 </head>
 <body>
   <!-- Cabecera -->
@@ -41,26 +45,22 @@
   <h2 class="mb-4">Asistencia de Profesores</h2>
 
   <!-- Filtros -->
-  <form class="row g-3 mb-4">
+  <form id="formFiltros" class="row g-3 mb-4">
     <div class="col-md-3">
       <label class="form-label">Departamento</label>
-      <select class="form-select">
-        <option selected>Todos</option>
-        <option>Ingeniería</option>
-        <option>Medicina</option>
+      <select class="form-select" id="filtroDepartamento">
+        <option value="">Todos</option>
       </select>
     </div>
     <div class="col-md-3">
       <label class="form-label">Carrera</label>
-      <select class="form-select">
-        <option selected>Todas</option>
-        <option>Sistemas</option>
-        <option>Civil</option>
+      <select class="form-select" id="filtroCarrera">
+        <option value="">Todas</option>
       </select>
     </div>
     <div class="col-md-3">
       <label class="form-label">Fecha</label>
-      <input type="date" class="form-control">
+      <input type="date" class="form-control" id="filtroFecha">
     </div>
     <div class="col-md-3 d-flex align-items-end">
       <button type="submit" class="btn btn-primary w-100">
@@ -68,22 +68,21 @@
       </button>
     </div>
   </form>
-
   <!-- Métricas rápidas -->
   <div class="row text-center mb-4">
     <div class="col-md-3">
       <div class="card bg-success text-white">
         <div class="card-body">
           <h5>Asistencias Hoy</h5>
-          <p class="fs-4">120</p>
+          <p class="fs-4" id="metricAsistencias">0</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3" id="cardFaltas">
       <div class="card bg-danger text-white">
         <div class="card-body">
           <h5>Faltas</h5>
-          <p class="fs-4">15</p>
+          <p class="fs-4" id="metricFaltas">0</p>
         </div>
       </div>
     </div>
@@ -91,7 +90,7 @@
       <div class="card bg-warning text-dark">
         <div class="card-body">
           <h5>Tardanzas</h5>
-          <p class="fs-4">8</p>
+          <p class="fs-4" id="metricTardanzas">0</p>
         </div>
       </div>
     </div>
@@ -99,27 +98,29 @@
       <div class="card bg-info text-dark">
         <div class="card-body">
           <h5>Total Profesores</h5>
-          <p class="fs-4">200</p>
+          <p class="fs-4" id="metricTotal">0</p>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Tabla dinámica con DataTables -->
-  <table id="tablaAsistencia" class="table table-hover table-bordered">
-    <thead class="table-dark">
-      <tr>
-        <th>Profesor</th>
-        <th>Departamento</th>
-        <th>Carrera</th>
-        <th>Asignatura</th>
-        <th>Aula</th>
-        <th>Fecha</th>
-        <th>Hora de entrada</th>
-        <th>Validación</th>
-      </tr>
-    </thead>
-  </table>
+  <div class="table-responsive">
+    <table id="tablaAsistencia" class="table table-hover table-bordered nowrap" style="width:100%">
+      <thead class="table-dark">
+        <tr>
+          <th>Profesor</th>
+          <th>Departamento</th>
+          <th>Carrera</th>
+          <th>Asignatura</th>
+          <th>Aula</th>
+          <th>Fecha</th>
+          <th>Hora de entrada</th>
+          <th>Validación</th>
+        </tr>
+      </thead>
+    </table>
+  </div>
 
   <!-- Gráficas -->
   <div class="card mb-4">
@@ -129,7 +130,6 @@
     </div>
   </div>
 </div>
-
   <!-- Pie de página -->
   <footer class="bg-dark text-white text-center py-3 mt-4">
     TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
@@ -140,47 +140,142 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 
   <script>
-    // Inicialización de DataTables
-    $(document).ready(function() {
-      $('#tablaAsistencia').DataTable({
-        ajax: {
-          url: '/asistencia_profesores',
-          dataSrc: 'data' // asegura que use la clave correcta
-        },
-        columns: [
-          { data: 'profesor' },
-          { data: 'departamento' },
-          { data: 'carrera' },
-          { data: 'asignatura' },
-          { data: 'aula' },
-          { data: 'fecha' },
-          { data: 'hora_entrada' },
-          { data: 'validacion',
-            render: function(data) {
-              return data 
-                ? '<span class="badge bg-success">✔️ Sí</span>' 
-                : '<span class="badge bg-danger">❌ No</span>';
-            }
+    // 🔹 Cargar departamentos y carreras reales
+    function cargarDepartamentos() {
+      fetch("https://smarcampus.onrender.com/departamentos")
+        .then(res => res.json())
+        .then(deps => {
+          const select = document.getElementById("filtroDepartamento");
+          select.innerHTML = '<option value="">Todos</option>';
+          deps.forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d.id_departamento;
+            opt.textContent = d.nombre;
+            select.appendChild(opt);
+          });
+        })
+        .catch(err => console.error("Error cargando departamentos:", err));
+    }
+
+    function cargarCarreras() {
+      fetch("https://smarcampus.onrender.com/carreras")
+        .then(res => res.json())
+        .then(cars => {
+          const select = document.getElementById("filtroCarrera");
+          select.innerHTML = '<option value="">Todas</option>';
+          cars.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c.id_carrera;
+            opt.textContent = c.nombre;
+            select.appendChild(opt);
+          });
+        })
+        .catch(err => console.error("Error cargando carreras:", err));
+    }
+
+    // 🔹 Cargar métricas reales
+    function cargarMetricas(params = {}) {
+      let url = "https://smarcampus.onrender.com/asistencia/metricas";
+      const query = new URLSearchParams(params).toString();
+      if (query) url += "?" + query;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(m => {
+          document.getElementById("metricAsistencias").textContent = m.asistencias_hoy ?? 0;
+          document.getElementById("metricTardanzas").textContent = m.tardanzas ?? 0;
+          document.getElementById("metricTotal").textContent = m.total_profesores ?? 0;
+
+          if (m.faltas !== undefined) {
+            document.getElementById("metricFaltas").textContent = m.faltas;
+            document.getElementById("cardFaltas").style.display = "block";
+          } else {
+            document.getElementById("cardFaltas").style.display = "none";
           }
-        ]
-      });
+        })
+        .catch(err => console.error("Error cargando métricas:", err));
+    }
+
+    // 🔹 Cargar gráfica real
+    function cargarGrafica(params = {}) {
+      let url = "https://smarcampus.onrender.com/asistencia/grafica";
+      const query = new URLSearchParams(params).toString();
+      if (query) url += "?" + query;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(datos => {
+          const ctx = document.getElementById('graficaAsistencia');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: datos.labels,
+              datasets: [{
+                label: 'Asistencias',
+                data: datos.values,
+                backgroundColor: 'rgba(54, 162, 235, 0.7)'
+              }]
+            }
+          });
+        })
+        .catch(err => console.error("Error cargando gráfica:", err));
+    }
+
+    // 🔹 Inicializar tabla de asistencia
+    let tabla;
+    function cargarAsistencia(params = {}) {
+      if (tabla) {
+        tabla.ajax.url("https://smarcampus.onrender.com/asistencia?" + new URLSearchParams(params)).load();
+      } else {
+        tabla = $('#tablaAsistencia').DataTable({
+          ajax: {
+            url: "https://smarcampus.onrender.com/asistencia",
+            dataSrc: ""
+          },
+          responsive: true,
+          columns: [
+            { data: 'profesor' },
+            { data: 'departamento' },
+            { data: 'carrera' },
+            { data: 'asignatura' },
+            { data: 'aula' },
+            { data: 'fecha' },
+            { data: 'hora_entrada' },
+            {
+              data: 'validacion',
+              render: function (val) {
+                return val 
+                  ? '<span class="badge bg-success">✔️ Sí</span>' 
+                  : '<span class="badge bg-danger">❌ No</span>';
+              }
+            }
+          ]
+        });
+      }
+    }
+
+    // 🔹 Botón de filtros
+    document.getElementById("formFiltros").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const params = {
+        departamento: document.getElementById("filtroDepartamento").value,
+        carrera: document.getElementById("filtroCarrera").value,
+        fecha: document.getElementById("filtroFecha").value
+      };
+      cargarAsistencia(params);
+      cargarMetricas(params);
+      cargarGrafica(params);
     });
 
-    // Ejemplo de gráfica con Chart.js
-    const ctx = document.getElementById('graficaAsistencia');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Lunes','Martes','Miércoles','Jueves','Viernes'],
-        datasets: [{
-          label: 'Asistencias',
-          data: [100, 120, 90, 110, 130],
-          backgroundColor: 'rgba(54, 162, 235, 0.7)'
-        }]
-      }
-    });
+    // 🔹 Inicialización al cargar la página
+    cargarDepartamentos();
+    cargarCarreras();
+    cargarAsistencia();
+    cargarMetricas();
+    cargarGrafica();
   </script>
 </body>
 </html>
