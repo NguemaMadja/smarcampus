@@ -37,6 +37,7 @@
     </div>
   </div>
 </nav>
+
 <div class="container mt-4">
   <h2 class="mb-4">Gestión de Buses</h2>
 
@@ -57,6 +58,7 @@
     </tbody>
   </table>
 </div>
+
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
   TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
 </footer>
@@ -81,8 +83,8 @@
       responsive: true
     });
 
-    // Cargar datos de buses
-    fetch("/buses")
+    // Cargar datos de buses desde el backend con prefijo /transporteescolar
+    fetch("/transporteescolar/buses")
       .then(res => res.json())
       .then(data => {
         tablaBuses.clear();
