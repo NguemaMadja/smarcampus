@@ -2361,6 +2361,7 @@ app.get('/transporteescolar/rutas', async (req, res) => {
     const result = await pool.query('SELECT * FROM rutas ORDER BY id_ruta');
     res.json(result.rows);
   } catch (err) {
+    console.error("Error al obtener rutas:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -2375,6 +2376,7 @@ app.get('/transporteescolar/rutas/:id', async (req, res) => {
     }
     res.json(result.rows[0]);
   } catch (err) {
+    console.error("Error al obtener ruta:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -2388,8 +2390,9 @@ app.post('/transporteescolar/rutas', async (req, res) => {
        VALUES ($1,$2,$3,$4) RETURNING *`,
       [nombre, descripcion, hora_inicio, hora_fin]
     );
-    res.json(result.rows[0]);
+    res.status(201).json(result.rows[0]); // 201 Created
   } catch (err) {
+    console.error("Error al crear ruta:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -2409,6 +2412,7 @@ app.put('/transporteescolar/rutas/:id', async (req, res) => {
     }
     res.json(result.rows[0]);
   } catch (err) {
+    console.error("Error al actualizar ruta:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -2423,6 +2427,7 @@ app.delete('/transporteescolar/rutas/:id', async (req, res) => {
     }
     res.json({ message: 'Ruta eliminada' });
   } catch (err) {
+    console.error("Error al eliminar ruta:", err);
     res.status(500).json({ error: err.message });
   }
 });
