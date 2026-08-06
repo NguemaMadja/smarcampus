@@ -2291,7 +2291,9 @@ app.get('/asistencia', async (req, res) => {
 // Obtener todos los buses
 app.get('/transporteescolar/buses', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM buses ORDER BY id_bus');
+    const result = await pool.query(
+      'SELECT id_bus, numero, placa, conductor, capacidad, estado FROM buses ORDER BY id_bus'
+    );
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2302,7 +2304,10 @@ app.get('/transporteescolar/buses', async (req, res) => {
 app.get('/transporteescolar/buses/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query('SELECT * FROM buses WHERE id_bus=$1', [id]);
+    const result = await pool.query(
+      'SELECT id_bus, numero, placa, conductor, capacidad, estado FROM buses WHERE id_bus=$1',
+      [id]
+    );
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2311,12 +2316,12 @@ app.get('/transporteescolar/buses/:id', async (req, res) => {
 
 // Crear un bus
 app.post('/transporteescolar/buses', async (req, res) => {
-  const { numero_bus, placa, conductor, capacidad, estado } = req.body;
+  const { numero, placa, conductor, capacidad, estado } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO buses (numero_bus, placa, conductor, capacidad, estado)
+      `INSERT INTO buses (numero, placa, conductor, capacidad, estado)
        VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-      [numero_bus, placa, conductor, capacidad, estado]
+      [numero, placa, conductor, capacidad, estado]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -2327,12 +2332,12 @@ app.post('/transporteescolar/buses', async (req, res) => {
 // Actualizar un bus
 app.put('/transporteescolar/buses/:id', async (req, res) => {
   const { id } = req.params;
-  const { numero_bus, placa, conductor, capacidad, estado } = req.body;
+  const { numero, placa, conductor, capacidad, estado } = req.body;
   try {
     const result = await pool.query(
-      `UPDATE buses SET numero_bus=$1, placa=$2, conductor=$3, capacidad=$4, estado=$5
+      `UPDATE buses SET numero=$1, placa=$2, conductor=$3, capacidad=$4, estado=$5
        WHERE id_bus=$6 RETURNING *`,
-      [numero_bus, placa, conductor, capacidad, estado, id]
+      [numero, placa, conductor, capacidad, estado, id]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -2350,6 +2355,7 @@ app.delete('/transporteescolar/buses/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
