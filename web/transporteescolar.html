@@ -38,16 +38,27 @@
     </div>
   </div>
 </nav>
-
 <div class="container mt-4">
-  <h2>Transporte Escolar</h2>
-  <table id="tablaTransporte" class="display" style="width:100%">
-    <thead>
+  <h2 class="mb-4">Transporte Escolar</h2>
+
+  <!-- Botones de acceso a mini-módulos -->
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="buses.html" class="btn btn-outline-primary">🚍 Gestión de Buses</a>
+    <a href="rutas.html" class="btn btn-outline-success">🛣️ Gestión de Rutas</a>
+    <a href="paradas.html" class="btn btn-outline-info">📍 Paradas</a>
+    <a href="posiciones.html" class="btn btn-outline-warning">📡 Posiciones en Tiempo Real</a>
+    <a href="pasajeros.html" class="btn btn-outline-dark">👥 Pasajeros</a>
+    <a href="alertas.html" class="btn btn-outline-danger">⚠️ Alertas</a>
+  </div>
+
+  <!-- Tabla principal de buses -->
+  <table id="tablaTransporte" class="display table table-striped table-bordered" style="width:100%">
+    <thead class="table-dark">
       <tr>
-        <th>ID Vehículo</th>
+        <th>ID Bus</th>
+        <th>Número</th>
         <th>Placa</th>
         <th>Conductor</th>
-        <th>Ruta</th>
         <th>Capacidad</th>
         <th>Estado</th>
       </tr>
@@ -57,9 +68,8 @@
     </tbody>
   </table>
 </div>
-
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
-  TODOS LOS DERECHOS RESERVADOS -UNGE- @ IoT A NUESTRO ALCANCE - 2026
+  TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
 </footer>
 
 <!-- jQuery y DataTables -->
@@ -71,23 +81,23 @@
   $(document).ready(function() {
     const tablaTransporte = $('#tablaTransporte').DataTable();
 
-    fetch("/transporteescolar")
+    fetch("/buses") // endpoint que devuelve lista de buses
       .then(res => res.json())
       .then(data => {
         tablaTransporte.clear();
-        data.forEach(t => {
+        data.forEach(bus => {
           tablaTransporte.row.add([
-            t.id_vehiculo,
-            t.placa,
-            t.conductor,
-            t.ruta,
-            t.capacidad,
-            t.estado
+            bus.id_bus,
+            bus.numero_bus,
+            bus.placa,
+            bus.conductor,
+            bus.capacidad,
+            bus.estado
           ]);
         });
         tablaTransporte.draw();
       })
-      .catch(err => console.error("Error cargando transporte escolar:", err));
+      .catch(err => console.error("Error cargando buses:", err));
   });
 </script>
 
