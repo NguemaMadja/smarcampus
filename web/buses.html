@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Buses - SmartCampusGuide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+</head>
+<body>
+
+<div class="d-flex justify-content-between mb-4">
+  <a href="transporteescolar.html" class="btn btn-outline-secondary">⬅️ Volver al Transporte Escolar</a>
+  <a href="mapa.html" class="btn btn-primary">Ir al Módulo Mapa ➡️</a>
+</div>
+
+<!-- Navbar persistente -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menuPrincipal">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
+        <li class="nav-item"><a class="nav-link active" href="buses.html">Gestión de Buses</a></li>
+        <li class="nav-item"><a class="nav-link" href="rutas.html">Rutas</a></li>
+        <li class="nav-item"><a class="nav-link" href="paradas.html">Paradas</a></li>
+        <li class="nav-item"><a class="nav-link" href="posiciones.html">Posiciones</a></li>
+        <li class="nav-item"><a class="nav-link" href="pasajeros.html">Pasajeros</a></li>
+        <li class="nav-item"><a class="nav-link" href="alertas.html">Alertas</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="container mt-4">
+  <h2 class="mb-4">Gestión de Buses</h2>
+
+  <!-- Tabla de buses -->
+  <table id="tablaBuses" class="display table table-striped table-bordered nowrap" style="width:100%">
+    <thead class="table-dark">
+      <tr>
+        <th>ID Bus</th>
+        <th>Número</th>
+        <th>Placa</th>
+        <th>Conductor</th>
+        <th>Capacidad</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Se llenará dinámicamente -->
+    </tbody>
+  </table>
+</div>
+<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
+  TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
+</footer>
+
+<!-- jQuery, DataTables y extensiones -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<!-- Script para cargar datos -->
+<script>
+  $(document).ready(function() {
+    const tablaBuses = $('#tablaBuses').DataTable({
+      dom: 'Bfrtip',
+      buttons: [
+        { extend: 'csv', text: '⬇️ Descargar CSV' },
+        { extend: 'excel', text: '⬇️ Descargar Excel' },
+        { extend: 'print', text: '🖨️ Imprimir' }
+      ],
+      responsive: true
+    });
+
+    // Cargar datos de buses
+    fetch("/buses")
+      .then(res => res.json())
+      .then(data => {
+        tablaBuses.clear();
+        data.forEach(bus => {
+          tablaBuses.row.add([
+            bus.id_bus,
+            bus.numero_bus,
+            bus.placa,
+            bus.conductor,
+            bus.capacidad,
+            bus.estado
+          ]);
+        });
+        tablaBuses.draw();
+      })
+      .catch(err => console.error("Error cargando buses:", err));
+  });
+</script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
