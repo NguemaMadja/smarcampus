@@ -13,7 +13,6 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 </head>
 <body>
-<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
   <div class="container-fluid">
     <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
@@ -22,6 +21,7 @@
     </button>
     <div class="collapse navbar-collapse" id="menuPrincipal">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="buses.html">Buses</a></li>
         <li class="nav-item"><a class="nav-link" href="rutas.html">Rutas</a></li>
         <li class="nav-item"><a class="nav-link" href="paradas.html">Paradas</a></li>
         <li class="nav-item"><a class="nav-link active" href="posiciones.html">Posiciones</a></li>
@@ -31,15 +31,7 @@
 </nav>
 
 <div class="container mt-4">
-  <h2 class="mb-4">Posiciones GPS de Buses</h2>
-
-  <!-- Leyenda -->
-  <div class="alert alert-warning shadow-sm mb-4">
-    📡 Este módulo muestra las posiciones enviadas por el hardware (ESP32 + SIM800 + GPS).  
-    Se registran: coordenadas, velocidad, dirección y hora exacta.
-  </div>
-
-  <!-- Tabla -->
+  <h2 class="mb-4">Historial de Posiciones</h2>
   <table id="tablaPosiciones" class="display table table-striped table-bordered nowrap" style="width:100%">
     <thead class="table-dark">
       <tr>
@@ -50,38 +42,27 @@
         <th>Velocidad (km/h)</th>
         <th>Dirección</th>
         <th>Fecha/Hora</th>
-        <th>Acciones</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 </div>
 
+<div class="container mt-4">
+  <h2 class="mb-4">Mapa de Recorrido</h2>
+  <div id="map" style="height:500px;"></div>
+</div>
+
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
   TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
 </footer>
-<!-- Modal Mapa -->
-<div class="modal fade" id="modalMapa" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Mapa de Posición</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div id="map" style="height:500px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- JS -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
 $(document).ready(function() {
@@ -102,78 +83,47 @@ $(document).ready(function() {
     }
   });
 
-  // Cargar últimas posiciones
+  // Inicializar mapa
+  const map = L.map('map').setView([3.75, 8.78], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Cargar posiciones
   function cargarPosiciones() {
-    fetch(`${API_BASE}/posiciones/actual`)
+    fetch(`${API_BASE}/posiciones`)
       .then(res => res.json())
       .then(data => {
+        // Tabla
         tablaPosiciones.clear();
-        data.forEach(p => {
+        data.forEach(pos => {
           tablaPosiciones.row.add([
-            p.id_bus,
-            p.id_ruta,
-            p.latitud,
-            p.longitud,
-            p.velocidad,
-            p.direccion,
-            p.fecha_hora,
-            `<button class="btn btn-sm btn-info verMapa" data-lat="${p.latitud}" data-lng="${p.longitud}" data-bus="${p.id_bus}">🗺️ Ver Mapa</button>
-             <button class="btn btn-sm btn-secondary historial" data-bus="${p.id_bus}">📜 Historial</button>`
+            pos.id_bus,
+            pos.id_ruta,
+            pos.latitud,
+            pos.longitud,
+            pos.velocidad,
+            pos.direccion,
+            pos.fecha_hora
           ]);
         });
         tablaPosiciones.draw();
+
+        // Mapa: dibujar recorrido
+        const coords = data.map(pos => [pos.latitud, pos.longitud]);
+        if (coords.length > 0) {
+          L.polyline(coords, { color: 'blue' }).addTo(map);
+          const ultima = data[data.length - 1];
+          L.marker([ultima.latitud, ultima.longitud])
+            .addTo(map)
+            .bindPopup(`Bus ${ultima.id_bus} - ${ultima.direccion}`);
+          map.fitBounds(coords);
+        }
       })
       .catch(err => console.error("Error cargando posiciones:", err));
   }
+
   cargarPosiciones();
-
-  // Ver mapa de posición actual
-  $('#tablaPosiciones').on('click', '.verMapa', function() {
-    const lat = $(this).data('lat');
-    const lng = $(this).data('lng');
-    const bus = $(this).data('bus');
-    $('#modalMapa').modal('show');
-
-    setTimeout(() => {
-      const map = L.map('map').setView([lat, lng], 16);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
-
-      L.marker([lat, lng]).addTo(map)
-        .bindPopup(`<b>Bus ${bus}</b><br>Lat: ${lat}, Lng: ${lng}`)
-        .openPopup();
-    }, 500);
-  });
-
-  // Ver historial de un bus
-  $('#tablaPosiciones').on('click', '.historial', function() {
-    const bus = $(this).data('bus');
-    $('#modalMapa').modal('show');
-
-    setTimeout(() => {
-      const map = L.map('map').setView([3.75, 8.78], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
-
-      fetch(`${API_BASE}/buses/${bus}/posiciones`)
-        .then(res => res.json())
-        .then(posiciones => {
-          const coords = [];
-          posiciones.forEach(p => {
-            L.marker([p.latitud, p.longitud]).addTo(map)
-              .bindPopup(`<b>Bus ${bus}</b><br>Velocidad: ${p.velocidad} km/h<br>${p.direccion}<br>${p.fecha_hora}`);
-            coords.push([p.latitud, p.longitud]);
-          });
-          if (coords.length > 1) {
-            L.polyline(coords, {color: 'red'}).addTo(map);
-            map.fitBounds(coords);
-          }
-        })
-        .catch(err => console.error("Error cargando historial:", err));
-    }, 500);
-  });
 });
 </script>
 </body>
