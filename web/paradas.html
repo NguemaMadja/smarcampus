@@ -13,12 +13,6 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 </head>
 <body>
-
-<div class="d-flex justify-content-between mb-4">
-  <a href="transporteescolar.html" class="btn btn-outline-secondary">⬅️ Volver al Transporte Escolar</a>
-  <a href="mapa.html" class="btn btn-primary">Ir al Módulo Mapa ➡️</a>
-</div>
-
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
   <div class="container-fluid">
@@ -103,7 +97,7 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Mapa de Parada</h5>
+        <h5 class="modal-title">Mapa de Ruta</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -126,13 +120,18 @@ $(document).ready(function() {
   const API_BASE = "https://smarcampus.onrender.com/transporteescolar";
 
   const tablaParadas = $('#tablaParadas').DataTable({
-    dom: 'Bfrtip',
+    dom: '<"top"fB>rt<"bottom"lip>',
     buttons: [
       { extend: 'csv', text: '⬇️ CSV' },
       { extend: 'excel', text: '⬇️ Excel' },
       { extend: 'print', text: '🖨️ Imprimir' }
     ],
-    responsive: true
+    responsive: true,
+    language: {
+      search: "🔍 Buscar:",
+      lengthMenu: "Mostrar _MENU_ registros",
+      info: "Mostrando _START_ a _END_ de _TOTAL_ paradas"
+    }
   });
 
   // Cargar paradas
@@ -150,7 +149,7 @@ $(document).ready(function() {
             p.longitud,
             p.orden,
             `
-              <button class="btn btn-sm btn-info verMapa" data-lat="${p.latitud}" data-lng="${p.longitud}" data-nombre="${p.nombre}">🗺️ Mapa</button>
+              <button class="btn btn-sm btn-info verMapa" data-ruta="${p.id_ruta}">🗺️ Ruta</button>
               <button class="btn btn-sm btn-warning editar" data-id="${p.id_parada}">✏️ Editar</button>
               <button class="btn btn-sm btn-danger eliminar" data-id="${p.id_parada}">🗑️ Eliminar</button>
             `
@@ -162,7 +161,7 @@ $(document).ready(function() {
   }
   cargarParadas();
 
-  // Guardar parada (crear/editar)
+  // Guardar parada
   $('#formParada').submit(function(e) {
     e.preventDefault();
     const id = $('#paradaId').val();
@@ -181,13 +180,9 @@ $(document).ready(function() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(parada)
     })
-    .then(res => {
-      if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
-      return res.json();
-    })
+    .then(res => res.json())
     .then(() => {
-      const modal = bootstrap.Modal.getInstance(document.getElementById('modalParada'));
-      modal.hide();
+      bootstrap.Modal.getInstance(document.getElementById('modalParada')).hide();
       cargarParadas();
     })
     .catch(err => console.error("Error guardando parada:", err));
@@ -221,22 +216,34 @@ $(document).ready(function() {
     }
   });
 
-  // Ver mapa de parada
+  // Ver mapa de ruta completa
   $('#tablaParadas').on('click', '.verMapa', function() {
-    const lat = $(this).data('lat');
-    const lng = $(this).data('lng');
-    const nombre = $(this).data('nombre');
+    const idRuta = $(this).data('ruta');
     $('#modalMapa').modal('show');
 
     setTimeout(() => {
-      const map = L.map('map').setView([lat, lng], 16);
+      const map = L.map('map').setView([3.75, 8.78], 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
-      L.marker([lat, lng]).addTo(map)
-        .bindPopup(`<b>${nombre}</b><br>Lat: ${lat}, Lng: ${lng}`)
-        .openPopup();
+      // Cargar todas las paradas de la ruta
+      fetch(`${API_BASE}/rutas/${idRuta}/paradas`)
+        .then(res => res.json())
+        .then(paradas => {
+          const coords = [];
+          paradas.forEach(p => {
+            const marker = L.marker([p.latitud, p.longitud]).addTo(map)
+              .bindPopup(`<b>${p.nombre}</b><br>Orden: ${p.orden}`);
+            coords.push([p.latitud, p.longitud]);
+          });
+          // Dibujar polilínea conectando las paradas
+          if (coords.length > 1) {
+            L.polyline(coords, {color: 'blue'}).addTo(map);
+            map.fitBounds(coords);
+          }
+        })
+        .catch(err => console.error("Error cargando paradas de ruta:", err));
     }, 500);
   });
 });
