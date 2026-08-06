@@ -2285,6 +2285,283 @@ app.get('/asistencia', async (req, res) => {
 });
 
 
+//[-------------ENDPOINTS TRANSPORTE-------------]
+//----BUSES------
+// Obtener todos los buses
+app.get('/buses', async (req, res) => {
+  const result = await pool.query('SELECT * FROM buses ORDER BY id_bus');
+  res.json(result.rows);
+});
+
+// Crear un bus
+app.post('/buses', async (req, res) => {
+  const { numero_bus, placa, conductor, capacidad, estado } = req.body;
+  const result = await pool.query(
+    `INSERT INTO buses (numero_bus, placa, conductor, capacidad, estado)
+     VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+    [numero_bus, placa, conductor, capacidad, estado]
+  );
+  res.json(result.rows[0]);
+});
+
+// Actualizar un bus
+app.put('/buses/:id', async (req, res) => {
+  const { id } = req.params;
+  const { numero_bus, placa, conductor, capacidad, estado } = req.body;
+  const result = await pool.query(
+    `UPDATE buses SET numero_bus=$1, placa=$2, conductor=$3, capacidad=$4, estado=$5
+     WHERE id_bus=$6 RETURNING *`,
+    [numero_bus, placa, conductor, capacidad, estado, id]
+  );
+  res.json(result.rows[0]);
+});
+
+// Eliminar un bus
+app.delete('/buses/:id', async (req, res) => {
+  const { id } = req.params;
+  await pool.query('DELETE FROM buses WHERE id_bus=$1', [id]);
+  res.json({ message: 'Bus eliminado' });
+});
+
+
+//--------RUTAS---------
+// Obtener todas las rutas
+app.get('/rutas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM rutas ORDER BY id_ruta');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Obtener una ruta específica
+app.get('/rutas/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('SELECT * FROM rutas WHERE id_ruta=$1', [id]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Crear una nueva ruta
+app.post('/rutas', async (req, res) => {
+  const { nombre, descripcion, hora_inicio, hora_fin } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO rutas (nombre, descripcion, hora_inicio, hora_fin)
+       VALUES ($1,$2,$3,$4) RETURNING *`,
+      [nombre, descripcion, hora_inicio, hora_fin]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Actualizar una ruta
+app.put('/rutas/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nombre, descripcion, hora_inicio, hora_fin } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE rutas SET nombre=$1, descripcion=$2, hora_inicio=$3, hora_fin=$4
+       WHERE id_ruta=$5 RETURNING *`,
+      [nombre, descripcion, hora_inicio, hora_fin, id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Eliminar una ruta
+app.delete('/rutas/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM rutas WHERE id_ruta=$1', [id]);
+    res.json({ message: 'Ruta eliminada' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+//-----------PARADAS----------
+// Obtener todas las paradas
+app.get('/paradas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM paradas ORDER BY id_parada');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Obtener paradas de una ruta específica
+app.get('/paradas/ruta/:id_ruta', async (req, res) => {
+  const { id_ruta } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM paradas WHERE id_ruta=$1 ORDER BY orden',
+      [id_ruta]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Crear una nueva parada
+app.post('/paradas', async (req, res) => {
+  const { id_ruta, nombre, latitud, longitud, orden } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO paradas (id_ruta, nombre, latitud, longitud, orden)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [id_ruta, nombre, latitud, longitud, orden]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Actualizar una parada
+app.put('/paradas/:id', async (req, res) => {
+  const { id } = req.params;
+  const { id_ruta, nombre, latitud, longitud, orden } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE paradas SET id_ruta=$1, nombre=$2, latitud=$3, longitud=$4, orden=$5
+       WHERE id_parada=$6 RETURNING *`,
+      [id_ruta, nombre, latitud, longitud, orden, id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Eliminar una parada
+app.delete('/paradas/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM paradas WHERE id_parada=$1', [id]);
+    res.json({ message: 'Parada eliminada' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+
+//----------RECIBIR GPS EN TIEMPO REAL--------
+// Recibir posición GPS desde el bus (SIM800 + GPS)
+app.post('/posiciones', async (req, res) => {
+  const { id_bus, latitud, longitud, velocidad, direccion } = req.body;
+  await pool.query(
+    `INSERT INTO posiciones_bus (id_bus, latitud, longitud, velocidad, direccion)
+     VALUES ($1,$2,$3,$4,$5)`,
+    [id_bus, latitud, longitud, velocidad, direccion]
+  );
+  res.json({ message: 'Posición registrada' });
+});
+
+// Última posición de cada bus
+app.get('/posiciones/actual', async (req, res) => {
+  const result = await pool.query(
+    `SELECT DISTINCT ON (id_bus) id_bus, latitud, longitud, velocidad, direccion, timestamp
+     FROM posiciones_bus ORDER BY id_bus, timestamp DESC`
+  );
+  res.json(result.rows);
+});
+
+
+//-------PASAJEROS--------
+// Registrar subida de pasajero
+app.post('/pasajeros', async (req, res) => {
+  const { id_bus, id_usuario } = req.body;
+  const result = await pool.query(
+    `INSERT INTO pasajeros_bus (id_bus, id_usuario, estado)
+     VALUES ($1,$2,'A BORDO') RETURNING *`,
+    [id_bus, id_usuario]
+  );
+  res.json(result.rows[0]);
+});
+
+// Registrar bajada de pasajero
+app.put('/pasajeros/:id', async (req, res) => {
+  const { id } = req.params;
+  const result = await pool.query(
+    `UPDATE pasajeros_bus SET estado='BAJADO' WHERE id_pasajero=$1 RETURNING *`,
+    [id]
+  );
+  res.json(result.rows[0]);
+});
+
+
+//-----ALERTAS-------
+// Registrar alerta
+app.post('/alertas', async (req, res) => {
+  const { id_bus, tipo, descripcion } = req.body;
+  const result = await pool.query(
+    `INSERT INTO alertas_bus (id_bus, tipo, descripcion)
+     VALUES ($1,$2,$3) RETURNING *`,
+    [id_bus, tipo, descripcion]
+  );
+  res.json(result.rows[0]);
+});
+
+// Obtener alertas recientes
+app.get('/alertas', async (req, res) => {
+  const result = await pool.query(
+    'SELECT * FROM alertas_bus ORDER BY timestamp DESC LIMIT 50'
+  );
+  res.json(result.rows);
+});
+
+
+//------METRICAS-----
+// Métricas rápidas
+app.get('/transporte/metricas', async (req, res) => {
+  const busesActivos = await pool.query("SELECT COUNT(*) FROM buses WHERE estado='EN SERVICIO'");
+  const rutas = await pool.query("SELECT COUNT(*) FROM rutas");
+  const pasajerosHoy = await pool.query("SELECT COUNT(*) FROM pasajeros_bus WHERE DATE(fecha)=CURRENT_DATE");
+  const alertas = await pool.query("SELECT COUNT(*) FROM alertas_bus WHERE DATE(timestamp)=CURRENT_DATE");
+
+  res.json({
+    activos: busesActivos.rows[0].count,
+    rutas: rutas.rows[0].count,
+    pasajeros_hoy: pasajerosHoy.rows[0].count,
+    alertas: alertas.rows[0].count
+  });
+});
+
+// Gráfica pasajeros por ruta
+app.get('/transporte/grafica', async (req, res) => {
+  const result = await pool.query(`
+    SELECT r.nombre AS ruta, COUNT(p.id_pasajero) AS pasajeros
+    FROM rutas r
+    LEFT JOIN paradas pa ON pa.id_ruta = r.id_ruta
+    LEFT JOIN pasajeros_bus p ON p.id_bus IN (
+      SELECT id_bus FROM buses WHERE id_bus IN (
+        SELECT id_bus FROM posiciones_bus WHERE id_bus IS NOT NULL
+      )
+    )
+    GROUP BY r.nombre
+  `);
+
+  res.json({
+    labels: result.rows.map(r => r.ruta),
+    values: result.rows.map(r => r.pasajeros)
+  });
+});
+
+
 
 // ---------------- INICIO SERVIDOR ----------------
 const PORT = process.env.PORT || 3000;
