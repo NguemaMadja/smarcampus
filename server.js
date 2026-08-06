@@ -2353,9 +2353,10 @@ app.delete('/transporteescolar/buses/:id', async (req, res) => {
 
 
 
-//--------RUTAS---------
+// -------- RUTAS --------
+
 // Obtener todas las rutas
-app.get('/rutas', async (req, res) => {
+app.get('/transporteescolar/rutas', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM rutas ORDER BY id_ruta');
     res.json(result.rows);
@@ -2365,10 +2366,13 @@ app.get('/rutas', async (req, res) => {
 });
 
 // Obtener una ruta específica
-app.get('/rutas/:id', async (req, res) => {
+app.get('/transporteescolar/rutas/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query('SELECT * FROM rutas WHERE id_ruta=$1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Ruta no encontrada' });
+    }
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2376,7 +2380,7 @@ app.get('/rutas/:id', async (req, res) => {
 });
 
 // Crear una nueva ruta
-app.post('/rutas', async (req, res) => {
+app.post('/transporteescolar/rutas', async (req, res) => {
   const { nombre, descripcion, hora_inicio, hora_fin } = req.body;
   try {
     const result = await pool.query(
@@ -2391,7 +2395,7 @@ app.post('/rutas', async (req, res) => {
 });
 
 // Actualizar una ruta
-app.put('/rutas/:id', async (req, res) => {
+app.put('/transporteescolar/rutas/:id', async (req, res) => {
   const { id } = req.params;
   const { nombre, descripcion, hora_inicio, hora_fin } = req.body;
   try {
@@ -2400,6 +2404,9 @@ app.put('/rutas/:id', async (req, res) => {
        WHERE id_ruta=$5 RETURNING *`,
       [nombre, descripcion, hora_inicio, hora_fin, id]
     );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Ruta no encontrada' });
+    }
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2407,10 +2414,13 @@ app.put('/rutas/:id', async (req, res) => {
 });
 
 // Eliminar una ruta
-app.delete('/rutas/:id', async (req, res) => {
+app.delete('/transporteescolar/rutas/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM rutas WHERE id_ruta=$1', [id]);
+    const result = await pool.query('DELETE FROM rutas WHERE id_ruta=$1 RETURNING *', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Ruta no encontrada' });
+    }
     res.json({ message: 'Ruta eliminada' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2418,9 +2428,10 @@ app.delete('/rutas/:id', async (req, res) => {
 });
 
 
-//-----------PARADAS----------
+// -------- PARADAS --------
+
 // Obtener todas las paradas
-app.get('/paradas', async (req, res) => {
+app.get('/transporteescolar/paradas', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM paradas ORDER BY id_parada');
     res.json(result.rows);
@@ -2429,13 +2440,13 @@ app.get('/paradas', async (req, res) => {
   }
 });
 
-// Obtener paradas de una ruta específica
-app.get('/paradas/ruta/:id_ruta', async (req, res) => {
-  const { id_ruta } = req.params;
+// Obtener todas las paradas de una ruta específica
+app.get('/transporteescolar/rutas/:id/paradas', async (req, res) => {
+  const { id } = req.params;
   try {
     const result = await pool.query(
       'SELECT * FROM paradas WHERE id_ruta=$1 ORDER BY orden',
-      [id_ruta]
+      [id]
     );
     res.json(result.rows);
   } catch (err) {
@@ -2444,7 +2455,7 @@ app.get('/paradas/ruta/:id_ruta', async (req, res) => {
 });
 
 // Crear una nueva parada
-app.post('/paradas', async (req, res) => {
+app.post('/transporteescolar/paradas', async (req, res) => {
   const { id_ruta, nombre, latitud, longitud, orden } = req.body;
   try {
     const result = await pool.query(
@@ -2459,7 +2470,7 @@ app.post('/paradas', async (req, res) => {
 });
 
 // Actualizar una parada
-app.put('/paradas/:id', async (req, res) => {
+app.put('/transporteescolar/paradas/:id', async (req, res) => {
   const { id } = req.params;
   const { id_ruta, nombre, latitud, longitud, orden } = req.body;
   try {
@@ -2468,6 +2479,9 @@ app.put('/paradas/:id', async (req, res) => {
        WHERE id_parada=$6 RETURNING *`,
       [id_ruta, nombre, latitud, longitud, orden, id]
     );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Parada no encontrada' });
+    }
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2475,10 +2489,13 @@ app.put('/paradas/:id', async (req, res) => {
 });
 
 // Eliminar una parada
-app.delete('/paradas/:id', async (req, res) => {
+app.delete('/transporteescolar/paradas/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM paradas WHERE id_parada=$1', [id]);
+    const result = await pool.query('DELETE FROM paradas WHERE id_parada=$1 RETURNING *', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Parada no encontrada' });
+    }
     res.json({ message: 'Parada eliminada' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2486,28 +2503,51 @@ app.delete('/paradas/:id', async (req, res) => {
 });
 
 
+// -------- POSICIONES --------
 
-
-//----------RECIBIR GPS EN TIEMPO REAL--------
-// Recibir posición GPS desde el bus (SIM800 + GPS)
-app.post('/posiciones', async (req, res) => {
-  const { id_bus, latitud, longitud, velocidad, direccion } = req.body;
-  await pool.query(
-    `INSERT INTO posiciones_bus (id_bus, latitud, longitud, velocidad, direccion)
-     VALUES ($1,$2,$3,$4,$5)`,
-    [id_bus, latitud, longitud, velocidad, direccion]
-  );
-  res.json({ message: 'Posición registrada' });
+// Registrar posición GPS (desde SIM800/ESP)
+app.post('/transporteescolar/posiciones', async (req, res) => {
+  const { id_bus, id_ruta, latitud, longitud, velocidad, direccion } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO posiciones (id_bus, id_ruta, latitud, longitud, velocidad, direccion)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+      [id_bus, id_ruta, latitud, longitud, velocidad, direccion]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Última posición de cada bus
-app.get('/posiciones/actual', async (req, res) => {
-  const result = await pool.query(
-    `SELECT DISTINCT ON (id_bus) id_bus, latitud, longitud, velocidad, direccion, timestamp
-     FROM posiciones_bus ORDER BY id_bus, timestamp DESC`
-  );
-  res.json(result.rows);
+app.get('/transporteescolar/posiciones/actual', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT ON (id_bus) id_bus, id_ruta, latitud, longitud, velocidad, direccion, fecha_hora
+       FROM posiciones
+       ORDER BY id_bus, fecha_hora DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
+
+// Historial de posiciones de un bus específico
+app.get('/transporteescolar/buses/:id/posiciones', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT * FROM posiciones WHERE id_bus=$1 ORDER BY fecha_hora DESC`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 //-------PASAJEROS--------
@@ -2589,6 +2629,7 @@ app.get('/transporte/grafica', async (req, res) => {
     values: result.rows.map(r => r.pasajeros)
   });
 });
+
 
 
 
