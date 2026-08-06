@@ -2518,14 +2518,28 @@ app.delete('/transporteescolar/paradas/:id', async (req, res) => {
 
 // Registrar posición GPS (desde SIM800/ESP)
 app.post('/transporteescolar/posiciones', async (req, res) => {
-  const { id_bus, id_ruta, latitud, longitud, velocidad, direccion } = req.body;
+  const { id_bus, id_ruta, latitud, longitud, velocidad, direccion, fecha_hora } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO posiciones (id_bus, id_ruta, latitud, longitud, velocidad, direccion)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [id_bus, id_ruta, latitud, longitud, velocidad, direccion]
+      `INSERT INTO posiciones (id_bus, id_ruta, latitud, longitud, velocidad, direccion, fecha_hora)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [id_bus, id_ruta, latitud, longitud, velocidad, direccion, fecha_hora]
     );
     res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Obtener todas las posiciones (historial completo)
+app.get('/transporteescolar/posiciones', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id_posicion, id_bus, id_ruta, latitud, longitud, velocidad, direccion, fecha_hora
+       FROM posiciones
+       ORDER BY fecha_hora ASC`
+    );
+    res.json(result.rows); // 🔑 devolver todas las filas
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -2550,7 +2564,10 @@ app.get('/transporteescolar/buses/:id/posiciones', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query(
-      `SELECT * FROM posiciones WHERE id_bus=$1 ORDER BY fecha_hora DESC`,
+      `SELECT id_posicion, id_bus, id_ruta, latitud, longitud, velocidad, direccion, fecha_hora
+       FROM posiciones
+       WHERE id_bus=$1
+       ORDER BY fecha_hora ASC`,
       [id]
     );
     res.json(result.rows);
@@ -2558,6 +2575,18 @@ app.get('/transporteescolar/buses/:id/posiciones', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Eliminar una posición (opcional, útil para limpiar datos de prueba)
+app.delete('/transporteescolar/posiciones/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM posiciones WHERE id_posicion=$1', [id]);
+    res.json({ message: 'Posición eliminada' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 
