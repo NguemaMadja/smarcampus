@@ -3,8 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>Transporte Escolar - SmartCampusGuide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- DataTables -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
 </head>
 <body>
 
@@ -51,8 +55,43 @@
     <a href="alertas.html" class="btn btn-outline-danger">⚠️ Alertas</a>
   </div>
 
+  <!-- Métricas rápidas -->
+  <div class="row text-center mb-4">
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <h5>Buses Activos</h5>
+          <p class="fs-4" id="metricActivos">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-info text-dark">
+        <div class="card-body">
+          <h5>Rutas Disponibles</h5>
+          <p class="fs-4" id="metricRutas">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-dark">
+        <div class="card-body">
+          <h5>Pasajeros Hoy</h5>
+          <p class="fs-4" id="metricPasajeros">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-danger text-white">
+        <div class="card-body">
+          <h5>Alertas</h5>
+          <p class="fs-4" id="metricAlertas">0</p>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- Tabla principal de buses -->
-  <table id="tablaTransporte" class="display table table-striped table-bordered" style="width:100%">
+  <table id="tablaTransporte" class="display table table-striped table-bordered nowrap" style="width:100%">
     <thead class="table-dark">
       <tr>
         <th>ID Bus</th>
@@ -67,21 +106,42 @@
       <!-- Se llenará dinámicamente -->
     </tbody>
   </table>
+
+  <!-- Gráfica -->
+  <div class="card mt-4">
+    <div class="card-header">Distribución de Pasajeros por Ruta</div>
+    <div class="card-body">
+      <canvas id="graficaTransporte"></canvas>
+    </div>
+  </div>
 </div>
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
   TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
 </footer>
 
-<!-- jQuery y DataTables -->
+<!-- jQuery, DataTables y extensiones -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- Script para cargar datos -->
 <script>
   $(document).ready(function() {
-    const tablaTransporte = $('#tablaTransporte').DataTable();
+    const tablaTransporte = $('#tablaTransporte').DataTable({
+      dom: 'Bfrtip',
+      buttons: [
+        { extend: 'csv', text: '⬇️ Descargar CSV' },
+        { extend: 'excel', text: '⬇️ Descargar Excel' },
+        { extend: 'print', text: '🖨️ Imprimir' }
+      ],
+      responsive: true
+    });
 
-    fetch("/buses") // endpoint que devuelve lista de buses
+    // Cargar datos de buses
+    fetch("/buses")
       .then(res => res.json())
       .then(data => {
         tablaTransporte.clear();
@@ -96,8 +156,40 @@
           ]);
         });
         tablaTransporte.draw();
+
+        // Métricas rápidas
+        document.getElementById("metricActivos").textContent = data.filter(b => b.estado === "EN SERVICIO").length;
+        document.getElementById("metricRutas").textContent = data.length; // simplificado, luego se conecta a /rutas
       })
       .catch(err => console.error("Error cargando buses:", err));
+
+    // Cargar métricas de pasajeros y alertas
+    fetch("/transporte/metricas")
+      .then(res => res.json())
+      .then(m => {
+        document.getElementById("metricPasajeros").textContent = m.pasajeros_hoy ?? 0;
+        document.getElementById("metricAlertas").textContent = m.alertas ?? 0;
+      })
+      .catch(err => console.error("Error cargando métricas:", err));
+
+    // Cargar gráfica de pasajeros por ruta
+    fetch("/transporte/grafica")
+      .then(res => res.json())
+      .then(datos => {
+        const ctx = document.getElementById('graficaTransporte');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: datos.labels,
+            datasets: [{
+              label: 'Pasajeros',
+              data: datos.values,
+              backgroundColor: 'rgba(54, 162, 235, 0.7)'
+            }]
+          }
+        });
+      })
+      .catch(err => console.error("Error cargando gráfica:", err));
   });
 </script>
 
