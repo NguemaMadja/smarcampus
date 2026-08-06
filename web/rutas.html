@@ -111,6 +111,7 @@
     </div>
   </div>
 </div>
+
 <!-- JS -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -119,9 +120,10 @@
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
 $(document).ready(function() {
+  const API_BASE = "https://smartcampus.render.com/transporteescolar";
+
   const tablaRutas = $('#tablaRutas').DataTable({
     dom: 'Bfrtip',
     buttons: [
@@ -134,7 +136,7 @@ $(document).ready(function() {
 
   // Cargar rutas
   function cargarRutas() {
-    fetch("/transporteescolar/rutas")
+    fetch(`${API_BASE}/rutas`)
       .then(res => res.json())
       .then(data => {
         tablaRutas.clear();
@@ -169,7 +171,7 @@ $(document).ready(function() {
       hora_fin: $('#horaFin').val()
     };
     const metodo = id ? 'PUT' : 'POST';
-    const url = id ? `/transporteescolar/rutas/${id}` : '/transporteescolar/rutas';
+    const url = id ? `${API_BASE}/rutas/${id}` : `${API_BASE}/rutas`;
 
     fetch(url, {
       method: metodo,
@@ -179,13 +181,14 @@ $(document).ready(function() {
     .then(() => {
       $('#modalRuta').modal('hide');
       cargarRutas();
-    });
+    })
+    .catch(err => console.error("Error guardando ruta:", err));
   });
 
   // Editar ruta
   $('#tablaRutas').on('click', '.editar', function() {
     const id = $(this).data('id');
-    fetch(`/transporteescolar/rutas/${id}`)
+    fetch(`${API_BASE}/rutas/${id}`)
       .then(res => res.json())
       .then(ruta => {
         $('#rutaId').val(ruta.id_ruta);
@@ -195,15 +198,17 @@ $(document).ready(function() {
         $('#horaFin').val(ruta.hora_fin);
         $('.modal-title').text("Editar Ruta");
         $('#modalRuta').modal('show');
-      });
+      })
+      .catch(err => console.error("Error cargando ruta:", err));
   });
 
   // Eliminar ruta
   $('#tablaRutas').on('click', '.eliminar', function() {
     const id = $(this).data('id');
     if(confirm("¿Seguro que deseas eliminar esta ruta?")) {
-      fetch(`/transporteescolar/rutas/${id}`, { method: 'DELETE' })
-        .then(() => cargarRutas());
+      fetch(`${API_BASE}/rutas/${id}`, { method: 'DELETE' })
+        .then(() => cargarRutas())
+        .catch(err => console.error("Error eliminando ruta:", err));
     }
   });
 
@@ -214,20 +219,21 @@ $(document).ready(function() {
 
     // Inicializar mapa
     setTimeout(() => {
-      const map = L.map('map').setView([3.75, 8.78], 13); // Coordenadas de ejemplo (Malabo)
+      const map = L.map('map').setView([3.75, 8.78], 13); // Coordenadas iniciales
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
-      // Aquí puedes cargar las paradas de la ruta desde el backend
-      fetch(`/transporteescolar/rutas/${id}/paradas`)
+      // Cargar paradas desde el backend
+      fetch(`${API_BASE}/rutas/${id}/paradas`)
         .then(res => res.json())
         .then(paradas => {
           paradas.forEach(p => {
             L.marker([p.latitud, p.longitud]).addTo(map)
               .bindPopup(`<b>${p.nombre}</b><br>${p.descripcion}`);
           });
-        });
+        })
+        .catch(err => console.error("Error cargando paradas:", err));
     }, 500);
   });
 });
