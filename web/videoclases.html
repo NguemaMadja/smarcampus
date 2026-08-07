@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Videoclases - SmartCampusGuide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+
+  <style>
+    #tablaVideoclases th {
+      background-color: #004080;
+      color: #fff;
+      text-align: center;
+    }
+    #tablaVideoclases td {
+      text-align: center;
+      vertical-align: middle;
+    }
+    .estado-programada { background-color: #e7f3ff; }
+    .estado-en-curso { background-color: #d4edda; }
+    .estado-finalizada { background-color: #f8d7da; }
+    .estado-cancelada { background-color: #ffeeba; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(0, 64, 128, 0.85);">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="admin.html">SmartCampusGuide</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menuPrincipal">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
+        <li class="nav-item"><a class="nav-link active" href="videoclases.html">Videoclases</a></li>
+        <li class="nav-item"><a class="nav-link" href="transporteescolar.html">Transporte Escolar</a></li>
+        <li class="nav-item"><a class="nav-link" href="mapa.html">Mapa</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <h2 class="mb-4">Videoclases Programadas</h2>
+  <div class="row text-center mb-4">
+    <div class="col-md-3"><div class="card bg-info text-dark"><div class="card-body"><h5>Total Programadas</h5><p class="fs-4" id="metricProgramadas">0</p></div></div></div>
+    <div class="col-md-3"><div class="card bg-success text-white"><div class="card-body"><h5>En Curso</h5><p class="fs-4" id="metricEnCurso">0</p></div></div></div>
+    <div class="col-md-3"><div class="card bg-secondary text-white"><div class="card-body"><h5>Finalizadas</h5><p class="fs-4" id="metricFinalizadas">0</p></div></div></div>
+    <div class="col-md-3"><div class="card bg-warning text-dark"><div class="card-body"><h5>Canceladas</h5><p class="fs-4" id="metricCanceladas">0</p></div></div></div>
+  </div>
+  <div class="tabla-container">
+    <table id="tablaVideoclases" class="display table table-striped table-bordered nowrap" style="width:100%">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Título</th>
+          <th>Profesor</th>
+          <th>Fecha Inicio</th>
+          <th>Fecha Fin</th>
+          <th>Estado</th>
+          <th>Enlace</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Se llenará dinámicamente -->
+      </tbody>
+    </table>
+  </div>
+</div>
+<footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
+  TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  const tabla = $('#tablaVideoclases').DataTable({
+    dom: 'Bfrtip',
+    buttons: [
+      { extend: 'csv', text: '⬇️ CSV' },
+      { extend: 'excel', text: '⬇️ Excel' },
+      { extend: 'print', text: '🖨️ Imprimir' }
+    ],
+    responsive: true,
+    scrollX: true,
+    autoWidth: false
+  });
+
+  fetch("/videoclases")
+    .then(res => res.json())
+    .then(data => {
+      tabla.clear();
+      let programadas=0,enCurso=0,finalizadas=0,canceladas=0;
+      data.forEach(clase => {
+        if(clase.estado==='PROGRAMADA') programadas++;
+        if(clase.estado==='EN_CURSO') enCurso++;
+        if(clase.estado==='FINALIZADA') finalizadas++;
+        if(clase.estado==='CANCELADA') canceladas++;
+
+        const ahora = new Date();
+        const inicio = new Date(clase.fecha_inicio);
+        const fin = clase.fecha_fin ? new Date(clase.fecha_fin) : null;
+        let boton = '<button class="btn btn-secondary btn-sm" disabled>Esperando</button>';
+        if(ahora >= inicio && (!fin || ahora <= fin) && clase.estado==='EN_CURSO'){
+          boton = `<a href="${clase.enlace}" target="_blank" class="btn btn-success btn-sm">Unirse</a>`;
+        }
+
+        tabla.row.add([
+          clase.id_videoclase,
+          clase.titulo,
+          clase.profesor_id,
+          clase.fecha_inicio,
+          clase.fecha_fin ?? '',
+          clase.estado,
+          `<a href="${clase.enlace}" target="_blank">Link</a>`,
+          boton
+        ]);
+      });
+      tabla.draw();
+      document.getElementById("metricProgramadas").textContent = programadas;
+      document.getElementById("metricEnCurso").textContent = enCurso;
+      document.getElementById("metricFinalizadas").textContent = finalizadas;
+      document.getElementById("metricCanceladas").textContent = canceladas;
+    })
+    .catch(err => console.error("Error cargando videoclases:", err));
+});
+</script>
+</body>
+</html>
