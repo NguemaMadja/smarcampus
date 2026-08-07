@@ -46,12 +46,23 @@
 
 <div class="container mt-4">
   <h2 class="mb-4">Videoclases Programadas</h2>
+
+  <!-- Botón para abrir modal de nueva clase -->
+  <div class="d-flex justify-content-end mb-3">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaClase">
+      ➕ Programar Nueva Clase
+    </button>
+  </div>
+
+  <!-- Métricas -->
   <div class="row text-center mb-4">
     <div class="col-md-3"><div class="card bg-info text-dark"><div class="card-body"><h5>Total Programadas</h5><p class="fs-4" id="metricProgramadas">0</p></div></div></div>
     <div class="col-md-3"><div class="card bg-success text-white"><div class="card-body"><h5>En Curso</h5><p class="fs-4" id="metricEnCurso">0</p></div></div></div>
     <div class="col-md-3"><div class="card bg-secondary text-white"><div class="card-body"><h5>Finalizadas</h5><p class="fs-4" id="metricFinalizadas">0</p></div></div></div>
     <div class="col-md-3"><div class="card bg-warning text-dark"><div class="card-body"><h5>Canceladas</h5><p class="fs-4" id="metricCanceladas">0</p></div></div></div>
   </div>
+
+  <!-- Tabla -->
   <div class="tabla-container">
     <table id="tablaVideoclases" class="display table table-striped table-bordered nowrap" style="width:100%">
       <thead>
@@ -70,6 +81,113 @@
         <!-- Se llenará dinámicamente -->
       </tbody>
     </table>
+  </div>
+</div>
+<!-- Modal Nueva Clase -->
+<div class="modal fade" id="modalNuevaClase" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form id="formNuevaClase" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Programar Videoclase</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Título</label>
+            <input type="text" class="form-control" name="titulo" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Profesor ID</label>
+            <input type="number" class="form-control" name="profesor_id" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Descripción</label>
+            <textarea class="form-control" name="descripcion"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Fecha Inicio</label>
+            <input type="datetime-local" class="form-control" name="fecha_inicio" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Fecha Fin</label>
+            <input type="datetime-local" class="form-control" name="fecha_fin">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Invitados (emails separados por coma)</label>
+            <input type="text" class="form-control" name="invitados">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success">Guardar Clase</button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Modal Editar Clase -->
+<div class="modal fade" id="modalEditarClase" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form id="formEditarClase" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Videoclase</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="id_videoclase" id="edit_id">
+        <div class="mb-3">
+          <label class="form-label">Título</label>
+          <input type="text" class="form-control" name="titulo" id="edit_titulo" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-control" name="descripcion" id="edit_descripcion"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Fecha Inicio</label>
+          <input type="datetime-local" class="form-control" name="fecha_inicio" id="edit_inicio" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Fecha Fin</label>
+          <input type="datetime-local" class="form-control" name="fecha_fin" id="edit_fin">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Estado</label>
+          <select class="form-select" name="estado" id="edit_estado">
+            <option value="PROGRAMADA">Programada</option>
+            <option value="EN_CURSO">En Curso</option>
+            <option value="FINALIZADA">Finalizada</option>
+            <option value="CANCELADA">Cancelada</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Invitados (emails separados por coma)</label>
+          <input type="text" class="form-control" name="invitados" id="edit_invitados">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Actualizar Clase</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Eliminar Clase -->
+<div class="modal fade" id="modalEliminarClase" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="formEliminarClase" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Eliminar Videoclase</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de que deseas eliminar esta videoclase?</p>
+        <input type="hidden" name="id_videoclase" id="delete_id">
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+      </div>
+    </form>
   </div>
 </div>
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
@@ -97,43 +215,153 @@ $(document).ready(function() {
     autoWidth: false
   });
 
-  fetch("/videoclases")
-    .then(res => res.json())
-    .then(data => {
-      tabla.clear();
-      let programadas=0,enCurso=0,finalizadas=0,canceladas=0;
-      data.forEach(clase => {
-        if(clase.estado==='PROGRAMADA') programadas++;
-        if(clase.estado==='EN_CURSO') enCurso++;
-        if(clase.estado==='FINALIZADA') finalizadas++;
-        if(clase.estado==='CANCELADA') canceladas++;
+  // Función para cargar videoclases
+  function cargarVideoclases() {
+    fetch("/videoclases")
+      .then(res => res.json())
+      .then(data => {
+        tabla.clear();
+        let programadas=0,enCurso=0,finalizadas=0,canceladas=0;
+        data.forEach(clase => {
+          if(clase.estado==='PROGRAMADA') programadas++;
+          if(clase.estado==='EN_CURSO') enCurso++;
+          if(clase.estado==='FINALIZADA') finalizadas++;
+          if(clase.estado==='CANCELADA') canceladas++;
 
-        const ahora = new Date();
-        const inicio = new Date(clase.fecha_inicio);
-        const fin = clase.fecha_fin ? new Date(clase.fecha_fin) : null;
-        let boton = '<button class="btn btn-secondary btn-sm" disabled>Esperando</button>';
-        if(ahora >= inicio && (!fin || ahora <= fin) && clase.estado==='EN_CURSO'){
-          boton = `<a href="${clase.enlace}" target="_blank" class="btn btn-success btn-sm">Unirse</a>`;
-        }
+          const ahora = new Date();
+          const inicio = new Date(clase.fecha_inicio);
+          const fin = clase.fecha_fin ? new Date(clase.fecha_fin) : null;
+          let boton = '<button class="btn btn-secondary btn-sm" disabled>Esperando</button>';
+          if(ahora >= inicio && (!fin || ahora <= fin) && clase.estado==='EN_CURSO'){
+            boton = `<a href="${clase.enlace}" target="_blank" class="btn btn-success btn-sm">Unirse</a>`;
+          }
 
-        tabla.row.add([
-          clase.id_videoclase,
-          clase.titulo,
-          clase.profesor_id,
-          clase.fecha_inicio,
-          clase.fecha_fin ?? '',
-          clase.estado,
-          `<a href="${clase.enlace}" target="_blank">Link</a>`,
-          boton
-        ]);
+          // Botones de edición y eliminación
+          const acciones = `
+            ${boton}
+            <button class="btn btn-warning btn-sm ms-1" onclick="abrirEditar(${clase.id_videoclase}, '${clase.titulo}', '${clase.descripcion}', '${clase.fecha_inicio}', '${clase.fecha_fin}', '${clase.estado}', '${clase.invitados}')">Editar</button>
+            <button class="btn btn-danger btn-sm ms-1" onclick="abrirEliminar(${clase.id_videoclase})">Eliminar</button>
+          `;
+
+          tabla.row.add([
+            clase.id_videoclase,
+            clase.titulo,
+            clase.profesor_id,
+            clase.fecha_inicio,
+            clase.fecha_fin ?? '',
+            clase.estado,
+            `<a href="${clase.enlace}" target="_blank">Link</a>`,
+            acciones
+          ]);
+        });
+        tabla.draw();
+        document.getElementById("metricProgramadas").textContent = programadas;
+        document.getElementById("metricEnCurso").textContent = enCurso;
+        document.getElementById("metricFinalizadas").textContent = finalizadas;
+        document.getElementById("metricCanceladas").textContent = canceladas;
+      })
+      .catch(err => console.error("Error cargando videoclases:", err));
+  }
+
+  cargarVideoclases();
+
+  // Crear videoclase
+  document.getElementById("formNuevaClase").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const datos = {
+      titulo: form.titulo.value,
+      descripcion: form.descripcion.value,
+      profesor_id: parseInt(form.profesor_id.value),
+      fecha_inicio: form.fecha_inicio.value,
+      fecha_fin: form.fecha_fin.value || null,
+      invitados: form.invitados.value ? form.invitados.value.split(",").map(i => i.trim()) : [],
+      estado: "PROGRAMADA"
+    };
+    try {
+      const res = await fetch("/videoclases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
       });
-      tabla.draw();
-      document.getElementById("metricProgramadas").textContent = programadas;
-      document.getElementById("metricEnCurso").textContent = enCurso;
-      document.getElementById("metricFinalizadas").textContent = finalizadas;
-      document.getElementById("metricCanceladas").textContent = canceladas;
-    })
-    .catch(err => console.error("Error cargando videoclases:", err));
+      if(res.ok){
+        alert("Videoclase programada correctamente ✅");
+        cargarVideoclases();
+        bootstrap.Modal.getInstance(document.getElementById("modalNuevaClase")).hide();
+      } else {
+        alert("Error al programar la clase ❌");
+      }
+    } catch(err){
+      console.error("Error enviando clase:", err);
+    }
+  });
+
+  // Abrir modal editar
+  window.abrirEditar = function(id, titulo, descripcion, inicio, fin, estado, invitados){
+    document.getElementById("edit_id").value = id;
+    document.getElementById("edit_titulo").value = titulo;
+    document.getElementById("edit_descripcion").value = descripcion;
+    document.getElementById("edit_inicio").value = inicio.replace(" ", "T");
+    if(fin && fin !== "null") document.getElementById("edit_fin").value = fin.replace(" ", "T");
+    document.getElementById("edit_estado").value = estado;
+    document.getElementById("edit_invitados").value = invitados;
+    new bootstrap.Modal(document.getElementById("modalEditarClase")).show();
+  }
+
+  // Editar videoclase
+  document.getElementById("formEditarClase").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const id = form.id_videoclase.value;
+    const datos = {
+      titulo: form.titulo.value,
+      descripcion: form.descripcion.value,
+      fecha_inicio: form.fecha_inicio.value,
+      fecha_fin: form.fecha_fin.value || null,
+      estado: form.estado.value,
+      invitados: form.invitados.value ? form.invitados.value.split(",").map(i => i.trim()) : []
+    };
+    try {
+      const res = await fetch(`/videoclases/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+      });
+      if(res.ok){
+        alert("Videoclase actualizada correctamente ✅");
+        cargarVideoclases();
+        bootstrap.Modal.getInstance(document.getElementById("modalEditarClase")).hide();
+      } else {
+        alert("Error al actualizar la clase ❌");
+      }
+    } catch(err){
+      console.error("Error actualizando clase:", err);
+    }
+  });
+
+  // Abrir modal eliminar
+  window.abrirEliminar = function(id){
+    document.getElementById("delete_id").value = id;
+    new bootstrap.Modal(document.getElementById("modalEliminarClase")).show();
+  }
+
+  // Eliminar videoclase
+  document.getElementById("formEliminarClase").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = document.getElementById("delete_id").value;
+    try {
+      const res = await fetch(`/videoclases/${id}`, { method: "DELETE" });
+      if(res.ok){
+        alert("Videoclase eliminada correctamente ✅");
+        cargarVideoclases();
+        bootstrap.Modal.getInstance(document.getElementById("modalEliminarClase")).hide();
+      } else {
+        alert("Error al eliminar la clase ❌");
+      }
+    } catch(err){
+      console.error("Error eliminando clase:", err);
+    }
+  });
 });
 </script>
 </body>
