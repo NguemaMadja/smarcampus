@@ -2749,6 +2749,74 @@ app.post('/transporteescolar', async (req, res) => {
 
 
 
+// =======================
+// ENDPOINTS VIDEOCLASES
+// =======================
+
+// Obtener todas las videoclases
+app.get('/videoclases', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM videoclases ORDER BY fecha_inicio ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error obteniendo videoclases' });
+  }
+});
+
+// Crear nueva videoclase
+app.post('/videoclases', async (req, res) => {
+  const { titulo, descripcion, profesor_id, fecha_inicio, fecha_fin, invitados, estado } = req.body;
+  try {
+    // Generar enlace dinámico Jitsi
+    const enlace = `https://meet.jit.si/${encodeURIComponent(titulo)}-${Date.now()}`;
+    const result = await pool.query(
+      `INSERT INTO videoclases (titulo, descripcion, profesor_id, fecha_inicio, fecha_fin, enlace, invitados, estado)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [titulo, descripcion, profesor_id, fecha_inicio, fecha_fin, enlace, invitados, estado]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error creando videoclase' });
+  }
+});
+
+// Actualizar videoclase existente
+app.put('/videoclases/:id', async (req, res) => {
+  const { id } = req.params;
+  const { titulo, descripcion, fecha_inicio, fecha_fin, estado, invitados } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE videoclases
+       SET titulo=$1, descripcion=$2, fecha_inicio=$3, fecha_fin=$4, estado=$5, invitados=$6, actualizado_en=NOW()
+       WHERE id_videoclase=$7 RETURNING *`,
+      [titulo, descripcion, fecha_inicio, fecha_fin, estado, invitados, id]
+    );
+    if(result.rows.length === 0) return res.status(404).json({ error: 'Videoclase no encontrada' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error actualizando videoclase' });
+  }
+});
+
+// Eliminar videoclase
+app.delete('/videoclases/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM videoclases WHERE id_videoclase=$1 RETURNING *', [id]);
+    if(result.rows.length === 0) return res.status(404).json({ error: 'Videoclase no encontrada' });
+    res.json({ message: 'Videoclase eliminada correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error eliminando videoclase' });
+  }
+});
+
+
+
+
 
 // ---------------- INICIO SERVIDOR ----------------
 const PORT = process.env.PORT || 3000;
