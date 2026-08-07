@@ -9,6 +9,24 @@
   <!-- DataTables -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+
+  <!-- Estilos personalizados -->
+  <style>
+    .tabla-container {
+      overflow-x: auto;
+      width: 100%;
+    }
+    #tablaTransporteEscolar th {
+      white-space: nowrap;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    #tablaTransporteEscolar td {
+      font-size: 0.85rem;
+      text-align: center;
+      vertical-align: middle;
+    }
+  </style>
 </head>
 <body>
 
@@ -90,25 +108,27 @@
     </div>
   </div>
   <!-- Tabla principal de transporteescolar -->
-  <table id="tablaTransporteEscolar" class="display table table-striped table-bordered nowrap" style="width:100%">
-    <thead class="table-dark">
-      <tr>
-        <th>ID</th>
-        <th>Fecha</th>
-        <th>Capacidad</th>
-        <th>Buses en Servicio</th>
-        <th>Buses fuera de Servicio</th>
-        <th>Rutas Activas</th>
-        <th>Alertas Hoy</th>
-        <th>Ocupación Promedio</th>
-        <th>Tiempo Promedio Llegada</th>
-        <th>Ruta</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Se llenará dinámicamente -->
-    </tbody>
-  </table>
+  <div class="tabla-container">
+    <table id="tablaTransporteEscolar" class="display table table-striped table-bordered nowrap" style="width:100%">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Fecha</th>
+          <th>Capacidad</th>
+          <th>Buses en Servicio</th>
+          <th>Buses fuera de Servicio</th>
+          <th>Rutas Activas</th>
+          <th>Alertas Hoy</th>
+          <th>Ocupación Promedio</th>
+          <th>Tiempo Promedio Llegada</th>
+          <th>Ruta</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Se llenará dinámicamente -->
+      </tbody>
+    </table>
+  </div>
 
   <!-- Gráfica -->
   <div class="card mt-4">
@@ -140,7 +160,8 @@
         { extend: 'excel', text: '⬇️ Descargar Excel' },
         { extend: 'print', text: '🖨️ Imprimir' }
       ],
-      responsive: true
+      responsive: true,
+      scrollX: true // habilita scroll horizontal elegante
     });
 
     // Cargar datos de transporteescolar
