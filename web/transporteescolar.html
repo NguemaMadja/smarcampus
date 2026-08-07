@@ -44,7 +44,6 @@
 </nav>
 <div class="container mt-4">
   <h2 class="mb-4">Transporte Escolar</h2>
-
   <!-- Botones de acceso a mini-módulos -->
   <div class="d-flex flex-wrap gap-2 mb-4">
     <a href="buses.html" class="btn btn-outline-primary">🚍 Gestión de Buses</a>
@@ -60,7 +59,7 @@
     <div class="col-md-3">
       <div class="card bg-success text-white">
         <div class="card-body">
-          <h5>Buses Activos</h5>
+          <h5>Buses en Servicio</h5>
           <p class="fs-4" id="metricActivos">0</p>
         </div>
       </div>
@@ -68,7 +67,7 @@
     <div class="col-md-3">
       <div class="card bg-info text-dark">
         <div class="card-body">
-          <h5>Rutas Disponibles</h5>
+          <h5>Rutas Activas</h5>
           <p class="fs-4" id="metricRutas">0</p>
         </div>
       </div>
@@ -76,30 +75,34 @@
     <div class="col-md-3">
       <div class="card bg-warning text-dark">
         <div class="card-body">
-          <h5>Pasajeros Hoy</h5>
-          <p class="fs-4" id="metricPasajeros">0</p>
+          <h5>Capacidad Total</h5>
+          <p class="fs-4" id="metricCapacidad">0</p>
         </div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card bg-danger text-white">
         <div class="card-body">
-          <h5>Alertas</h5>
+          <h5>Alertas Hoy</h5>
           <p class="fs-4" id="metricAlertas">0</p>
         </div>
       </div>
     </div>
   </div>
-  <!-- Tabla principal de buses -->
-  <table id="tablaTransporte" class="display table table-striped table-bordered nowrap" style="width:100%">
+  <!-- Tabla principal de transporteescolar -->
+  <table id="tablaTransporteEscolar" class="display table table-striped table-bordered nowrap" style="width:100%">
     <thead class="table-dark">
       <tr>
-        <th>ID Bus</th>
-        <th>Número</th>
-        <th>Placa</th>
-        <th>Conductor</th>
+        <th>ID</th>
+        <th>Fecha</th>
         <th>Capacidad</th>
-        <th>Estado</th>
+        <th>Buses en Servicio</th>
+        <th>Buses fuera de Servicio</th>
+        <th>Rutas Activas</th>
+        <th>Alertas Hoy</th>
+        <th>Ocupación Promedio</th>
+        <th>Tiempo Promedio Llegada</th>
+        <th>Ruta</th>
       </tr>
     </thead>
     <tbody>
@@ -109,7 +112,7 @@
 
   <!-- Gráfica -->
   <div class="card mt-4">
-    <div class="card-header">Distribución de Pasajeros por Ruta</div>
+    <div class="card-header">Evolución de Ocupación Promedio</div>
     <div class="card-body">
       <canvas id="graficaTransporte"></canvas>
     </div>
@@ -130,7 +133,7 @@
 <!-- Script para cargar datos -->
 <script>
   $(document).ready(function() {
-    const tablaTransporte = $('#tablaTransporte').DataTable({
+    const tablaEscolar = $('#tablaTransporteEscolar').DataTable({
       dom: 'Bfrtip',
       buttons: [
         { extend: 'csv', text: '⬇️ Descargar CSV' },
@@ -140,51 +143,53 @@
       responsive: true
     });
 
-    // Cargar datos de buses
-    fetch("/buses")
+    // Cargar datos de transporteescolar
+    fetch("/transporteescolar")
       .then(res => res.json())
       .then(data => {
-        tablaTransporte.clear();
-        data.forEach(bus => {
-          tablaTransporte.row.add([
-            bus.id_bus,
-            bus.numero_bus,
-            bus.placa,
-            bus.conductor,
-            bus.capacidad,
-            bus.estado
+        tablaEscolar.clear();
+        data.forEach(registro => {
+          tablaEscolar.row.add([
+            registro.id_transporte,
+            registro.fecha,
+            registro.capacidad,
+            registro.buses_en_servicio,
+            registro.buses_fuera_servicio,
+            registro.rutas_activas,
+            registro.alertas_hoy,
+            registro.ocupacion_promedio,
+            registro.tiempo_promedio_llegada,
+            registro.ruta
           ]);
         });
-        tablaTransporte.draw();
+        tablaEscolar.draw();
 
-        // Métricas rápidas
-        document.getElementById("metricActivos").textContent = data.filter(b => b.estado === "EN SERVICIO").length;
-        document.getElementById("metricRutas").textContent = data.length; // simplificado, luego se conecta a /rutas
+        // Actualizar métricas rápidas con el último registro
+        const ultimo = data.at(-1);
+        if (ultimo) {
+          document.getElementById("metricActivos").textContent = ultimo.buses_en_servicio ?? 0;
+          document.getElementById("metricRutas").textContent = ultimo.rutas_activas ?? 0;
+          document.getElementById("metricCapacidad").textContent = ultimo.capacidad ?? 0;
+          document.getElementById("metricAlertas").textContent = ultimo.alertas_hoy ?? 0;
+        }
       })
-      .catch(err => console.error("Error cargando buses:", err));
+      .catch(err => console.error("Error cargando transporteescolar:", err));
 
-    // Cargar métricas de pasajeros y alertas
-    fetch("/transporte/metricas")
-      .then(res => res.json())
-      .then(m => {
-        document.getElementById("metricPasajeros").textContent = m.pasajeros_hoy ?? 0;
-        document.getElementById("metricAlertas").textContent = m.alertas ?? 0;
-      })
-      .catch(err => console.error("Error cargando métricas:", err));
-
-    // Cargar gráfica de pasajeros por ruta
-    fetch("/transporte/grafica")
+    // Gráfica de ocupación promedio por fecha
+    fetch("/transporteescolar/grafica")
       .then(res => res.json())
       .then(datos => {
         const ctx = document.getElementById('graficaTransporte');
         new Chart(ctx, {
-          type: 'bar',
+          type: 'line',
           data: {
             labels: datos.labels,
             datasets: [{
-              label: 'Pasajeros',
+              label: 'Ocupación Promedio (%)',
               data: datos.values,
-              backgroundColor: 'rgba(54, 162, 235, 0.7)'
+              borderColor: 'rgba(75, 192, 192, 1)',
+              fill: false,
+              tension: 0.1
             }]
           }
         });
