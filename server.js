@@ -2671,6 +2671,83 @@ app.get('/transporte/grafica', async (req, res) => {
 });
 
 
+//----------ENDPOINTS T-ESCOLAR-------------
+
+
+
+// Obtener todos los registros de transporteescolar
+app.get('/transporteescolar', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM transporteescolar ORDER BY fecha ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener transporteescolar:', err);
+    res.status(500).json({ error: 'Error al obtener datos' });
+  }
+});
+
+// Obtener métricas rápidas (último registro)
+app.get('/transporteescolar/metricas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM transporteescolar ORDER BY fecha DESC LIMIT 1');
+    const ultimo = result.rows[0];
+    res.json({
+      buses_en_servicio: ultimo?.buses_en_servicio ?? 0,
+      rutas_activas: ultimo?.rutas_activas ?? 0,
+      capacidad: ultimo?.capacidad ?? 0,
+      alertas_hoy: ultimo?.alertas_hoy ?? 0
+    });
+  } catch (err) {
+    console.error('Error al obtener métricas:', err);
+    res.status(500).json({ error: 'Error al obtener métricas' });
+  }
+});
+
+// Obtener datos para gráfica de ocupación promedio
+app.get('/transporteescolar/grafica', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT fecha, ocupacion_promedio FROM transporteescolar ORDER BY fecha ASC'
+    );
+    const labels = result.rows.map(r => r.fecha);
+    const values = result.rows.map(r => r.ocupacion_promedio);
+    res.json({ labels, values });
+  } catch (err) {
+    console.error('Error al obtener gráfica:', err);
+    res.status(500).json({ error: 'Error al obtener datos de gráfica' });
+  }
+});
+
+// Insertar un nuevo registro de métricas diarias
+app.post('/transporteescolar', async (req, res) => {
+  try {
+    const query = `
+      INSERT INTO transporteescolar (
+        fecha, capacidad, buses_en_servicio, buses_fuera_servicio,
+        rutas_activas, alertas_hoy, ocupacion_promedio, tiempo_promedio_llegada, ruta
+      )
+      VALUES (
+        CURRENT_DATE,
+        (SELECT SUM(capacidad) FROM buses),
+        (SELECT COUNT(*) FROM buses WHERE estado = 'EN SERVICIO'),
+        (SELECT COUNT(*) FROM buses WHERE estado = 'FUERA DE SERVICIO'),
+        (SELECT COUNT(*) FROM rutas),
+        (SELECT COUNT(*) FROM alertas WHERE fecha::date = CURRENT_DATE),
+        (SELECT AVG(capacidad) FROM buses),
+        (SELECT AVG(hora_fin - hora_inicio) FROM rutas),
+        (SELECT nombre FROM rutas LIMIT 1)
+      )
+      RETURNING *;
+    `;
+    const result = await pool.query(query);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error al insertar métricas:', err);
+    res.status(500).json({ error: 'Error al insertar métricas' });
+  }
+});
+
+
 
 
 // ---------------- INICIO SERVIDOR ----------------
