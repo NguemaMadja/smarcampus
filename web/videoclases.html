@@ -43,7 +43,6 @@
     </div>
   </div>
 </nav>
-
 <div class="container mt-4">
   <h2 class="mb-4">Videoclases Programadas</h2>
 
@@ -83,6 +82,7 @@
     </table>
   </div>
 </div>
+
 <!-- Modal Nueva Clase -->
 <div class="modal fade" id="modalNuevaClase" tabindex="-1">
   <div class="modal-dialog modal-lg">
@@ -93,66 +93,31 @@
       </div>
       <div class="modal-body">
         <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Título</label>
-            <input type="text" class="form-control" name="titulo" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Profesor ID</label>
-            <input type="number" class="form-control" name="profesor_id" required>
-          </div>
-          <div class="col-12">
-            <label class="form-label">Descripción</label>
-            <textarea class="form-control" name="descripcion"></textarea>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Fecha Inicio</label>
-            <input type="datetime-local" class="form-control" name="fecha_inicio" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Fecha Fin</label>
-            <input type="datetime-local" class="form-control" name="fecha_fin">
-          </div>
-          <div class="col-12">
-            <label class="form-label">Invitados (emails separados por coma)</label>
-            <input type="text" class="form-control" name="invitados">
-          </div>
+          <div class="col-md-6"><label class="form-label">Título</label><input type="text" class="form-control" name="titulo" required></div>
+          <div class="col-md-6"><label class="form-label">Profesor ID</label><input type="number" class="form-control" name="profesor_id" required></div>
+          <div class="col-12"><label class="form-label">Descripción</label><textarea class="form-control" name="descripcion"></textarea></div>
+          <div class="col-md-6"><label class="form-label">Fecha Inicio</label><input type="datetime-local" class="form-control" name="fecha_inicio" required></div>
+          <div class="col-md-6"><label class="form-label">Fecha Fin</label><input type="datetime-local" class="form-control" name="fecha_fin"></div>
+          <div class="col-12"><label class="form-label">Invitados (emails separados por coma)</label><input type="text" class="form-control" name="invitados"></div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-success">Guardar Clase</button>
-      </div>
+      <div class="modal-footer"><button type="submit" class="btn btn-success">Guardar Clase</button></div>
     </form>
   </div>
 </div>
+
 <!-- Modal Editar Clase -->
 <div class="modal fade" id="modalEditarClase" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <form id="formEditarClase" class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Editar Videoclase</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
+      <div class="modal-header"><h5 class="modal-title">Editar Videoclase</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
       <div class="modal-body">
         <input type="hidden" name="id_videoclase" id="edit_id">
-        <div class="mb-3">
-          <label class="form-label">Título</label>
-          <input type="text" class="form-control" name="titulo" id="edit_titulo" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Descripción</label>
-          <textarea class="form-control" name="descripcion" id="edit_descripcion"></textarea>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Fecha Inicio</label>
-          <input type="datetime-local" class="form-control" name="fecha_inicio" id="edit_inicio" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Fecha Fin</label>
-          <input type="datetime-local" class="form-control" name="fecha_fin" id="edit_fin">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Estado</label>
+        <div class="mb-3"><label class="form-label">Título</label><input type="text" class="form-control" name="titulo" id="edit_titulo" required></div>
+        <div class="mb-3"><label class="form-label">Descripción</label><textarea class="form-control" name="descripcion" id="edit_descripcion"></textarea></div>
+        <div class="mb-3"><label class="form-label">Fecha Inicio</label><input type="datetime-local" class="form-control" name="fecha_inicio" id="edit_inicio" required></div>
+        <div class="mb-3"><label class="form-label">Fecha Fin</label><input type="datetime-local" class="form-control" name="fecha_fin" id="edit_fin"></div>
+        <div class="mb-3"><label class="form-label">Estado</label>
           <select class="form-select" name="estado" id="edit_estado">
             <option value="PROGRAMADA">Programada</option>
             <option value="EN_CURSO">En Curso</option>
@@ -160,18 +125,12 @@
             <option value="CANCELADA">Cancelada</option>
           </select>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Invitados (emails separados por coma)</label>
-          <input type="text" class="form-control" name="invitados" id="edit_invitados">
-        </div>
+        <div class="mb-3"><label class="form-label">Invitados</label><input type="text" class="form-control" name="invitados" id="edit_invitados"></div>
       </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Actualizar Clase</button>
-      </div>
+      <div class="modal-footer"><button type="submit" class="btn btn-primary">Actualizar Clase</button></div>
     </form>
   </div>
 </div>
-
 <!-- Modal Eliminar Clase -->
 <div class="modal fade" id="modalEliminarClase" tabindex="-1">
   <div class="modal-dialog">
@@ -190,6 +149,53 @@
     </form>
   </div>
 </div>
+
+<!-- Gráficas -->
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-6">
+      <h4 class="text-center">Distribución de Estados</h4>
+      <canvas id="graficoEstados"></canvas>
+    </div>
+    <div class="col-md-6">
+      <h4 class="text-center">Clases por Mes</h4>
+      <canvas id="graficoMensual"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard Ejecutivo -->
+<div class="container mt-5">
+  <h3 class="mb-3">Dashboard Ejecutivo</h3>
+  <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="agenda-tab" data-bs-toggle="tab" data-bs-target="#agenda" type="button" role="tab">📅 Agenda</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="metricas-tab" data-bs-toggle="tab" data-bs-target="#metricas" type="button" role="tab">📊 Métricas</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="graficas-tab" data-bs-toggle="tab" data-bs-target="#graficas" type="button" role="tab">📈 Gráficas</button>
+    </li>
+  </ul>
+  <div class="tab-content p-3 border border-top-0" id="dashboardTabsContent">
+    <div class="tab-pane fade show active" id="agenda" role="tabpanel">
+      <p>Aquí se muestra la agenda completa de videoclases (tabla principal).</p>
+    </div>
+    <div class="tab-pane fade" id="metricas" role="tabpanel">
+      <p>Resumen ejecutivo de métricas:</p>
+      <ul>
+        <li>Total Programadas: <span id="dashProgramadas">0</span></li>
+        <li>En Curso: <span id="dashEnCurso">0</span></li>
+        <li>Finalizadas: <span id="dashFinalizadas">0</span></li>
+        <li>Canceladas: <span id="dashCanceladas">0</span></li>
+      </ul>
+    </div>
+    <div class="tab-pane fade" id="graficas" role="tabpanel">
+      <p>Visualización de gráficas ya integradas arriba.</p>
+    </div>
+  </div>
+</div>
 <footer class="text-center mt-4 p-3" style="background-color: rgba(0, 64, 128, 0.85); color: white;">
   TODOS LOS DERECHOS RESERVADOS - UNGE © IoT A NUESTRO ALCANCE - 2026
 </footer>
@@ -200,6 +206,7 @@
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 $(document).ready(function() {
@@ -215,7 +222,54 @@ $(document).ready(function() {
     autoWidth: false
   });
 
-  // Función para cargar videoclases
+  let chartEstados, chartMensual;
+
+  function actualizarGraficas(data){
+    let programadas=0,enCurso=0,finalizadas=0,canceladas=0;
+    let clasesPorMes = {};
+
+    data.forEach(clase => {
+      if(clase.estado==='PROGRAMADA') programadas++;
+      if(clase.estado==='EN_CURSO') enCurso++;
+      if(clase.estado==='FINALIZADA') finalizadas++;
+      if(clase.estado==='CANCELADA') canceladas++;
+
+      const mes = new Date(clase.fecha_inicio).toLocaleString('es-ES',{month:'short',year:'numeric'});
+      clasesPorMes[mes] = (clasesPorMes[mes]||0)+1;
+    });
+
+    document.getElementById("dashProgramadas").textContent = programadas;
+    document.getElementById("dashEnCurso").textContent = enCurso;
+    document.getElementById("dashFinalizadas").textContent = finalizadas;
+    document.getElementById("dashCanceladas").textContent = canceladas;
+
+    const ctx1 = document.getElementById('graficoEstados').getContext('2d');
+    if(chartEstados) chartEstados.destroy();
+    chartEstados = new Chart(ctx1,{
+      type:'pie',
+      data:{
+        labels:['Programadas','En Curso','Finalizadas','Canceladas'],
+        datasets:[{
+          data:[programadas,enCurso,finalizadas,canceladas],
+          backgroundColor:['#17a2b8','#28a745','#6c757d','#ffc107']
+        }]
+      }
+    });
+
+    const ctx2 = document.getElementById('graficoMensual').getContext('2d');
+    if(chartMensual) chartMensual.destroy();
+    chartMensual = new Chart(ctx2,{
+      type:'bar',
+      data:{
+        labels:Object.keys(clasesPorMes),
+        datasets:[{
+          label:'Videoclases',
+          data:Object.values(clasesPorMes),
+          backgroundColor:'#004080'
+        }]
+      }
+    });
+  }
   function cargarVideoclases() {
     fetch("/videoclases")
       .then(res => res.json())
@@ -236,7 +290,6 @@ $(document).ready(function() {
             boton = `<a href="${clase.enlace}" target="_blank" class="btn btn-success btn-sm">Unirse</a>`;
           }
 
-          // Botones de edición y eliminación
           const acciones = `
             ${boton}
             <button class="btn btn-warning btn-sm ms-1" onclick="abrirEditar(${clase.id_videoclase}, '${clase.titulo}', '${clase.descripcion}', '${clase.fecha_inicio}', '${clase.fecha_fin}', '${clase.estado}', '${clase.invitados}')">Editar</button>
@@ -259,6 +312,8 @@ $(document).ready(function() {
         document.getElementById("metricEnCurso").textContent = enCurso;
         document.getElementById("metricFinalizadas").textContent = finalizadas;
         document.getElementById("metricCanceladas").textContent = canceladas;
+
+        actualizarGraficas(data);
       })
       .catch(err => console.error("Error cargando videoclases:", err));
   }
