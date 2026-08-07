@@ -16,15 +16,23 @@
       overflow-x: auto;
       width: 100%;
     }
+    #tablaTransporteEscolar {
+      font-size: 0.85rem;
+    }
     #tablaTransporteEscolar th {
       white-space: nowrap;
       font-size: 0.9rem;
       text-align: center;
+      background-color: #004080;
+      color: #fff;
     }
     #tablaTransporteEscolar td {
-      font-size: 0.85rem;
       text-align: center;
       vertical-align: middle;
+    }
+    /* Ajuste de filas alternas */
+    #tablaTransporteEscolar tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
     }
   </style>
 </head>
@@ -110,7 +118,7 @@
   <!-- Tabla principal de transporteescolar -->
   <div class="tabla-container">
     <table id="tablaTransporteEscolar" class="display table table-striped table-bordered nowrap" style="width:100%">
-      <thead class="table-dark">
+      <thead>
         <tr>
           <th>ID</th>
           <th>Fecha</th>
@@ -209,9 +217,16 @@
               label: 'Ocupación Promedio (%)',
               data: datos.values,
               borderColor: 'rgba(75, 192, 192, 1)',
-              fill: false,
-              tension: 0.1
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              fill: true,
+              tension: 0.3
             }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'top' }
+            }
           }
         });
       })
